@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-ivory-base: #FAF8F5;
+    --color-charcoal-base: #1A1918;
+    --color-forest-base: #183728;
+    --color-amber-base: #C5832B;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    background-color: #FAF8F5;
+    color: #1A1918;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Architectural focus styling */
+  *:focus-visible {
+    outline: 2px solid #183728;
+    outline-offset: 2px;
+  }
+
+  /* Respect reduced motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Custom scrollbar matching ivory and charcoal palette */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #FAF8F5;
+    border-left: 1px solid #EAE3D5;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #DDD3C1;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #C8BBA5;
+  }
+}

@@ -1,0 +1,58 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Next.js build output
+/.next/
+/out/
+/build
+/dist
+*.tsbuildinfo
+
+# Production environment & sensitive keys
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+id_rsa*
+
+# Debugging and system logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.log
+
+# OS Metadata
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE & Editor caches
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Unrelated archive & legacy files
+dashboard_old/
+ronky-*
+SecretScanner/
+*.zip
+*.docx
+*.jpg
+build_api_clean.py
+build_phase1.py
+build_phases234.py
+pyproject.toml
+ronky_fluent_form_export.json
+seed_db_benchmarks.py
+test_api.py
+test_local_api.py
