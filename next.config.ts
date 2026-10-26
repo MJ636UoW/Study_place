@@ -8,6 +8,18 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // Security headers applied to every response (works on any host: Render, Vercel, self-hosted)
+        source: "/(.*)",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+          { key: "X-XSS-Protection", value: "1; mode=block" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        ],
+      },
+      {
         // Enforce strict no-cache on all API routes:
         // Authenticated sessions, payment intents, and live seat availability must never be cached.
         source: "/api/:path*",

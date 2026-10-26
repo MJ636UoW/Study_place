@@ -1,0 +1,130 @@
+##############################################################################
+# render.yaml — Sanctuary Residency Platform
+# Infrastructure-as-Code for Render.com
+#
+# This file defines:
+#   1. The main Next.js web service
+#   2. Three cron jobs (hold cleanup, notification dispatch, payment reconciliation)
+#
+# Deploy by connecting your GitHub repo (mj897535-oss/StudyPlace) on
+# https://dashboard.render.com → New → Blueprint and selecting this repo.
+##############################################################################
+
+services:
+  # ──────────────────────────────────────────────────────────
+  # 1. Main Web Service — Next.js 15 Application
+  # ──────────────────────────────────────────────────────────
+  - type: web
+    name: sanctuary-studyplace
+    runtime: node
+    region: singapore          # Closest to India; change to "ohio" or "frankfurt" if needed
+    plan: starter              # Starter = $7/month, allows commercial use. Use "free" only for testing.
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    autoDeploy: true           # Auto-redeploy on every push to the connected branch
+    branch: main
+    envVars:
+      # ── Next.js ──────────────────────────────────────────
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"
+      # ── App URL (set to your Render URL or custom domain) ─
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false            # Fill in Render Dashboard after first deploy (e.g. https://sanctuary-studyplace.onrender.com)
+      # ── Supabase ─────────────────────────────────────────
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false            # Paste from Supabase Dashboard → Project Settings → API
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false            # Paste from Supabase Dashboard → Project Settings → API
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false            # Paste from Supabase Dashboard → Project Settings → API (SECRET — server only)
+      # ── Razorpay ─────────────────────────────────────────
+      - key: NEXT_PUBLIC_RAZORPAY_KEY_ID
+        sync: false            # Paste from Razorpay Dashboard → API Keys
+      - key: RAZORPAY_KEY_SECRET
+        sync: false            # Paste from Razorpay Dashboard → API Keys (SECRET — server only)
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false            # Paste from Razorpay Dashboard → Webhooks (SECRET — server only)
+      # ── Cron Authentication ───────────────────────────────
+      - key: CRON_SECRET
+        generateValue: true    # Render auto-generates a secure random value for you
+
+  # ──────────────────────────────────────────────────────────
+  # 2. Cron Job — Release Expired Booking Holds (every 10 min)
+  #    Releases stale 15-minute payment holds so seats are freed
+  # ──────────────────────────────────────────────────────────
+  - type: cron
+    name: sanctuary-cleanup-holds
+    runtime: node
+    region: singapore
+    plan: starter
+    schedule: "*/10 * * * *"   # Every 10 minutes
+    buildCommand: npm ci
+    startCommand: >
+      node -e "
+        const secret = process.env.CRON_SECRET;
+        const url = process.env.NEXT_PUBLIC_APP_URL + '/api/bookings/cleanup-expired-holds';
+        fetch(url, { method: 'POST', headers: { 'Authorization': 'Bearer ' + secret, 'Content-Type': 'application/json' } })
+          .then(r => r.json())
+          .then(d => { console.log('Hold cleanup:', JSON.stringify(d)); process.exit(0); })
+          .catch(e => { console.error('Hold cleanup failed:', e.message); process.exit(1); });
+      "
+    envVars:
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false
+      - key: CRON_SECRET
+        sync: false
+
+  # ──────────────────────────────────────────────────────────
+  # 3. Cron Job — Dispatch Pending Notifications (every 5 min)
+  #    Sends queued emails: confirmations, approvals, reminders
+  # ──────────────────────────────────────────────────────────
+  - type: cron
+    name: sanctuary-dispatch-notifications
+    runtime: node
+    region: singapore
+    plan: starter
+    schedule: "*/5 * * * *"    # Every 5 minutes
+    buildCommand: npm ci
+    startCommand: >
+      node -e "
+        const secret = process.env.CRON_SECRET;
+        const url = process.env.NEXT_PUBLIC_APP_URL + '/api/notifications/dispatch';
+        fetch(url, { method: 'POST', headers: { 'Authorization': 'Bearer ' + secret, 'Content-Type': 'application/json' } })
+          .then(r => r.json())
+          .then(d => { console.log('Notifications dispatched:', JSON.stringify(d)); process.exit(0); })
+          .catch(e => { console.error('Notification dispatch failed:', e.message); process.exit(1); });
+      "
+    envVars:
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false
+      - key: CRON_SECRET
+        sync: false
+
+  # ──────────────────────────────────────────────────────────
+  # 4. Cron Job — Payment Reconciliation (every 15 min)
+  #    Catches missed Razorpay webhooks, reconciles order status
+  # ──────────────────────────────────────────────────────────
+  - type: cron
+    name: sanctuary-payment-reconcile
+    runtime: node
+    region: singapore
+    plan: starter
+    schedule: "*/15 * * * *"   # Every 15 minutes
+    buildCommand: npm ci
+    startCommand: >
+      node -e "
+        const secret = process.env.CRON_SECRET;
+        const url = process.env.NEXT_PUBLIC_APP_URL + '/api/payments/reconcile';
+        fetch(url, { method: 'POST', headers: { 'Authorization': 'Bearer ' + secret, 'Content-Type': 'application/json' } })
+          .then(r => r.json())
+          .then(d => { console.log('Reconciliation:', JSON.stringify(d)); process.exit(0); })
+          .catch(e => { console.error('Reconciliation failed:', e.message); process.exit(1); });
+      "
+    envVars:
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false
+      - key: CRON_SECRET
+        sync: false
