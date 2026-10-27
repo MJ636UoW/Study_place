@@ -82,7 +82,7 @@ export const DeskToRoomScroll: React.FC = () => {
             <div className="p-8 border border-ivory-300 bg-ivory-50 text-center">
               <h3 className="font-serif text-xl text-charcoal-900 mb-2">I. The Solitary Desk</h3>
               <p className="text-xs text-charcoal-600 mb-4">
-                Solid Appalachian oak, warm brass task lamp, and dedicated gigabit connection.
+                Handcrafted solid oak, warm brass task lamp, and dedicated gigabit connection.
               </p>
               <div className="aspect-[4/3] bg-ivory-100 border border-ivory-200 flex items-center justify-center p-4">
                 <svg viewBox="0 0 400 300" className="w-full h-full max-h-56" aria-hidden="true">

@@ -253,7 +253,7 @@ export class BookingEngine {
         currency: "INR",
         plan_slug: input.planId,
       },
-      planTermsSnapshot: "Curatorial silent retreat covenant and Appalachian oak joinery preservation.",
+      planTermsSnapshot: "Curatorial silent retreat covenant and handcrafted timber joinery preservation.",
       guestNotes: input.guestNotes,
       specialAccommodations: input.specialAccommodations,
       idempotencyKey: input.idempotencyKey,

@@ -67,11 +67,11 @@ export default function AdminPage() {
 
   const [cashReqId, setCashReqId] = useState("");
   const [cashRef, setCashRef] = useState("CASH-2026-");
-  const [cashAmountPaise, setCashAmountPaise] = useState(3800000);
-  const [cashNotes, setCashNotes] = useState("Collected in person at Curatorial loggia desk.");
+  const [cashAmountPaise, setCashAmountPaise] = useState(249900);
+  const [cashNotes, setCashNotes] = useState("Collected in person at Curatorial desk (Kandivali East).");
 
   const [selectedPlanId, setSelectedPlanId] = useState("tier-resident");
-  const [newPlanPriceUSD, setNewPlanPriceUSD] = useState(380);
+  const [newPlanPriceINR, setNewPlanPriceINR] = useState(2499);
   const [newPlanName, setNewPlanName] = useState("");
 
   const [maintSeat, setMaintSeat] = useState("seat-A02");
@@ -205,7 +205,7 @@ export default function AdminPage() {
     e.preventDefault();
     const res = AdminService.updatePlan(
       selectedPlanId,
-      { priceUSD: Number(newPlanPriceUSD), name: newPlanName || undefined },
+      { priceRupees: Number(newPlanPriceINR), pricePaise: Number(newPlanPriceINR) * 100, name: newPlanName || undefined },
       staffId
     );
     if (res.success) {
@@ -1029,7 +1029,7 @@ export default function AdminPage() {
                 setSelectedPlanId(e.target.value);
                 const p = plans.find((pl) => pl.id === e.target.value);
                 if (p) {
-                  setNewPlanPriceUSD(p.price);
+                  setNewPlanPriceINR(p.price);
                   setNewPlanName(p.name);
                 }
               }}
@@ -1037,7 +1037,7 @@ export default function AdminPage() {
             >
               {plans.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name} (${p.price} USD / {p.cadence})
+                  {p.name} (₹{p.price} / {p.cadence})
                 </option>
               ))}
             </select>
@@ -1046,13 +1046,13 @@ export default function AdminPage() {
             label="Tier Display Title"
             value={newPlanName}
             onChange={(e) => setNewPlanName(e.target.value)}
-            placeholder="e.g. Resident Atelier (Revised Rate)"
+            placeholder="e.g. Monthly Resident (Revised Rate)"
           />
           <Input
-            label="New Rate (USD)"
+            label="New Rate (INR ₹)"
             type="number"
-            value={newPlanPriceUSD}
-            onChange={(e) => setNewPlanPriceUSD(Number(e.target.value))}
+            value={newPlanPriceINR}
+            onChange={(e) => setNewPlanPriceINR(Number(e.target.value))}
             required
           />
           <div className="pt-2 flex justify-end gap-2">

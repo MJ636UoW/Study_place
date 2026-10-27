@@ -84,9 +84,9 @@ export default function BookingReceiptPage() {
               Curatorial Workstation Residency • Tax Invoice & Payment Receipt
             </div>
             <p className="text-xs text-charcoal-600 mt-2 max-w-sm leading-relaxed">
-              44/2 Lavelle Road, Shanthala Nagar, Ashok Nagar, Bengaluru, Karnataka 560001, India.
+              3rd Floor, Growel&apos;s 101 Mall Annex, Akurli Road, Kandivali East, Mumbai, Maharashtra 400101, India.
               <br />
-              GSTIN: <span className="font-mono">29ABCDE1234F1Z5</span> • SAC Code: <span className="font-mono">998399</span>
+              GSTIN: <span className="font-mono">27ABCDE1234F1Z5</span> • SAC Code: <span className="font-mono">998399</span>
             </p>
           </div>
 

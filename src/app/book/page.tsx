@@ -53,8 +53,8 @@ function BookDemoContent() {
   // 4. Request / Hold Submission State
   const [isHoldDialogOpen, setIsHoldDialogOpen] = useState<boolean>(false);
   const [isSubmittingHold, setIsSubmittingHold] = useState<boolean>(false);
-  const [guestName, setGuestName] = useState<string>("Elena Rostova");
-  const [guestEmail, setGuestEmail] = useState<string>("e.rostova@studio-v.org");
+  const [guestName, setGuestName] = useState<string>("Arjun Kulkarni");
+  const [guestEmail, setGuestEmail] = useState<string>("arjun.kulkarni@outlook.com");
   const [guestNotes, setGuestNotes] = useState<string>("");
   const [holdResult, setHoldResult] = useState<HoldResponse | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState<boolean>(false);
@@ -259,7 +259,7 @@ function BookDemoContent() {
                     </div>
                   </div>
                   <div className="pt-2 text-xs font-mono font-bold text-forest-900">
-                    ${rule.basePrice} <span className="font-normal text-[10px] text-charcoal-500">USD*</span>
+                    ₹{rule.basePrice} <span className="font-normal text-[10px] text-charcoal-500">INR</span>
                   </div>
                 </button>
               );
@@ -478,8 +478,8 @@ function BookDemoContent() {
             <div className="text-right">
               <div className="text-[10px] uppercase font-mono text-charcoal-500">Estimated Fee</div>
               <div className="font-serif text-2xl font-bold text-charcoal-900">
-                ${currentDurationRule.basePrice}{" "}
-                <span className="text-xs font-mono font-normal text-charcoal-500">USD*</span>
+                ₹{currentDurationRule.basePrice}{" "}
+                <span className="text-xs font-mono font-normal text-charcoal-500">INR</span>
               </div>
             </div>
 
@@ -546,7 +546,7 @@ function BookDemoContent() {
             <div className="p-4 bg-ivory-100 border border-ivory-300 font-mono text-xs space-y-1 text-charcoal-900">
               <div>Hold Reference: <strong>{holdResult.holdRef}</strong></div>
               <div>Expires: <strong>{holdResult.expiresAt}</strong> (15-min window)</div>
-              <div>Estimated Demo Fee: <strong>${holdResult.totalPrice} USD</strong></div>
+              <div>Estimated Demo Fee: <strong>₹{holdResult.totalPrice} INR</strong></div>
             </div>
 
             <p className="text-[10px] font-mono text-amber-800">
@@ -577,7 +577,7 @@ function BookDemoContent() {
               <div>Station: <strong>{selectedSeat?.seatNumber} ({selectedSeat?.name})</strong></div>
               <div>Zone: {selectedSeat?.zone}</div>
               <div>Period: {formatDisplayDate(startDate)} → {formatDisplayDate(calculatedEndDate)}</div>
-              <div>Cadence: {currentDurationRule.label} (${currentDurationRule.basePrice} USD)</div>
+              <div>Cadence: {currentDurationRule.label} (₹{currentDurationRule.basePrice} INR)</div>
             </div>
 
             <Input

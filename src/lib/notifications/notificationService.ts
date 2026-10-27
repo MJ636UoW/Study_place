@@ -56,8 +56,8 @@ const notificationStore: NotificationRecord[] = [
     templateName: "payment_confirmation_template",
     payload: {
       bookingRef: "SNC-2026-8021",
-      seatLabel: "Desk 04 (North Gallery)",
-      amount: "380.00 USD",
+      seatLabel: "Desk 04 (Main Study Hall)",
+      amount: "2,499.00 INR",
       checkInDate: "2026-10-20",
     },
     status: "sent",

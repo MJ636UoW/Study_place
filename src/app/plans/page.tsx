@@ -62,10 +62,10 @@ export default function PlansPage() {
 
               <div className="py-4 border-y border-ivory-200 flex items-baseline gap-2">
                 <span className="font-serif text-5xl font-bold text-charcoal-900">
-                  ${plan.price}
+                  ₹{plan.price}
                 </span>
                 <span className="text-xs font-mono uppercase text-charcoal-500">
-                  {plan.currency} / {plan.cadence}
+                  / {plan.cadence}
                 </span>
               </div>
 

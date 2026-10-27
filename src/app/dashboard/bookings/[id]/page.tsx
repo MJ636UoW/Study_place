@@ -94,7 +94,7 @@ export default function BookingDetailPage() {
           <div className="p-4 bg-ivory-100/60 border border-ivory-200 space-y-1">
             <span className="text-[10px] uppercase font-mono text-charcoal-500">Total Contribution</span>
             <div className="font-serif text-lg font-bold text-charcoal-900">
-              ${booking.totalAmount} {booking.currency}
+              ₹{booking.totalAmount} {booking.currency}
             </div>
             <p className="text-charcoal-600">Paid in full via invoice</p>
           </div>

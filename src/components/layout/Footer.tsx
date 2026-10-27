@@ -19,7 +19,7 @@ export const Footer: React.FC = () => {
               “From distraction to focus. A sanctuary crafted for the unhurried pursuit of deep work, rigorous study, and lasting ideas.”
             </p>
             <p className="text-xs text-charcoal-600 font-sans leading-relaxed max-w-md">
-              Designed with library-grade acoustics, honest Appalachian oak, filtered air, and an uncompromising quietude charter.
+              Designed with library-grade acoustics, honest solid timber, filtered air, and an uncompromising quietude charter.
             </p>
           </div>
 
@@ -116,7 +116,7 @@ export const Footer: React.FC = () => {
           © {new Date().getFullYear()} Sanctuary Study & Atelier Inc. All rights reserved.
         </div>
         <div className="flex items-center gap-6">
-          <span>San Francisco, California</span>
+          <span>Kandivali East, Mumbai</span>
           <span className="hidden sm:inline-block">•</span>
           <span>Silent Hours: 07:30 — 22:00</span>
         </div>

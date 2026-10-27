@@ -161,7 +161,7 @@ export default function ContactPage() {
                 <Input
                   label="Telephone (Optional)"
                   type="tel"
-                  placeholder="+1 (415) 000-0000"
+                  placeholder="+91 98765 43210"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                 />

@@ -16,40 +16,41 @@ export interface DurationRule {
 export const DURATION_RULES: DurationRule[] = [
   {
     id: "day",
-    label: "Day Sanctuary",
+    label: "Day Pass",
     sublabel: "1 Day (07:30 — 22:00)",
-    description: "Single-session deep focus immersion. Access ends at 22:00.",
-    basePrice: 45,
+    description: "Single-session deep focus. Full day access to desk, Wi-Fi, and refreshments.",
+    basePrice: 299,
   },
   {
     id: "week",
     label: "Weekly Sprint",
     sublabel: "7 Consecutive Days",
-    description: "Seven continuous days of dedicated desk access.",
-    basePrice: 190,
+    description: "Seven continuous days of dedicated desk access with locker.",
+    basePrice: 1499,
   },
   {
     id: "month",
-    label: "Monthly Atelier",
+    label: "Monthly Resident",
     sublabel: "1 Calendar Month",
-    description: "Full calendar month with 24/7 keycard access and personal cedar locker.",
-    basePrice: 380,
+    description: "Full calendar month with 24/7 keycard access and personal locker.",
+    basePrice: 2499,
   },
   {
     id: "quarter",
     label: "Quarterly Fellow",
     sublabel: "3 Calendar Months",
-    description: "Three calendar months with dual-studio access and meeting credits.",
-    basePrice: 950,
+    description: "Three calendar months with all-zone access and 8 guest passes.",
+    basePrice: 5999,
   },
   {
     id: "year",
     label: "Annual Residency",
     sublabel: "1 Full Year (Leap Year Aware)",
-    description: "365/366 days of continuous tenure with archival storage vault.",
-    basePrice: 3400,
+    description: "365/366 days of continuous tenure with private storage vault and priority support.",
+    basePrice: 19999,
   },
 ];
+
 
 /**
  * Check if a given year is a leap year.

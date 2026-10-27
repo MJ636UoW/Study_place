@@ -21,6 +21,20 @@ declare global {
   }
 }
 
+const loadRazorpayScript = (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined") return resolve(false);
+    if ((window as unknown as { Razorpay?: unknown }).Razorpay) return resolve(true);
+
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
 export function RazorpayCheckoutModal({
   bookingRequestId,
   seatLabel,
@@ -46,6 +60,9 @@ export function RazorpayCheckoutModal({
     setRefundAlert(null);
 
     try {
+      // Try loading official checkout script
+      await loadRazorpayScript();
+
       // 1. Create order on server using saved price snapshot in integer paise
       const idempotencyKey = `idemp_${bookingRequestId}_${Date.now()}`;
       const orderRes = await fetch("/api/payments/create-order", {
@@ -71,8 +88,8 @@ export function RazorpayCheckoutModal({
           key: keyId,
           amount: orderData.amountPaise,
           currency: "INR",
-          name: "Sanctuary Residency",
-          description: `Workstation ${seatLabel} (${durationLabel})`,
+          name: "Sanctuary Study Space",
+          description: `Workstation ${seatLabel} (${durationLabel}) • Kandivali East`,
           order_id: orderId,
           handler: async function (response: {
             razorpay_payment_id: string;
@@ -92,12 +109,12 @@ export function RazorpayCheckoutModal({
             },
           },
           prefill: {
-            name: "Elena Rostova",
-            email: "e.rostova@studio-v.org",
+            name: "Arjun Kulkarni",
+            email: "arjun.kulkarni@outlook.com",
             contact: "+919876543210",
           },
           theme: {
-            color: "#1B3B2B",
+            color: "#183728",
           },
         };
 
@@ -230,6 +247,31 @@ export function RazorpayCheckoutModal({
           <p className="text-forest-900 leading-relaxed">
             Transactions are processed in <strong>TEST Mode</strong>. No real credit cards or bank accounts will be debited. Amounts are snapshotted on the server in integer paise.
           </p>
+        </div>
+
+        {/* Supported Payment Channels */}
+        <div className="p-3 border border-ivory-300 bg-ivory-100/40 space-y-2">
+          <span className="font-mono text-[10px] uppercase font-bold text-charcoal-700 tracking-wider">
+            Supported Indian Payment Methods (Razorpay Gateway)
+          </span>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-[11px] font-sans">
+            <div className="p-2 border border-ivory-200 bg-ivory-50 rounded-sm">
+              <div className="font-bold text-forest-900">UPI Instant</div>
+              <div className="text-[10px] text-charcoal-600 mt-0.5">PhonePe • GPay • Paytm • QR</div>
+            </div>
+            <div className="p-2 border border-ivory-200 bg-ivory-50 rounded-sm">
+              <div className="font-bold text-forest-900">Cards</div>
+              <div className="text-[10px] text-charcoal-600 mt-0.5">RuPay • Visa • Mastercard Debit/Credit</div>
+            </div>
+            <div className="p-2 border border-ivory-200 bg-ivory-50 rounded-sm">
+              <div className="font-bold text-forest-900">Wallets</div>
+              <div className="text-[10px] text-charcoal-600 mt-0.5">PhonePe • Paytm • Mobikwik</div>
+            </div>
+            <div className="p-2 border border-ivory-200 bg-ivory-50 rounded-sm">
+              <div className="font-bold text-forest-900">Net Banking</div>
+              <div className="text-[10px] text-charcoal-600 mt-0.5">SBI • HDFC • ICICI • Axis • 50+ Banks</div>
+            </div>
+          </div>
         </div>
 
         {/* Transaction Summary Ledger */}

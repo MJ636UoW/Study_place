@@ -447,7 +447,7 @@ export class AdminService {
   // Plan editing (preserving historical price snapshots of prior bookings)
   public static updatePlan(
     planId: string,
-    updates: { pricePaise?: number; priceUSD?: number; name?: string; tagline?: string },
+    updates: { pricePaise?: number; priceRupees?: number; priceUSD?: number; name?: string; tagline?: string },
     staffId: string
   ) {
     const plan = dynamicPlansStore.find((p) => p.id === planId);
@@ -456,7 +456,8 @@ export class AdminService {
     }
 
     const oldPrice = plan.price;
-    if (updates.priceUSD !== undefined) plan.price = updates.priceUSD;
+    if (updates.priceRupees !== undefined) plan.price = updates.priceRupees;
+    else if (updates.priceUSD !== undefined) plan.price = updates.priceUSD;
     if (updates.name) plan.name = updates.name;
     if (updates.tagline) plan.tagline = updates.tagline;
 

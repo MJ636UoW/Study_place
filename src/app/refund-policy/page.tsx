@@ -113,7 +113,7 @@ export default function RefundPolicyPage() {
       </article>
 
       <div className="pt-8 border-t border-ivory-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-charcoal-500">
-        <div>Sanctuary Curatorial Desk • San Francisco</div>
+        <div>Sanctuary Curatorial Desk • Kandivali, Mumbai</div>
         <div className="flex items-center gap-4">
           <Link href="/conduct" className="text-forest-900 hover:underline">
             House Conduct →

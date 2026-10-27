@@ -61,7 +61,7 @@ export default function ConductPage() {
             II. Workstation Stewardship & Joinery Care
           </h2>
           <p className="text-xs text-charcoal-700 leading-relaxed">
-            Workstations are crafted from Appalachian solid white oak with organic botanical oil finishes. Members are custodians of this furniture:
+            Workstations are crafted from handcrafted solid timber with organic botanical oil finishes. Members are custodians of this furniture:
           </p>
           <ul className="list-disc pl-5 space-y-1.5 text-xs text-charcoal-700">
             <li>Always utilize provided leather desk blotters beneath hot beverage vessels.</li>

@@ -48,7 +48,7 @@ export default function TermsPage() {
             2. Workstation Care & Joinery
           </h2>
           <p>
-            Workstations are solid Appalachian white oak finished with non-toxic botanical oils. Members agree to utilize desk blotters for hot drink containers and refrain from writing directly upon unfinished wood surfaces.
+            Workstations are solid timber finished with non-toxic botanical oils. Members agree to utilize desk blotters for hot drink containers and refrain from writing directly upon unfinished wood surfaces.
           </p>
         </section>
 
@@ -90,7 +90,7 @@ export default function TermsPage() {
       </article>
 
       <div className="pt-8 border-t border-ivory-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-charcoal-500">
-        <div>Sanctuary Study & Atelier Inc. • San Francisco</div>
+        <div>Sanctuary Study Space • Kandivali, Mumbai</div>
         <div className="flex items-center gap-4">
           <Link href="/conduct" className="text-forest-900 hover:underline">
             House Rules & Conduct →

@@ -118,9 +118,9 @@ export const SeatInspector: React.FC<SeatInspectorProps> = ({
           <span className="text-xs uppercase font-mono text-charcoal-600">Calculated Fee</span>
           <div className="text-right">
             <span className="font-serif text-3xl font-bold text-charcoal-900">
-              ${currentRule.basePrice}
+              ₹{currentRule.basePrice}
             </span>
-            <span className="text-xs font-mono text-charcoal-500 ml-1">USD</span>
+            <span className="text-xs font-mono text-charcoal-500 ml-1">INR</span>
           </div>
         </div>
 

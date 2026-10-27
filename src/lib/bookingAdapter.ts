@@ -90,7 +90,7 @@ export const SEATS_FIXTURE_20: Seat[] = [
     zone: "North Skylight Gallery",
     viewDescription: "Northern skylight with timber roof truss reveal",
     verifiedFeatures: [
-      "FSC-certified Appalachian oak joinery",
+      "FSC-certified solid oak joinery",
       "Herman Miller Cosm high-back chair",
       "Acoustics certified < 36 dBA",
       "Heavy linen blotter with brass pen rest",
@@ -229,7 +229,7 @@ export const SEATS_FIXTURE_20: Seat[] = [
     viewDescription: "Southern wall niche with soft shadow line",
     verifiedFeatures: [
       "Basalt wool acoustic damping",
-      "Solid Appalachian oak desk",
+      "Solid handcrafted oak desk",
       "Individual filtered air terminal",
       "Ethernet port",
     ],

@@ -243,7 +243,7 @@ export default function HomePage() {
                   <div className="text-[10px] font-mono uppercase text-forest-800">Criterion 01</div>
                   <h3 className="font-serif text-2xl text-charcoal-900">Honest Materials</h3>
                   <p className="text-xs text-charcoal-600 font-sans leading-relaxed">
-                    Surrounded by solid Appalachian white oak, heavy felt partitions, raw brass fittings, and textured linen journals. No plastic laminates or sensory overload.
+                    Surrounded by solid oak timber, heavy felt partitions, raw brass fittings, and textured linen journals. No plastic laminates or sensory overload.
                   </p>
                   <div className="text-[11px] font-mono text-charcoal-500 pt-2 border-t border-ivory-200">
                     Sourced FSC-Certified • Custom Joinery
@@ -508,10 +508,10 @@ export default function HomePage() {
                   {/* Pricing Display */}
                   <div className="py-4 border-y border-ivory-200 flex items-baseline gap-2">
                     <span className="font-serif text-4xl sm:text-5xl font-bold text-charcoal-900">
-                      ${plan.price}
+                      ₹{plan.price}
                     </span>
                     <span className="text-xs font-mono uppercase text-charcoal-500">
-                      {plan.currency} / {plan.cadence}
+                      / {plan.cadence}
                     </span>
                   </div>
 
