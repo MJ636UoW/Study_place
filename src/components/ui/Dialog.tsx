@@ -12,6 +12,7 @@ export interface DialogProps {
   children: React.ReactNode;
   footer?: React.ReactNode;
   maxWidth?: "sm" | "md" | "lg" | "xl";
+  protocolBadge?: string;
 }
 
 export const Dialog: React.FC<DialogProps> = ({
@@ -22,6 +23,7 @@ export const Dialog: React.FC<DialogProps> = ({
   children,
   footer,
   maxWidth = "md",
+  protocolBadge = "Elite Study Zone • Secure Gateway",
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -84,8 +86,8 @@ export const Dialog: React.FC<DialogProps> = ({
         {/* Header */}
         <div className="flex items-start justify-between p-6 border-b border-ivory-200 bg-ivory-100/50">
           <div>
-            <div className="text-[10px] uppercase tracking-widest font-mono text-amber-700 mb-1">
-              Sanctuary Protocol
+            <div className="text-[10px] uppercase tracking-widest font-mono text-forest-700 font-bold mb-1">
+              {protocolBadge}
             </div>
             <h2 id="dialog-title" className="text-xl font-serif text-charcoal-900 tracking-tight">
               {title}

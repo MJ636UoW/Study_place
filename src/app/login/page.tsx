@@ -36,6 +36,12 @@ export default function LoginPage() {
 
   // Google Modal State (for smooth client demonstration)
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
+  const [customGoogleEmail, setCustomGoogleEmail] = useState("");
+  const [customGoogleName, setCustomGoogleName] = useState("");
+  const [showCustomGoogleInput, setShowCustomGoogleInput] = useState(false);
+
+  // Auto-detect email from active form input or prior session
+  const detectedGoogleEmail = email || (typeof window !== "undefined" ? localStorage.getItem("esz_last_email") || "" : "");
 
   // 1. One-Click Google OAuth Sign-In with Seamless Experience
   const handleGoogleSignInClick = async () => {
@@ -66,6 +72,9 @@ export default function LoginPage() {
 
   const handleSelectGoogleAccount = (accountEmail: string, accountName: string) => {
     setIsGoogleModalOpen(false);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("esz_last_email", accountEmail);
+    }
     setStatusMessage({
       type: "success",
       text: `Authenticating with Google Account: ${accountEmail}...`,
@@ -554,16 +563,52 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Google Account Selector Dialog (Demonstration Modal) */}
+      {/* Google Account Selector Dialog (Demonstration & Identity Modal) */}
       <Dialog
         isOpen={isGoogleModalOpen}
-        onClose={() => setIsGoogleModalOpen(false)}
+        onClose={() => {
+          setIsGoogleModalOpen(false);
+          setShowCustomGoogleInput(false);
+        }}
         title="Sign in with Google"
-        description="Choose a Google account to continue to Elite Study Zone"
+        description="Choose a Google account or enter any student email to continue"
+        protocolBadge="Elite Study Zone • Google Authentication"
         maxWidth="sm"
       >
         <div className="space-y-3 py-2">
-          {/* Account 1: User's Email */}
+          {/* 1. Auto-Detected Google Account (from active form or prior session) */}
+          {detectedGoogleEmail && detectedGoogleEmail !== "mandarj2412@gmail.com" && (
+            <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-700 text-white font-bold flex items-center justify-center text-sm shadow-sm">
+                  {detectedGoogleEmail.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div className="text-[10px] font-mono uppercase text-emerald-800 font-bold flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-amber-500" />
+                    <span>Auto-Detected Account</span>
+                  </div>
+                  <div className="text-xs font-mono font-bold text-emerald-950">
+                    {detectedGoogleEmail}
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  handleSelectGoogleAccount(
+                    detectedGoogleEmail,
+                    detectedGoogleEmail.split("@")[0]
+                  )
+                }
+                className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-lg shadow-sm"
+              >
+                Sign In →
+              </button>
+            </div>
+          )}
+
+          {/* Account 1: Mandar Joshi */}
           <button
             type="button"
             onClick={() => handleSelectGoogleAccount("mandarj2412@gmail.com", "Mandar Joshi")}
@@ -607,7 +652,76 @@ export default function LoginPage() {
             <ArrowRight className="w-4 h-4 text-charcoal-400 group-hover:text-forest-700 transition-transform group-hover:translate-x-1" />
           </button>
 
-          {/* Account 3: Custom Email Input */}
+          {/* Option 3: Use another Google account (Custom Email Input) */}
+          {!showCustomGoogleInput ? (
+            <button
+              type="button"
+              onClick={() => setShowCustomGoogleInput(true)}
+              className="w-full p-3.5 border border-dashed border-slate-300 hover:border-forest-600 rounded-xl flex items-center gap-3 text-left hover:bg-slate-50 transition-all text-xs font-sans font-bold text-charcoal-700 hover:text-forest-800"
+            >
+              <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-300 flex items-center justify-center text-charcoal-600">
+                <User className="w-5 h-5" />
+              </div>
+              <div>
+                <div>Use another Google account</div>
+                <div className="text-[11px] font-normal text-charcoal-500 font-sans">
+                  Type any other student or personal Gmail address
+                </div>
+              </div>
+            </button>
+          ) : (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!customGoogleEmail) return;
+                handleSelectGoogleAccount(
+                  customGoogleEmail.trim(),
+                  customGoogleName.trim() || customGoogleEmail.split("@")[0]
+                );
+              }}
+              className="p-4 bg-slate-50 border border-slate-300 rounded-xl space-y-3 animate-in fade-in duration-150"
+            >
+              <div className="text-xs font-sans font-bold text-charcoal-900">
+                Enter your Google Account details:
+              </div>
+              <Input
+                label="Google Email Address"
+                type="email"
+                placeholder="your.email@gmail.com"
+                value={customGoogleEmail}
+                onChange={(e) => setCustomGoogleEmail(e.target.value)}
+                required
+                className="text-xs font-mono"
+              />
+              <Input
+                label="Full Name (Optional)"
+                type="text"
+                placeholder="e.g. Priyanshu Singh"
+                value={customGoogleName}
+                onChange={(e) => setCustomGoogleName(e.target.value)}
+                className="text-xs"
+              />
+              <div className="flex gap-2 pt-1">
+                <Button
+                  type="submit"
+                  size="sm"
+                  variant="primary"
+                  className="w-full bg-forest-700 hover:bg-forest-600 text-white font-bold"
+                >
+                  Continue with this Google Account →
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => setShowCustomGoogleInput(false)}
+                  className="px-3 py-1.5 text-xs text-charcoal-500 hover:text-charcoal-800"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Footer SSL Note */}
           <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-charcoal-500 px-1">
             <span className="flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
