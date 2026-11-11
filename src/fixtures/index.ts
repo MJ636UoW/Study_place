@@ -83,25 +83,43 @@ export interface AdminMetrics {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Membership Plans — Prices in INR for Mumbai, Kandivali
+// Membership Plans — Prices in INR for Elite Study Zone (Mumbai, Ghatkopar West)
 // ─────────────────────────────────────────────────────────────────────────────
 export const plansFixture: PlanTier[] = [
+  {
+    id: "tier-hour",
+    name: "Hourly Flexi-Pass",
+    code: "PLN-00",
+    cadence: "per hour",
+    price: 49,
+    currency: "INR",
+    tagline: "Pay-as-you-go hourly workspace for quick revision, exams, and sprint study.",
+    features: [
+      "Ergonomic dedicated workstation with power socket",
+      "Biometric fingerprint / QR gate access",
+      "High-speed fiber Wi-Fi (Gigabit link)",
+      "Complimentary purified drinking water & tea",
+    ],
+    accessHours: "07:00 — 23:00 (Hourly slots)",
+    guestPasses: 0,
+    lockerAccess: false,
+  },
   {
     id: "tier-day",
     name: "Day Pass",
     code: "PLN-01",
     cadence: "per day",
-    price: 299,
+    price: 249,
     currency: "INR",
-    tagline: "One full day of library-grade deep focus in a dedicated, silent workspace.",
+    tagline: "One full day of deep focus in an air-conditioned, distraction-free environment.",
     features: [
       "Dedicated ergonomic workstation for the full day",
+      "Biometric fingerprint access enabled for the day",
       "High-speed wired & Wi-Fi internet access",
       "Unlimited chai, filter coffee & purified water",
-      "Acoustic isolation — strict silence zone",
       "Phone booth access (up to 30 min/day)",
     ],
-    accessHours: "07:30 — 22:00",
+    accessHours: "07:00 — 23:00",
     guestPasses: 0,
     lockerAccess: false,
   },
@@ -110,17 +128,17 @@ export const plansFixture: PlanTier[] = [
     name: "Monthly Resident",
     code: "PLN-02",
     cadence: "per month",
-    price: 2499,
+    price: 2299,
     currency: "INR",
-    tagline: "Your permanent desk, personal locker, and unrestricted 24/7 access — every single day.",
+    tagline: "Your permanent desk, personal locker, and 24/7 biometric fingerprint access — every day.",
     highlighted: true,
     features: [
       "Permanent assigned desk in the Main Study Hall",
-      "24/7 keycard access — weekdays, weekends & holidays",
+      "Biometric fingerprint scanner authorization for seamless 24/7 entry",
       "Private steel locker with combination lock",
-      "Meeting cabin credit (6 hours/month)",
-      "Unlimited chai, filter coffee & infused water",
-      "Postal receiving & courier handling service",
+      "High-speed dual-band fiber optic Wi-Fi",
+      "Unlimited chai, filter coffee & pantry access",
+      "Power backup with online UPS system",
     ],
     accessHours: "24 Hours / 7 Days",
     guestPasses: 2,
@@ -131,16 +149,16 @@ export const plansFixture: PlanTier[] = [
     name: "Quarterly Fellow",
     code: "PLN-03",
     cadence: "per quarter",
-    price: 5999,
+    price: 5499,
     currency: "INR",
-    tagline: "Three months of uninterrupted residency with priority cabin access and guest privileges.",
+    tagline: "Three full months of dedicated study space for competitive exam preparation.",
     features: [
-      "Permanent desk across all study zones",
-      "Unlimited meeting cabin & private room bookings",
-      "Private storage locker & archival shelf",
+      "Permanent desk across all quiet study zones",
+      "Biometric fingerprint access synced with attendance logs",
+      "Private storage locker & textbook archival shelf",
       "Guest passes for collaborators (8 passes/quarter)",
       "Dedicated coordinator direct WhatsApp line",
-      "Priority seat upgrades & community event access",
+      "Free printing & document scanning quota",
     ],
     accessHours: "24 Hours / 7 Days",
     guestPasses: 8,
@@ -427,16 +445,19 @@ export const adminMetricsFixture: AdminMetrics = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Location — Kandivali, Mumbai
+// Location — Ghatkopar West, Mumbai (Elite Study Zone)
 // ─────────────────────────────────────────────────────────────────────────────
 export const locationFixture = {
-  name: "Sanctuary Study Space — Kandivali",
-  addressLine1: "3rd Floor, Growel's 101 Mall Annex",
-  addressLine2: "Akurli Road, Kandivali East",
+  name: "Elite Study Zone",
+  tagline: "YOUR FOCUS. YOUR FUTURE. YOUR SUCCESS.",
+  headline: "A PLACE WHERE DREAMS TURN INTO ACHIEVEMENTS.",
+  coreMessage: "YOUR DREAMS DESERVE A SPACE. Your Success Starts Here! Every page you read, every hour you dedicate and every effort you make brings you one step closer to your dreams.",
+  addressLine1: "Amrut Nagar",
+  addressLine2: "Ghatkopar West",
   city: "Mumbai",
-  statePostal: "Maharashtra 400 101",
+  statePostal: "Maharashtra 400 086",
   conciergePhone: "+91 98765 43210",
-  conciergeEmail: "hello@sanctuary-study.in",
-  openingHours: "Mon — Sun: 07:30 to 22:00 (24/7 for Monthly & Quarterly Members)",
-  transitNote: "2-minute walk from Kandivali Station (Western Railway). Auto & cab drop-off at main entrance.",
+  conciergeEmail: "contact@elitestudyzone.in",
+  openingHours: "Mon — Sun: 07:00 to 23:00 (24/7 for Monthly & Quarterly Members)",
+  transitNote: "Short walk from Ghatkopar Metro & Railway Station. Located conveniently at Amrut Nagar.",
 };

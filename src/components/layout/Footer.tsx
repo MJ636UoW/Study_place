@@ -12,14 +12,19 @@ export const Footer: React.FC = () => {
           {/* Brand Manifesto */}
           <div className="lg:col-span-5 space-y-4">
             <div className="flex items-center gap-2">
-              <Compass className="w-6 h-6 text-forest-800" strokeWidth={1.5} />
-              <span className="font-serif text-2xl tracking-tight text-charcoal-900">SANCTUARY</span>
+              <span className="w-8 h-8 rounded-lg bg-forest-700 text-white flex items-center justify-center font-mono font-bold text-lg shadow-sm">
+                E
+              </span>
+              <span className="font-sans font-extrabold text-2xl tracking-tight text-charcoal-900">ELITE STUDY ZONE</span>
             </div>
-            <p className="font-serif text-lg text-charcoal-800 leading-snug italic max-w-md">
-              “From distraction to focus. A sanctuary crafted for the unhurried pursuit of deep work, rigorous study, and lasting ideas.”
+            <p className="font-sans font-semibold text-forest-700 text-sm tracking-wide uppercase">
+              YOUR FOCUS. YOUR FUTURE. YOUR SUCCESS.
             </p>
-            <p className="text-xs text-charcoal-600 font-sans leading-relaxed max-w-md">
-              Designed with library-grade acoustics, honest solid timber, filtered air, and an uncompromising quietude charter.
+            <p className="font-sans text-xs text-charcoal-700 leading-relaxed max-w-md">
+              “Your dreams deserve a space. Your success starts here! Every page you read, every hour you dedicate and every effort you make brings you one step closer to your dreams.”
+            </p>
+            <p className="text-xs text-charcoal-500 font-sans leading-relaxed max-w-md">
+              Amrut Nagar, Ghatkopar West, Mumbai • Equipped with Biometric Fingerprint Access, High-Speed Wi-Fi, and Ergonomic Study Workstations.
             </p>
           </div>
 
@@ -113,12 +118,12 @@ export const Footer: React.FC = () => {
       {/* Bottom Legal bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-charcoal-500">
         <div>
-          © {new Date().getFullYear()} Sanctuary Study & Atelier Inc. All rights reserved.
+          © {new Date().getFullYear()} Elite Study Zone. All rights reserved.
         </div>
         <div className="flex items-center gap-6">
-          <span>Kandivali East, Mumbai</span>
+          <span>Amrut Nagar, Ghatkopar West, Mumbai</span>
           <span className="hidden sm:inline-block">•</span>
-          <span>Silent Hours: 07:30 — 22:00</span>
+          <span>Biometric Access: 24/7 Active</span>
         </div>
       </div>
     </footer>

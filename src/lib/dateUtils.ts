@@ -3,7 +3,7 @@
  * Strict calendar rules with month-end and leap-year handling.
  */
 
-export type DurationType = "day" | "week" | "month" | "quarter" | "year";
+export type DurationType = "hour" | "day" | "week" | "month" | "quarter" | "year";
 
 export interface DurationRule {
   id: DurationType;
@@ -15,39 +15,46 @@ export interface DurationRule {
 
 export const DURATION_RULES: DurationRule[] = [
   {
+    id: "hour",
+    label: "Hourly Slot",
+    sublabel: "Custom Hours (Flexi-Pass)",
+    description: "Quick focused revision & study sprint. Pay-as-you-go hourly allocation.",
+    basePrice: 49,
+  },
+  {
     id: "day",
     label: "Day Pass",
-    sublabel: "1 Day (07:30 — 22:00)",
+    sublabel: "1 Day (07:00 — 23:00)",
     description: "Single-session deep focus. Full day access to desk, Wi-Fi, and refreshments.",
-    basePrice: 299,
+    basePrice: 249,
   },
   {
     id: "week",
     label: "Weekly Sprint",
     sublabel: "7 Consecutive Days",
-    description: "Seven continuous days of dedicated desk access with locker.",
-    basePrice: 1499,
+    description: "Seven continuous days of dedicated desk access with high-speed internet & biometric pass.",
+    basePrice: 1299,
   },
   {
     id: "month",
     label: "Monthly Resident",
     sublabel: "1 Calendar Month",
-    description: "Full calendar month with 24/7 keycard access and personal locker.",
-    basePrice: 2499,
+    description: "Full calendar month with 24/7 biometric fingerprint access and personal locker.",
+    basePrice: 2299,
   },
   {
     id: "quarter",
     label: "Quarterly Fellow",
     sublabel: "3 Calendar Months",
-    description: "Three calendar months with all-zone access and 8 guest passes.",
-    basePrice: 5999,
+    description: "Three calendar months with all-zone access, locker and biometric priority access.",
+    basePrice: 5499,
   },
   {
     id: "year",
     label: "Annual Residency",
     sublabel: "1 Full Year (Leap Year Aware)",
-    description: "365/366 days of continuous tenure with private storage vault and priority support.",
-    basePrice: 19999,
+    description: "365/366 days of continuous tenure with private storage locker and 24/7 biometric fingerprint pass.",
+    basePrice: 17999,
   },
 ];
 
@@ -84,7 +91,7 @@ export function calculateEndDate(startDateStr: string, duration: DurationType): 
   const [year, month, day] = parts;
   const start = new Date(year, month - 1, day);
 
-  if (duration === "day") {
+  if (duration === "hour" || duration === "day") {
     return formatDate(start);
   }
 

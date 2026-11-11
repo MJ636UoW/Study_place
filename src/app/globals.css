@@ -4,23 +4,23 @@
 
 @layer base {
   :root {
-    --color-ivory-base: #FAF8F5;
-    --color-charcoal-base: #1A1918;
-    --color-forest-base: #183728;
-    --color-amber-base: #C5832B;
+    --color-ivory-base: #F8FAFC;
+    --color-charcoal-base: #0F172A;
+    --color-forest-base: #1E3A8A;
+    --color-amber-base: #0284C7;
   }
 
   html {
     scroll-behavior: smooth;
-    background-color: #FAF8F5;
-    color: #1A1918;
+    background-color: #F8FAFC;
+    color: #0F172A;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   /* Architectural focus styling */
   *:focus-visible {
-    outline: 2px solid #183728;
+    outline: 2px solid #2563EB;
     outline-offset: 2px;
   }
 

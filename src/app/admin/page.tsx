@@ -30,8 +30,54 @@ import { bookingsFixture } from "@/fixtures";
 export default function AdminPage() {
   // Operational Navigation
   const [activeQueue, setActiveQueue] = useState<
-    "pending" | "holds" | "attendance" | "endings" | "exceptions" | "enquiries" | "reviews" | "audit"
+    "pending" | "holds" | "attendance" | "endings" | "exceptions" | "enquiries" | "reviews" | "audit" | "biometrics"
   >("pending");
+
+  // Biometric Hardware State
+  const [biometricApiKey, setBiometricApiKey] = useState("ESZ-BIOM-PRO-984210");
+  const [biometricEndpoint, setBiometricEndpoint] = useState("https://cloud.realtimebiometrics.com/api/v2");
+  const [biometricDeviceId, setBiometricDeviceId] = useState("DEV-GHATKOPAR-01");
+  const [biometricDeviceModel, setBiometricDeviceModel] = useState("eSSL SilkBio-101TC (Fingerprint + QR)");
+  const [biometricStatus, setBiometricStatus] = useState<"connected" | "disconnected">("connected");
+  const [enrollStudentName, setEnrollStudentName] = useState("");
+  const [enrollSeatId, setEnrollSeatId] = useState("Desk-04");
+  const [biometricLogs, setBiometricLogs] = useState<Array<{
+    id: string;
+    userName: string;
+    seatId: string;
+    punchType: string;
+    timestamp: string;
+    matchedScore: number;
+    terminal: string;
+  }>>([
+    {
+      id: "log-1",
+      userName: "Arjun Kulkarni",
+      seatId: "seat-N01",
+      punchType: "check_in",
+      timestamp: "Today, 07:45 AM",
+      matchedScore: 98.4,
+      terminal: "Turnstile Gate 1 (Main Hall)",
+    },
+    {
+      id: "log-2",
+      userName: "Priya Sharma",
+      seatId: "seat-A02",
+      punchType: "check_in",
+      timestamp: "Today, 08:12 AM",
+      matchedScore: 99.1,
+      terminal: "Turnstile Gate 1 (Main Hall)",
+    },
+    {
+      id: "log-3",
+      userName: "Rohit Deshmukh",
+      seatId: "seat-S01",
+      punchType: "check_in",
+      timestamp: "Today, 09:01 AM",
+      matchedScore: 97.6,
+      terminal: "Turnstile Gate 2 (Flexi-Zone)",
+    },
+  ]);
 
   // Live state from AdminService & BookingEngine
   const [financial, setFinancial] = useState(AdminService.getFinancialBreakdown());
@@ -380,6 +426,7 @@ export default function AdminPage() {
           { id: "pending", label: "Pending Intake", count: pendingRequests.length },
           { id: "holds", label: "Expiring Holds", count: expiringHolds.length },
           { id: "attendance", label: "Seat & Attendance", count: reservedSeats.length },
+          { id: "biometrics", label: "Biometric & Fingerprint API", count: 3 },
           { id: "endings", label: "Upcoming Expirations", count: upcomingEndings.length },
           { id: "exceptions", label: "Payment Exceptions", count: exceptions.totalExceptionsCount },
           { id: "enquiries", label: "Inbound Enquiries", count: enquiries.filter((e) => e.status === "new").length },
@@ -531,7 +578,7 @@ export default function AdminPage() {
                           refreshAllState();
                         }}
                       >
-                        Release Seat
+                        Release
                       </Button>
                     </div>
                   </div>
@@ -539,6 +586,179 @@ export default function AdminPage() {
               })}
             </div>
           )}
+        </div>
+      )}
+
+      {/* QUEUE: BIOMETRIC HARDWARE API & FINGERPRINT INTEGRATION */}
+      {activeQueue === "biometrics" && (
+        <div className="p-6 border border-forest-200 bg-white rounded-md shadow-md space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-forest-100 gap-4">
+            <div>
+              <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-emerald-100 text-emerald-800 text-[11px] font-mono rounded font-bold uppercase mb-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+                <span>Device Online & Authorized</span>
+              </div>
+              <h2 className="font-sans font-extrabold text-2xl text-charcoal-900">
+                Biometric Fingerprint Hardware Integration
+              </h2>
+              <p className="text-xs text-charcoal-600 font-sans">
+                Manage cloud API connection with physical fingerprint turnstiles & access door controllers.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => showToast("Pinged biometric hardware API: 200 OK (Latency 24ms)")}
+              >
+                Test Device Ping
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => showToast("Biometric credentials saved successfully to environment.")}
+              >
+                Save Hardware Config
+              </Button>
+            </div>
+          </div>
+
+          {/* Hardware Credentials API Configuration Panel */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-forest-50 border border-forest-200 rounded-md">
+            <div>
+              <label className="block text-[11px] font-mono uppercase text-forest-900 font-bold mb-1">
+                Company API Key
+              </label>
+              <input
+                type="password"
+                value={biometricApiKey}
+                onChange={(e) => setBiometricApiKey(e.target.value)}
+                className="w-full px-3 py-2 text-xs font-mono bg-white border border-forest-300 rounded focus:ring-2 focus:ring-forest-700"
+              />
+              <span className="text-[10px] text-forest-700 font-sans">Provided by biometric company</span>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-mono uppercase text-forest-900 font-bold mb-1">
+                Cloud Endpoint URL
+              </label>
+              <input
+                type="text"
+                value={biometricEndpoint}
+                onChange={(e) => setBiometricEndpoint(e.target.value)}
+                className="w-full px-3 py-2 text-xs font-mono bg-white border border-forest-300 rounded focus:ring-2 focus:ring-forest-700"
+              />
+              <span className="text-[10px] text-forest-700 font-sans">REST Webhook Gateway</span>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-mono uppercase text-forest-900 font-bold mb-1">
+                Device Serial / ID
+              </label>
+              <input
+                type="text"
+                value={biometricDeviceId}
+                onChange={(e) => setBiometricDeviceId(e.target.value)}
+                className="w-full px-3 py-2 text-xs font-mono bg-white border border-forest-300 rounded focus:ring-2 focus:ring-forest-700"
+              />
+              <span className="text-[10px] text-forest-700 font-sans">Terminal identifier at entry gate</span>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-mono uppercase text-forest-900 font-bold mb-1">
+                Hardware Model
+              </label>
+              <input
+                type="text"
+                value={biometricDeviceModel}
+                onChange={(e) => setBiometricDeviceModel(e.target.value)}
+                className="w-full px-3 py-2 text-xs font-mono bg-white border border-forest-300 rounded focus:ring-2 focus:ring-forest-700"
+              />
+              <span className="text-[10px] text-forest-700 font-sans">Firmware: v4.81-Cloud</span>
+            </div>
+          </div>
+
+          {/* Quick Member Enrollment Action */}
+          <div className="p-4 border border-forest-200 bg-white rounded-md space-y-3">
+            <h3 className="font-sans font-bold text-sm text-charcoal-900">
+              Instant Student Fingerprint Enrollment
+            </h3>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <input
+                type="text"
+                placeholder="Student / Member Name (e.g. Rahul Mehta)"
+                value={enrollStudentName}
+                onChange={(e) => setEnrollStudentName(e.target.value)}
+                className="flex-1 px-3 py-2 text-xs border border-charcoal-300 rounded font-sans"
+              />
+              <input
+                type="text"
+                placeholder="Assigned Desk (e.g. Desk-04)"
+                value={enrollSeatId}
+                onChange={(e) => setEnrollSeatId(e.target.value)}
+                className="w-36 px-3 py-2 text-xs border border-charcoal-300 rounded font-mono"
+              />
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => {
+                  if (!enrollStudentName) return showToast("Please enter student name.");
+                  const newEntry = {
+                    id: `log-${Date.now()}`,
+                    userName: enrollStudentName,
+                    seatId: enrollSeatId,
+                    punchType: "enroll_success",
+                    timestamp: "Just now",
+                    matchedScore: 99.4,
+                    terminal: "Gate 1 Scanner",
+                  };
+                  setBiometricLogs([newEntry, ...biometricLogs]);
+                  setEnrollStudentName("");
+                  showToast(`Fingerprint template captured & synced to turnstile for ${newEntry.userName}!`);
+                }}
+              >
+                Enroll & Sync Fingerprint
+              </Button>
+            </div>
+          </div>
+
+          {/* Real-time Punch Logs Table */}
+          <div className="space-y-2">
+            <h3 className="font-sans font-bold text-sm text-charcoal-900">
+              Live Biometric Access Ledger (Turnstiles & Door Controller)
+            </h3>
+            <div className="border border-charcoal-200 rounded overflow-hidden">
+              <table className="w-full text-left text-xs font-mono">
+                <thead className="bg-forest-950 text-white font-bold uppercase text-[10px]">
+                  <tr>
+                    <th className="p-3">Student Name</th>
+                    <th className="p-3">Assigned Desk</th>
+                    <th className="p-3">Event / Punch</th>
+                    <th className="p-3">Match Accuracy</th>
+                    <th className="p-3">Terminal Gate</th>
+                    <th className="p-3 text-right">Timestamp</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-charcoal-200 bg-white">
+                  {biometricLogs.map((log) => (
+                    <tr key={log.id} className="hover:bg-forest-50/50">
+                      <td className="p-3 font-bold font-sans text-charcoal-900">{log.userName}</td>
+                      <td className="p-3 text-forest-700 font-bold">{log.seatId}</td>
+                      <td className="p-3">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 uppercase">
+                          {log.punchType}
+                        </span>
+                      </td>
+                      <td className="p-3 text-charcoal-600">{log.matchedScore}% Verified</td>
+                      <td className="p-3 text-charcoal-600">{log.terminal}</td>
+                      <td className="p-3 text-right text-charcoal-500">{log.timestamp}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
 

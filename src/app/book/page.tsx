@@ -35,8 +35,10 @@ import { RazorpayCheckoutModal } from "@/components/payments/RazorpayCheckoutMod
 import { motion } from "motion/react";
 
 function BookDemoContent() {
-  // 1. Duration & Date selection
-  const [duration, setDuration] = useState<DurationType>("month");
+  // 1. Duration, Hours & Date selection
+  const [duration, setDuration] = useState<DurationType>("hour");
+  const [hourlyCount, setHourlyCount] = useState<number>(3); // Default 3 hours
+  const [hourlyTimeSlot, setHourlyTimeSlot] = useState<string>("09:00 - 12:00");
   const [startDate, setStartDate] = useState<string>("2026-10-28");
   const [viewMode, setViewMode] = useState<"map" | "list">("map");
 
@@ -236,7 +238,7 @@ function BookDemoContent() {
           <label className="block text-xs uppercase font-mono text-charcoal-700 tracking-wider">
             Choose Membership Duration
           </label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
             {DURATION_RULES.map((rule) => {
               const isSelected = duration === rule.id;
               return (
@@ -246,25 +248,76 @@ function BookDemoContent() {
                   onClick={() => setDuration(rule.id)}
                   className={`p-3.5 border text-left transition-all min-h-[44px] flex flex-col justify-between ${
                     isSelected
-                      ? "border-forest-900 bg-forest-50 ring-1 ring-forest-900 shadow-editorial"
+                      ? "border-forest-700 bg-forest-50 ring-2 ring-forest-600 shadow-md"
                       : "border-ivory-300 bg-ivory-100/50 hover:bg-ivory-100"
                   }`}
                 >
                   <div>
-                    <div className="font-serif text-sm font-semibold text-charcoal-900">
+                    <div className="font-sans text-sm font-bold text-charcoal-900">
                       {rule.label}
                     </div>
                     <div className="text-[10px] text-charcoal-500 font-mono mt-0.5">
                       {rule.sublabel}
                     </div>
                   </div>
-                  <div className="pt-2 text-xs font-mono font-bold text-forest-900">
+                  <div className="pt-2 text-xs font-mono font-bold text-forest-700">
                     ₹{rule.basePrice} <span className="font-normal text-[10px] text-charcoal-500">INR</span>
                   </div>
                 </button>
               );
             })}
           </div>
+
+          {/* Hourly Slot Selector (when duration === 'hour') */}
+          {duration === "hour" && (
+            <div className="p-4 bg-forest-50 border border-forest-200 rounded-md space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <span className="text-xs font-mono uppercase font-bold text-forest-900">
+                  Select Number of Study Hours (₹49/hour)
+                </span>
+                <div className="flex items-center gap-2">
+                  {[1, 2, 3, 4, 6, 8].map((h) => (
+                    <button
+                      key={h}
+                      type="button"
+                      onClick={() => setHourlyCount(h)}
+                      className={`px-3 py-1.5 text-xs font-mono font-bold rounded ${
+                        hourlyCount === h
+                          ? "bg-forest-700 text-white"
+                          : "bg-white text-charcoal-800 border border-forest-300 hover:bg-forest-100"
+                      }`}
+                    >
+                      {h} hr{h > 1 ? "s" : ""}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-forest-200 text-xs font-mono">
+                {[
+                  "07:00 - 10:00 (Early Morning)",
+                  "09:00 - 12:00 (Morning Focus)",
+                  "12:00 - 15:00 (Mid-day Sprint)",
+                  "15:00 - 18:00 (Afternoon Block)",
+                  "18:00 - 21:00 (Evening Scholar)",
+                  "20:00 - 23:00 (Night Owl)",
+                ].map((slot) => (
+                  <button
+                    key={slot}
+                    type="button"
+                    onClick={() => setHourlyTimeSlot(slot)}
+                    className={`p-2 text-left border rounded text-[11px] ${
+                      hourlyTimeSlot === slot
+                        ? "border-forest-700 bg-white font-bold text-forest-900 shadow-sm"
+                        : "border-forest-200 bg-forest-50/60 text-charcoal-700 hover:bg-white"
+                    }`}
+                  >
+                    {slot}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Step 2: Date Picker & Calendar Engine Display */}
@@ -478,7 +531,7 @@ function BookDemoContent() {
             <div className="text-right">
               <div className="text-[10px] uppercase font-mono text-charcoal-500">Estimated Fee</div>
               <div className="font-serif text-2xl font-bold text-charcoal-900">
-                ₹{currentDurationRule.basePrice}{" "}
+                ₹{duration === "hour" ? currentDurationRule.basePrice * hourlyCount : currentDurationRule.basePrice}{" "}
                 <span className="text-xs font-mono font-normal text-charcoal-500">INR</span>
               </div>
             </div>
@@ -576,8 +629,9 @@ function BookDemoContent() {
             <div className="p-3 bg-ivory-100/70 border border-ivory-200 text-xs font-mono space-y-1">
               <div>Station: <strong>{selectedSeat?.seatNumber} ({selectedSeat?.name})</strong></div>
               <div>Zone: {selectedSeat?.zone}</div>
-              <div>Period: {formatDisplayDate(startDate)} → {formatDisplayDate(calculatedEndDate)}</div>
-              <div>Cadence: {currentDurationRule.label} (₹{currentDurationRule.basePrice} INR)</div>
+              <div>Period: {formatDisplayDate(startDate)} {duration === "hour" ? `(${hourlyTimeSlot})` : `→ ${formatDisplayDate(calculatedEndDate)}`}</div>
+              <div>Cadence: {currentDurationRule.label} {duration === "hour" ? `(${hourlyCount} hrs × ₹49 = ₹${hourlyCount * 49} INR)` : `(₹${currentDurationRule.basePrice} INR)`}</div>
+              <div className="text-forest-700 font-bold">Biometric Access: Automatic fingerprint sync upon payment</div>
             </div>
 
             <Input

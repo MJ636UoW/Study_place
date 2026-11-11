@@ -45,54 +45,62 @@ export default function HomePage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
             {/* Left Column: Headline, Charter & Primary CTA */}
             <div className="lg:col-span-6 space-y-6 text-left">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-ivory-100 border border-ivory-300 text-[11px] font-mono uppercase tracking-widest text-amber-800">
-                <span className="w-1.5 h-1.5 rounded-full bg-forest-800" />
-                <span>Creative Direction • From Distraction to Focus</span>
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-forest-50 border border-forest-200 text-[11px] font-mono uppercase tracking-widest text-forest-700 font-semibold rounded-sm">
+                <span className="w-2 h-2 rounded-full bg-forest-600 animate-pulse" />
+                <span>YOUR FOCUS. YOUR FUTURE. YOUR SUCCESS.</span>
               </div>
 
-              <h1 className="font-serif text-4xl sm:text-6xl lg:text-7xl font-normal text-charcoal-900 tracking-tight leading-[1.08]">
-                A place for your next breakthrough.
+              <h1 className="font-sans font-extrabold text-4xl sm:text-6xl lg:text-6xl text-charcoal-900 tracking-tight leading-[1.12]">
+                A PLACE WHERE DREAMS TURN INTO ACHIEVEMENTS.
               </h1>
 
-              <p className="font-serif italic text-lg sm:text-xl text-charcoal-700 max-w-xl leading-relaxed">
-                Step inside an intentional sanctuary built strictly for deep reading, sustained concentration, and the unhurried craft of scholarship.
-              </p>
+              <div className="p-4 bg-forest-950 text-white rounded-md space-y-1.5 border border-forest-800">
+                <div className="font-mono text-[11px] text-forest-300 uppercase tracking-widest font-semibold">
+                  YOUR DREAMS DESERVE A SPACE
+                </div>
+                <div className="font-sans font-bold text-lg text-white">
+                  Your Success Starts Here!
+                </div>
+                <p className="font-sans text-xs text-slate-300 leading-relaxed">
+                  Every page you read, every hour you dedicate and every effort you make brings you one step closer to your dreams.
+                </p>
+              </div>
 
-              <p className="text-xs sm:text-sm text-charcoal-600 font-sans max-w-lg leading-relaxed">
-                No casual conversations, no ambient music, no artificial rush. Dedicated solid oak workstations, library-grade acoustics (&lt; 38 dBA), and whole-bean single-origin roasts.
+              <p className="text-xs sm:text-sm text-charcoal-700 font-sans max-w-lg leading-relaxed">
+                <strong>Welcome to Elite Study Zone!</strong> Your journey towards success deserves the right environment. We provide a peaceful, comfortable, and distraction-free atmosphere where you can focus on your goals, make every hour productive, and turn your hard work into success.
               </p>
 
               {/* CTAs */}
               <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
                 <Link
                   href="/book"
-                  className="px-8 py-4 bg-forest-900 text-ivory-50 text-xs uppercase tracking-widest font-semibold hover:bg-forest-800 active:bg-forest-950 border border-forest-900 shadow-editorial min-h-[48px] flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-900 focus-visible:ring-offset-2 transition-all"
+                  className="px-8 py-4 bg-forest-700 text-white text-xs uppercase tracking-widest font-bold hover:bg-forest-600 active:bg-forest-800 rounded-md shadow-md min-h-[48px] flex items-center justify-center gap-2 transition-all"
                 >
-                  <span>Find My Seat</span>
+                  <span>Book Workstation (Hourly / Monthly)</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
 
                 <Link
                   href="/plans"
-                  className="px-6 py-4 bg-transparent text-charcoal-800 text-xs uppercase tracking-widest font-medium hover:bg-ivory-100 border border-charcoal-400 hover:border-charcoal-800 min-h-[48px] flex items-center justify-center transition-colors"
+                  className="px-6 py-4 bg-white text-charcoal-900 text-xs uppercase tracking-widest font-semibold hover:bg-forest-50 border border-forest-300 rounded-md min-h-[48px] flex items-center justify-center transition-colors"
                 >
-                  View Residency Tiers
+                  View Hourly & Monthly Plans
                 </Link>
               </div>
 
               {/* Verified Trust Strip */}
               <div className="pt-6 border-t border-ivory-200 grid grid-cols-3 gap-4 text-xs font-mono text-charcoal-600">
                 <div>
-                  <div className="font-serif text-base sm:text-lg text-charcoal-900 font-bold">&lt; 38 dBA</div>
-                  <div className="text-[10px] uppercase tracking-wider text-charcoal-500">Certified Silence</div>
+                  <div className="font-sans text-base sm:text-lg text-forest-700 font-bold">₹49 / hr</div>
+                  <div className="text-[10px] uppercase tracking-wider text-charcoal-500">Hourly Flexi-Pass</div>
                 </div>
                 <div>
-                  <div className="font-serif text-base sm:text-lg text-charcoal-900 font-bold">100% FSC Oak</div>
-                  <div className="text-[10px] uppercase tracking-wider text-charcoal-500">Solid Workstations</div>
+                  <div className="font-sans text-base sm:text-lg text-forest-700 font-bold">Biometric API</div>
+                  <div className="text-[10px] uppercase tracking-wider text-charcoal-500">Fingerprint Access</div>
                 </div>
                 <div>
-                  <div className="font-serif text-base sm:text-lg text-charcoal-900 font-bold">24 / 7 Keycard</div>
-                  <div className="text-[10px] uppercase tracking-wider text-charcoal-500">Resident Access</div>
+                  <div className="font-sans text-base sm:text-lg text-forest-700 font-bold">Ghatkopar West</div>
+                  <div className="text-[10px] uppercase tracking-wider text-charcoal-500">Amrut Nagar, Mumbai</div>
                 </div>
               </div>
             </div>
@@ -213,24 +221,35 @@ export default function HomePage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
             {/* Left Col: The Architectural Philosophy */}
             <div className="lg:col-span-5 space-y-6">
-              <span className="text-[11px] uppercase font-mono tracking-widest text-amber-800 font-semibold">
-                Architecture of Thought
+              <span className="text-[11px] uppercase font-mono tracking-widest text-forest-700 font-semibold">
+                Our Mission & Vision
               </span>
 
-              <h2 className="font-serif text-3xl sm:text-4xl text-charcoal-900 leading-snug">
-                The modern workplace was built for collaboration. Sanctuary was built for the solitary hours that precede it.
+              <h2 className="font-sans font-extrabold text-3xl sm:text-4xl text-charcoal-900 leading-snug">
+                Provide a peaceful, disciplined & focused self-study environment.
               </h2>
 
-              <p className="text-sm text-charcoal-700 font-sans leading-relaxed">
-                Breakthroughs require continuous, uninterrupted time. We eliminated the performative distractions of typical modern offices—the endless pinging, background chatter, and hot-desking friction.
-              </p>
+              <ul className="space-y-3 text-sm text-charcoal-700 font-sans leading-relaxed">
+                <li className="flex items-start gap-2.5">
+                  <span className="w-2 h-2 rounded-full bg-forest-600 mt-2 flex-shrink-0" />
+                  <span><strong>Encourage discipline, consistency & productive learning</strong> for all competitive examinations and professional work.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="w-2 h-2 rounded-full bg-forest-600 mt-2 flex-shrink-0" />
+                  <span><strong>Support students and working professionals</strong> in their educational, career, and personal growth journeys.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="w-2 h-2 rounded-full bg-forest-600 mt-2 flex-shrink-0" />
+                  <span><strong>Create a comfortable space</strong> that motivates everyone to perform at their highest potential every single day.</span>
+                </li>
+              </ul>
 
-              <div className="p-6 bg-ivory-100 border-l-2 border-forest-900 text-xs font-sans text-charcoal-800 space-y-2">
-                <p className="font-semibold text-charcoal-900 uppercase tracking-wide">
-                  The Quietude Covenant
+              <div className="p-6 bg-forest-50 border-l-4 border-forest-700 text-xs font-sans text-charcoal-900 space-y-2 rounded-r-md">
+                <p className="font-bold text-forest-900 uppercase tracking-wide">
+                  DREAM BIG. STAY FOCUSED. ACHIEVE MORE.
                 </p>
                 <p>
-                  Every member and day guest signs an acoustic pledge upon arrival: silence in the Main Reading Room, headphones required for playback, phone calls strictly sequestered to decoupled telephone salons.
+                  Located in Amrut Nagar, Ghatkopar West, Mumbai. A dedicated haven equipped with biometric gate scanning, dual high-speed fiber links, ergonomic high-back chairs, and air-conditioned silence.
                 </p>
               </div>
             </div>

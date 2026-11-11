@@ -15,25 +15,25 @@ export const Navigation: React.FC = () => {
   }, [pathname]);
 
   const navLinks = [
-    { href: "/", label: "Sanctuary" },
-    { href: "/plans", label: "Tiers & Plans" },
-    { href: "/book", label: "Reserve Seat" },
-    { href: "/reviews", label: "Reflections" },
-    { href: "/contact", label: "Concierge Desk" },
-    { href: "/dashboard", label: "Member Portal" },
-    { href: "/admin", label: "Curator Ledger" },
+    { href: "/", label: "Home" },
+    { href: "/plans", label: "Plans & Hourly" },
+    { href: "/book", label: "Book Workstation" },
+    { href: "/reviews", label: "Reviews" },
+    { href: "/contact", label: "Contact Us" },
+    { href: "/dashboard", label: "Student Portal" },
+    { href: "/admin", label: "Admin & Biometrics" },
   ];
 
   return (
     <header className="sticky top-0 z-40 w-full bg-ivory-50/95 backdrop-blur-md border-b border-ivory-200 transition-colors">
-      {/* Top micro-bar with architectural edition note */}
-      <div className="w-full bg-ivory-100/60 border-b border-ivory-200/80 px-4 sm:px-8 py-1.5 flex items-center justify-between text-[11px] font-mono tracking-wider text-charcoal-500 uppercase">
+      {/* Top micro-bar with brand slogan */}
+      <div className="w-full bg-forest-950 text-white px-4 sm:px-8 py-1.5 flex items-center justify-between text-[11px] font-mono tracking-wider uppercase">
         <span className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-forest-700 animate-pulse" aria-hidden="true" />
-          <span>Central Studio & Library • Quietude Hours Observed</span>
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" aria-hidden="true" />
+          <span>YOUR FOCUS. YOUR FUTURE. YOUR SUCCESS.</span>
         </span>
-        <span className="hidden md:inline-block text-charcoal-400">
-          Vol. IV • Architectural Solitude
+        <span className="hidden md:inline-block text-forest-200">
+          Amrut Nagar, Ghatkopar West, Mumbai • Open 07:00 — 23:00 (24/7 Biometric Entry)
         </span>
       </div>
 
@@ -42,14 +42,16 @@ export const Navigation: React.FC = () => {
         {/* Brand mark */}
         <Link
           href="/"
-          className="group flex flex-col items-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-900 focus-visible:ring-offset-2"
+          className="group flex flex-col items-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-700 focus-visible:ring-offset-2"
         >
-          <span className="font-serif text-2xl sm:text-3xl tracking-tight text-charcoal-900 group-hover:text-forest-900 transition-colors flex items-center gap-2">
-            <Compass className="w-6 h-6 text-forest-800" strokeWidth={1.5} />
-            <span>SANCTUARY</span>
+          <span className="font-sans font-extrabold text-2xl sm:text-3xl tracking-tight text-charcoal-900 group-hover:text-forest-700 transition-colors flex items-center gap-2">
+            <span className="w-8 h-8 rounded-lg bg-forest-700 text-white flex items-center justify-center font-mono font-bold text-lg shadow-sm">
+              E
+            </span>
+            <span>ELITE STUDY ZONE</span>
           </span>
-          <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-charcoal-500 -mt-0.5">
-            Study & Atelier
+          <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-forest-700 font-semibold -mt-0.5">
+            Self-Study Space & Focus Hub
           </span>
         </Link>
 
