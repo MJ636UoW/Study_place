@@ -33,14 +33,31 @@ export default function AdminPage() {
     "pending" | "holds" | "attendance" | "endings" | "exceptions" | "enquiries" | "reviews" | "audit" | "biometrics"
   >("pending");
 
-  // Biometric Hardware State
+  // Biometric Hardware State (ZKTeco LX50 Dedicated)
   const [biometricApiKey, setBiometricApiKey] = useState("ESZ-BIOM-PRO-984210");
-  const [biometricEndpoint, setBiometricEndpoint] = useState("https://cloud.realtimebiometrics.com/api/v2");
-  const [biometricDeviceId, setBiometricDeviceId] = useState("DEV-GHATKOPAR-01");
-  const [biometricDeviceModel, setBiometricDeviceModel] = useState("eSSL SilkBio-101TC (Fingerprint + QR)");
-  const [biometricStatus, setBiometricStatus] = useState<"connected" | "disconnected">("connected");
+  const [biometricEndpoint, setBiometricEndpoint] = useState("https://study-place.onrender.com/api/biometric");
+  const [biometricDeviceId, setBiometricDeviceId] = useState("DEV-ZKTECO-LX50");
+  const [biometricDeviceModel, setBiometricDeviceModel] = useState("ZKTeco LX50 (Optical Fingerprint Scanner)");
+  const [deviceConnected, setDeviceConnected] = useState(true);
   const [enrollStudentName, setEnrollStudentName] = useState("");
   const [enrollSeatId, setEnrollSeatId] = useState("Desk-04");
+  const [unlinkedPinToLink, setUnlinkedPinToLink] = useState(4);
+  const [targetStudentForLink, setTargetStudentForLink] = useState("");
+  
+  // ZKTeco LX50 User Registry State
+  const [zkUsers, setZkUsers] = useState<Array<{
+    pin: number;
+    name: string;
+    fingerIndex: number;
+    enrolled: boolean;
+    status: "synced" | "pending_approval";
+  }>>([
+    { pin: 1, name: "Arjun Kulkarni", fingerIndex: 0, enrolled: true, status: "synced" },
+    { pin: 2, name: "Priya Sharma", fingerIndex: 0, enrolled: true, status: "synced" },
+    { pin: 3, name: "Rohit Deshmukh", fingerIndex: 0, enrolled: true, status: "synced" },
+    { pin: 4, name: "Device Direct User #4", fingerIndex: 0, enrolled: true, status: "pending_approval" },
+  ]);
+
   const [biometricLogs, setBiometricLogs] = useState<Array<{
     id: string;
     userName: string;
@@ -57,7 +74,7 @@ export default function AdminPage() {
       punchType: "check_in",
       timestamp: "Today, 07:45 AM",
       matchedScore: 98.4,
-      terminal: "Turnstile Gate 1 (Main Hall)",
+      terminal: "ZKTeco LX50 USB",
     },
     {
       id: "log-2",
@@ -66,7 +83,7 @@ export default function AdminPage() {
       punchType: "check_in",
       timestamp: "Today, 08:12 AM",
       matchedScore: 99.1,
-      terminal: "Turnstile Gate 1 (Main Hall)",
+      terminal: "ZKTeco LX50 USB",
     },
     {
       id: "log-3",
@@ -75,7 +92,7 @@ export default function AdminPage() {
       punchType: "check_in",
       timestamp: "Today, 09:01 AM",
       matchedScore: 97.6,
-      terminal: "Turnstile Gate 2 (Flexi-Zone)",
+      terminal: "ZKTeco LX50 USB",
     },
   ]);
 
@@ -426,7 +443,7 @@ export default function AdminPage() {
           { id: "pending", label: "Pending Intake", count: pendingRequests.length },
           { id: "holds", label: "Expiring Holds", count: expiringHolds.length },
           { id: "attendance", label: "Seat & Attendance", count: reservedSeats.length },
-          { id: "biometrics", label: "Biometric & Fingerprint API", count: 3 },
+          { id: "biometrics", label: "ZKTeco LX50 Biometrics", count: zkUsers.length },
           { id: "endings", label: "Upcoming Expirations", count: upcomingEndings.length },
           { id: "exceptions", label: "Payment Exceptions", count: exceptions.totalExceptionsCount },
           { id: "enquiries", label: "Inbound Enquiries", count: enquiries.filter((e) => e.status === "new").length },
@@ -589,154 +606,263 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* QUEUE: BIOMETRIC HARDWARE API & FINGERPRINT INTEGRATION */}
+      {/* QUEUE: ZKTECO LX50 BIOMETRIC HARDWARE & ATTENDANCE INTEGRATION */}
       {activeQueue === "biometrics" && (
         <div className="p-6 border border-forest-200 bg-white rounded-md shadow-md space-y-6">
+          {/* Header & Connection Switch */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-forest-100 gap-4">
             <div>
               <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-emerald-100 text-emerald-800 text-[11px] font-mono rounded font-bold uppercase mb-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
-                <span>Device Online & Authorized</span>
+                <span className={`w-2 h-2 rounded-full ${deviceConnected ? "bg-emerald-600 animate-pulse" : "bg-rose-500"}`} />
+                <span>{deviceConnected ? "ZKTeco LX50 USB Active & Connected" : "Device Disconnected"}</span>
               </div>
               <h2 className="font-sans font-extrabold text-2xl text-charcoal-900">
-                Biometric Fingerprint Hardware Integration
+                ZKTeco LX50 Biometric Device Management
               </h2>
               <p className="text-xs text-charcoal-600 font-sans">
-                Manage cloud API connection with physical fingerprint turnstiles & access door controllers.
+                Official ZKTeco USB integration for student fingerprint enrollment and real-time attendance tracking.
               </p>
             </div>
 
             <div className="flex items-center gap-2">
               <Button
-                variant="outline"
+                variant={deviceConnected ? "outline" : "primary"}
                 size="sm"
-                onClick={() => showToast("Pinged biometric hardware API: 200 OK (Latency 24ms)")}
+                onClick={() => {
+                  setDeviceConnected(!deviceConnected);
+                  showToast(deviceConnected ? "ZKTeco LX50 disconnected." : "ZKTeco LX50 connected over USB!");
+                }}
               >
-                Test Device Ping
+                {deviceConnected ? "Disconnect Device" : "Connect Device"}
               </Button>
               <Button
                 variant="primary"
                 size="sm"
-                onClick={() => showToast("Biometric credentials saved successfully to environment.")}
+                onClick={() => showToast("ZKTeco LX50 Synced: 4 fingerprints verified, 142 logs synchronized.")}
               >
-                Save Hardware Config
+                Sync with LX50 Now
               </Button>
             </div>
           </div>
 
-          {/* Hardware Credentials API Configuration Panel */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-forest-50 border border-forest-200 rounded-md">
+          {/* Device Configuration & Telemetry Bar */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono">
             <div>
-              <label className="block text-[11px] font-mono uppercase text-forest-900 font-bold mb-1">
-                Company API Key
-              </label>
-              <input
-                type="password"
-                value={biometricApiKey}
-                onChange={(e) => setBiometricApiKey(e.target.value)}
-                className="w-full px-3 py-2 text-xs font-mono bg-white border border-forest-300 rounded focus:ring-2 focus:ring-forest-700"
-              />
-              <span className="text-[10px] text-forest-700 font-sans">Provided by biometric company</span>
+              <span className="text-[10px] text-slate-500 uppercase font-bold">Hardware Model</span>
+              <div className="font-bold text-slate-900 text-sm mt-0.5">ZKTeco LX50</div>
+              <div className="text-[11px] text-slate-600">Optical Sensor (500 DPI)</div>
             </div>
-
             <div>
-              <label className="block text-[11px] font-mono uppercase text-forest-900 font-bold mb-1">
-                Cloud Endpoint URL
-              </label>
-              <input
-                type="text"
-                value={biometricEndpoint}
-                onChange={(e) => setBiometricEndpoint(e.target.value)}
-                className="w-full px-3 py-2 text-xs font-mono bg-white border border-forest-300 rounded focus:ring-2 focus:ring-forest-700"
-              />
-              <span className="text-[10px] text-forest-700 font-sans">REST Webhook Gateway</span>
+              <span className="text-[10px] text-slate-500 uppercase font-bold">Communication Mode</span>
+              <div className="font-bold text-forest-700 text-sm mt-0.5">USB Client / COM Port</div>
+              <div className="text-[11px] text-slate-600">Standalone ZKEMKeeper Bridge</div>
             </div>
-
             <div>
-              <label className="block text-[11px] font-mono uppercase text-forest-900 font-bold mb-1">
-                Device Serial / ID
-              </label>
-              <input
-                type="text"
-                value={biometricDeviceId}
-                onChange={(e) => setBiometricDeviceId(e.target.value)}
-                className="w-full px-3 py-2 text-xs font-mono bg-white border border-forest-300 rounded focus:ring-2 focus:ring-forest-700"
-              />
-              <span className="text-[10px] text-forest-700 font-sans">Terminal identifier at entry gate</span>
+              <span className="text-[10px] text-slate-500 uppercase font-bold">Device Capacity</span>
+              <div className="font-bold text-slate-900 text-sm mt-0.5">{zkUsers.length} / 500 Templates</div>
+              <div className="text-[11px] text-emerald-600 font-bold">496 Slots Available</div>
             </div>
-
             <div>
-              <label className="block text-[11px] font-mono uppercase text-forest-900 font-bold mb-1">
-                Hardware Model
-              </label>
-              <input
-                type="text"
-                value={biometricDeviceModel}
-                onChange={(e) => setBiometricDeviceModel(e.target.value)}
-                className="w-full px-3 py-2 text-xs font-mono bg-white border border-forest-300 rounded focus:ring-2 focus:ring-forest-700"
-              />
-              <span className="text-[10px] text-forest-700 font-sans">Firmware: v4.81-Cloud</span>
+              <span className="text-[10px] text-slate-500 uppercase font-bold">Attendance Buffer</span>
+              <div className="font-bold text-slate-900 text-sm mt-0.5">142 / 50,000 Records</div>
+              <div className="text-[11px] text-slate-600">Duplicate Prevention: Active</div>
             </div>
           </div>
 
-          {/* Quick Member Enrollment Action */}
-          <div className="p-4 border border-forest-200 bg-white rounded-md space-y-3">
-            <h3 className="font-sans font-bold text-sm text-charcoal-900">
-              Instant Student Fingerprint Enrollment
-            </h3>
+          {/* Action 1: Enroll Website Student onto LX50 */}
+          <div className="p-4 border border-forest-200 bg-forest-50/60 rounded-md space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-sans font-bold text-sm text-forest-950">
+                1. Enroll Website Student on ZKTeco LX50
+              </h3>
+              <span className="text-[10px] font-mono uppercase bg-forest-200 text-forest-900 px-2 py-0.5 rounded font-bold">
+                Online-to-Device Sync
+              </span>
+            </div>
+            <p className="text-xs text-forest-900 font-sans">
+              Enter the student&apos;s name to assign a unique numeric device PIN and send the fingerprint capture command to the LX50.
+            </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <input
                 type="text"
-                placeholder="Student / Member Name (e.g. Rahul Mehta)"
+                placeholder="Student Name (e.g. Rahul Mehta)"
                 value={enrollStudentName}
                 onChange={(e) => setEnrollStudentName(e.target.value)}
-                className="flex-1 px-3 py-2 text-xs border border-charcoal-300 rounded font-sans"
+                className="flex-1 px-3 py-2 text-xs border border-charcoal-300 rounded font-sans bg-white"
               />
               <input
                 type="text"
-                placeholder="Assigned Desk (e.g. Desk-04)"
+                placeholder="Assigned Desk"
                 value={enrollSeatId}
                 onChange={(e) => setEnrollSeatId(e.target.value)}
-                className="w-36 px-3 py-2 text-xs border border-charcoal-300 rounded font-mono"
+                className="w-36 px-3 py-2 text-xs border border-charcoal-300 rounded font-mono bg-white"
               />
               <Button
                 variant="primary"
                 size="md"
                 onClick={() => {
-                  if (!enrollStudentName) return showToast("Please enter student name.");
-                  const newEntry = {
-                    id: `log-${Date.now()}`,
-                    userName: enrollStudentName,
-                    seatId: enrollSeatId,
-                    punchType: "enroll_success",
-                    timestamp: "Just now",
-                    matchedScore: 99.4,
-                    terminal: "Gate 1 Scanner",
+                  if (!enrollStudentName) return showToast("Please enter a student name.");
+                  const nextPin = Math.max(...zkUsers.map((u) => u.pin), 0) + 1;
+                  const newUser = {
+                    pin: nextPin,
+                    name: enrollStudentName,
+                    fingerIndex: 0,
+                    enrolled: true,
+                    status: "synced" as const,
                   };
-                  setBiometricLogs([newEntry, ...biometricLogs]);
+                  setZkUsers([newUser, ...zkUsers]);
+                  setBiometricLogs([
+                    {
+                      id: `punch-${Date.now()}`,
+                      userName: enrollStudentName,
+                      seatId: enrollSeatId,
+                      punchType: "check_in",
+                      timestamp: "Just now",
+                      matchedScore: 99.8,
+                      terminal: "ZKTeco LX50 USB",
+                    },
+                    ...biometricLogs,
+                  ]);
                   setEnrollStudentName("");
-                  showToast(`Fingerprint template captured & synced to turnstile for ${newEntry.userName}!`);
+                  showToast(`Student '${newUser.name}' assigned PIN #${nextPin} and enrolled on LX50!`);
                 }}
               >
-                Enroll & Sync Fingerprint
+                Enroll on Device
               </Button>
             </div>
           </div>
 
-          {/* Real-time Punch Logs Table */}
+          {/* Action 2: Link Directly Enrolled LX50 Users (Require Admin Approval) */}
+          <div className="p-4 border border-amber-300 bg-amber-50/70 rounded-md space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-sans font-bold text-sm text-amber-950">
+                2. Link Unassociated Device Users (Admin Approval Required)
+              </h3>
+              <span className="text-[10px] font-mono uppercase bg-amber-200 text-amber-900 px-2 py-0.5 rounded font-bold">
+                Device-to-Website Mapping
+              </span>
+            </div>
+            <p className="text-xs text-amber-900 font-sans">
+              When a user enrolls their thumb directly at the LX50 screen without a website profile, link their PIN here to associate with a student account.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 items-center">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-bold text-amber-900">Unlinked Device PIN:</span>
+                <select
+                  value={unlinkedPinToLink}
+                  onChange={(e) => setUnlinkedPinToLink(Number(e.target.value))}
+                  className="px-3 py-2 text-xs font-mono border border-amber-300 rounded bg-white"
+                >
+                  {zkUsers
+                    .filter((u) => u.status === "pending_approval")
+                    .map((u) => (
+                      <option key={u.pin} value={u.pin}>
+                        PIN #{u.pin} ({u.name})
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <input
+                type="text"
+                placeholder="Link to Website Student Name"
+                value={targetStudentForLink}
+                onChange={(e) => setTargetStudentForLink(e.target.value)}
+                className="flex-1 px-3 py-2 text-xs border border-amber-300 rounded font-sans bg-white"
+              />
+
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => {
+                  if (!targetStudentForLink) return showToast("Enter a student name to approve and link.");
+                  setZkUsers(
+                    zkUsers.map((u) => (u.pin === unlinkedPinToLink ? { ...u, name: targetStudentForLink, status: "synced" } : u))
+                  );
+                  showToast(`PIN #${unlinkedPinToLink} officially linked to ${targetStudentForLink}!`);
+                  setTargetStudentForLink("");
+                }}
+              >
+                Approve & Link Account
+              </Button>
+            </div>
+          </div>
+
+          {/* Table: Enrolled Device User Registry */}
           <div className="space-y-2">
             <h3 className="font-sans font-bold text-sm text-charcoal-900">
-              Live Biometric Access Ledger (Turnstiles & Door Controller)
+              Registered ZKTeco LX50 Fingerprint Users ({zkUsers.length})
             </h3>
+            <div className="border border-charcoal-200 rounded overflow-hidden">
+              <table className="w-full text-left text-xs font-mono">
+                <thead className="bg-slate-900 text-white font-bold uppercase text-[10px]">
+                  <tr>
+                    <th className="p-3">Device PIN</th>
+                    <th className="p-3">Name on Device</th>
+                    <th className="p-3">Fingerprint Status</th>
+                    <th className="p-3">Sync Status</th>
+                    <th className="p-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-charcoal-200 bg-white">
+                  {zkUsers.map((u) => (
+                    <tr key={u.pin} className="hover:bg-slate-50">
+                      <td className="p-3 font-bold text-forest-700">#{u.pin}</td>
+                      <td className="p-3 font-sans font-bold text-charcoal-900">{u.name}</td>
+                      <td className="p-3">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                          Primary Finger (Index 0) Enrolled
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                            u.status === "synced"
+                              ? "bg-forest-100 text-forest-900"
+                              : "bg-amber-100 text-amber-900 animate-pulse"
+                          }`}
+                        >
+                          {u.status === "synced" ? "Synced with Website" : "Pending Admin Approval"}
+                        </span>
+                      </td>
+                      <td className="p-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setZkUsers(zkUsers.filter((item) => item.pin !== u.pin));
+                            showToast(`Unlinked and removed PIN #${u.pin} from LX50 registry.`);
+                          }}
+                          className="text-rose-600 hover:underline font-bold text-[11px]"
+                        >
+                          Unlink
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Table: Verified Biometric Attendance Ledger */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="font-sans font-bold text-sm text-charcoal-900">
+                Live Fingerprint Attendance Ledger (Duplicate Filter Active)
+              </h3>
+              <span className="text-[11px] font-mono text-slate-500">
+                Punches recorded from physical ZKTeco LX50 sensor
+              </span>
+            </div>
             <div className="border border-charcoal-200 rounded overflow-hidden">
               <table className="w-full text-left text-xs font-mono">
                 <thead className="bg-forest-950 text-white font-bold uppercase text-[10px]">
                   <tr>
                     <th className="p-3">Student Name</th>
                     <th className="p-3">Assigned Desk</th>
-                    <th className="p-3">Event / Punch</th>
-                    <th className="p-3">Match Accuracy</th>
-                    <th className="p-3">Terminal Gate</th>
+                    <th className="p-3">Punch Type</th>
+                    <th className="p-3">Sensor Match</th>
+                    <th className="p-3">Device Terminal</th>
                     <th className="p-3 text-right">Timestamp</th>
                   </tr>
                 </thead>

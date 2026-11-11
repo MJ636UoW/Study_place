@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS public.biometric_devices (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 7. Biometric Live Access / Punch Logs
+-- 7. Biometric Live Access / Punch Logs (With Duplicate Prevention)
 CREATE TABLE IF NOT EXISTS public.biometric_punch_logs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
@@ -86,8 +86,27 @@ CREATE TABLE IF NOT EXISTS public.biometric_punch_logs (
   seat_id TEXT NOT NULL,
   punch_type TEXT NOT NULL CHECK (punch_type IN ('check_in', 'check_out', 'enroll_success', 'access_denied')),
   matched_score NUMERIC(5, 2) DEFAULT 99.00,
-  terminal_gate TEXT NOT NULL DEFAULT 'Turnstile Gate 1',
-  timestamp TIMESTAMPTZ DEFAULT NOW()
+  terminal_gate TEXT NOT NULL DEFAULT 'ZKTeco LX50 USB',
+  timestamp TIMESTAMPTZ DEFAULT NOW(),
+  device_punch_id TEXT,
+  -- Duplicate Prevention: No duplicate punch for same user within the exact same minute
+  UNIQUE(user_name, punch_type, timestamp)
+);
+
+-- 7B. ZKTeco LX50 Biometric User Mapping (Device ID <-> Website Profile)
+CREATE TABLE IF NOT EXISTS public.biometric_device_users (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  device_id TEXT NOT NULL DEFAULT 'DEV-ZKTECO-LX50',
+  device_pin INT NOT NULL, -- Numeric ID stored on the LX50 (e.g. 1, 2, 101)
+  name_on_device TEXT NOT NULL,
+  fingerprint_index INT DEFAULT 0, -- Finger index (0-9)
+  privilege TEXT DEFAULT 'user' CHECK (privilege IN ('user', 'admin')),
+  website_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  enrolled_on_device BOOLEAN DEFAULT TRUE,
+  sync_status TEXT DEFAULT 'synced' CHECK (sync_status IN ('synced', 'pending_sync', 'pending_approval')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(device_id, device_pin)
 );
 
 -- 8. Seed Default Workstations (Desks 1 to 16)

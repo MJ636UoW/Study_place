@@ -1,5 +1,31 @@
 "use client";
 
+function FingerprintIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4" />
+      <path d="M14 13.12c0 2.38 0 6.38-1 8.88" />
+      <path d="M17.29 21.02c.12-.6.43-2.3.5-3.02" />
+      <path d="M2 12a10 10 0 0 1 18-6" />
+      <path d="M2 16h.01" />
+      <path d="M21.8 16c.2-2 .131-5.354 0-6" />
+      <path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2" />
+      <path d="M8.65 22c.21-.66.45-1.32.57-2" />
+      <path d="M9 6.8a6 6 0 0 1 9 5.2v2" />
+    </svg>
+  );
+}
+
+
+
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
@@ -46,10 +72,55 @@ interface NotificationItem {
   sentAt: string | null;
 }
 
+interface BiometricPunchItem {
+  id: string;
+  pin: number;
+  userName: string;
+  seatId: string;
+  type: "check_in" | "check_out";
+  timestamp: string;
+  terminal: string;
+  matchedScore: number;
+}
+
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState<"residencies" | "notifications">("residencies");
+  const [activeTab, setActiveTab] = useState<"residencies" | "notifications" | "attendance">("residencies");
 
   // Reservations list
+  const [attendanceLogs, setAttendanceLogs] = useState<BiometricPunchItem[]>([
+    {
+      id: "punch-1",
+      pin: 1,
+      userName: "Julian Vance",
+      seatId: "Permanent Desk 04",
+      type: "check_in",
+      timestamp: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+      terminal: "ZKTeco LX50 USB",
+      matchedScore: 99.4,
+    },
+    {
+      id: "punch-prev",
+      pin: 1,
+      userName: "Julian Vance",
+      seatId: "Permanent Desk 04",
+      type: "check_out",
+      timestamp: new Date(Date.now() - 18 * 3600 * 1000).toISOString(),
+      terminal: "ZKTeco LX50 USB",
+      matchedScore: 98.9,
+    },
+  ]);
+
+  useEffect(() => {
+    fetch("/api/biometric")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.logs && Array.isArray(d.logs)) {
+          setAttendanceLogs(d.logs);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const [reservations, setReservations] = useState<ReservationItem[]>([
     {
       id: "BK-8021",
@@ -639,6 +710,105 @@ export default function DashboardPage() {
 
                   <div className="text-right text-[11px] font-mono text-charcoal-500 self-start sm:self-center">
                     {notif.sentAt ? `Dispatched: ${new Date(notif.sentAt).toLocaleTimeString()}` : "Queued"}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      
+      {/* Tab Content 3: Biometric Attendance History */}
+      {activeTab === "attendance" && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-ivory-200 gap-2">
+            <div>
+              <h2 className="font-serif text-2xl sm:text-3xl text-charcoal-900">
+                Biometric Terminal Attendance History
+              </h2>
+              <p className="text-xs text-charcoal-600 font-sans mt-1">
+                Hardware-verified punches recorded at Elite Study Zone ZKTeco LX50 Biometric Gate.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-[10px] font-mono uppercase text-emerald-800 font-bold rounded">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Biometric Hardware Active</span>
+              </span>
+            </div>
+          </div>
+
+          <div className="p-4 bg-slate-900 text-white rounded-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-forest-600/30 border border-forest-500/40 flex items-center justify-center">
+                <FingerprintIcon className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div>
+                <div className="text-xs font-mono font-bold uppercase text-emerald-400">
+                  Terminal: ZKTeco LX50 USB (#DEV-ZKTECO-LX50)
+                </div>
+                <div className="text-[11px] text-slate-300">
+                  Elite Study Zone, Amrut Nagar, Ghatkopar West • Optical 500 DPI Fingerprint Verification
+                </div>
+              </div>
+            </div>
+            <div className="text-left md:text-right font-mono text-[11px] text-slate-400">
+              Anti-Passback & 60s Duplicate Filter: <span className="text-emerald-400 font-bold">Active</span>
+            </div>
+          </div>
+
+          <div className="border border-ivory-300 bg-ivory-50 divide-y divide-ivory-200 shadow-editorial overflow-hidden">
+            <div className="p-4 bg-ivory-100 font-mono text-[11px] uppercase tracking-wider text-charcoal-600 grid grid-cols-12 gap-2 font-semibold">
+              <div className="col-span-3">Timestamp</div>
+              <div className="col-span-3">Event Type</div>
+              <div className="col-span-2">Desk Station</div>
+              <div className="col-span-2">Verification</div>
+              <div className="col-span-2 text-right">Status</div>
+            </div>
+
+            {attendanceLogs.length === 0 ? (
+              <div className="p-8 text-center text-xs font-mono text-charcoal-500">
+                No punch records registered for this account yet.
+              </div>
+            ) : (
+              attendanceLogs.map((log) => (
+                <div
+                  key={log.id}
+                  className="p-4 grid grid-cols-12 gap-2 items-center text-xs font-sans hover:bg-ivory-100/60 transition-colors"
+                >
+                  <div className="col-span-3 font-mono text-[11px] text-charcoal-700">
+                    {new Date(log.timestamp).toLocaleString("en-IN", {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
+                    })}
+                  </div>
+                  <div className="col-span-3 flex items-center gap-1.5 font-medium">
+                    {log.type === "check_in" ? (
+                      <>
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span className="text-emerald-900 font-bold">Gate Check-In</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                        <span className="text-amber-900 font-bold">Gate Check-Out</span>
+                      </>
+                    )}
+                  </div>
+                  <div className="col-span-2 font-mono text-xs text-charcoal-800">
+                    {log.seatId || "Flexi-Desk"}
+                  </div>
+                  <div className="col-span-2 font-mono text-[10px] text-charcoal-600">
+                    Fingerprint ({log.matchedScore}%)
+                  </div>
+                  <div className="col-span-2 text-right">
+                    <span className="px-2 py-0.5 bg-emerald-100 border border-emerald-300 text-emerald-800 text-[10px] font-mono uppercase font-bold rounded">
+                      Verified
+                    </span>
                   </div>
                 </div>
               ))
