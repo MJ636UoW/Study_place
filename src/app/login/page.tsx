@@ -91,7 +91,14 @@ export default function LoginPage() {
 
       setIsLoading(false);
       if (error) {
-        setStatusMessage({ type: "error", text: error.message });
+        if (error.message.includes("rate limit") || error.message.includes("over_email_send_rate_limit")) {
+          setStatusMessage({
+            type: "info",
+            text: "Supabase built-in mailer reached its 3 emails/hour project quota. You can log in directly using the Password tab, or click 'Instant Student Preview Access' below!",
+          });
+        } else {
+          setStatusMessage({ type: "error", text: error.message });
+        }
       } else {
         setOtpSent(true);
         setStatusMessage({
@@ -163,10 +170,17 @@ export default function LoginPage() {
         }
       } else if (authMethod === "register") {
         const res = await signUpWithPassword(null, formData);
-        setStatusMessage({
-          type: res.success ? "success" : "error",
-          text: res.message,
-        });
+        if (res.message?.toLowerCase().includes("rate limit") || res.error?.includes("rate_limit")) {
+          setStatusMessage({
+            type: "info",
+            text: "Supabase reached its 3 emails/hour confirmation quota. In Supabase Dashboard > Auth > Providers > Email, turn OFF 'Confirm email' for instant password signups! In the meantime, use Password login or click Instant Access below.",
+          });
+        } else {
+          setStatusMessage({
+            type: res.success ? "success" : "error",
+            text: res.message,
+          });
+        }
       } else if (authMethod === "forgot_password") {
         const res = await requestPasswordReset(null, formData);
         setStatusMessage({
