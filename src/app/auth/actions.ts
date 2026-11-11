@@ -229,3 +229,24 @@ export async function requestPasswordReset(
     message: "Password recovery instructions dispatched to your email address.",
   };
 }
+
+/**
+ * Verify if an OAuth provider (e.g. Google) is enabled in the active Supabase project
+ */
+export async function checkOAuthProviderEnabled(
+  provider: string = "google"
+): Promise<{ enabled: boolean; reason?: string }> {
+  try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://dyaobbudjufenwporvdb.supabase.co";
+    const res = await fetch(`${url}/auth/v1/authorize?provider=${provider}`, { method: "GET" });
+    if (res.status === 400) {
+      const data = await res.json().catch(() => null);
+      if (data?.msg?.includes("provider is not enabled") || data?.error_code === "validation_failed") {
+        return { enabled: false, reason: data.msg || "Provider is not enabled in Supabase" };
+      }
+    }
+    return { enabled: true };
+  } catch {
+    return { enabled: false, reason: "Unable to verify OAuth provider status" };
+  }
+}

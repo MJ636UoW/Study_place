@@ -6,7 +6,12 @@ import { AlertCircle, CheckCircle2, Sparkles, Mail, Lock, KeyRound, ArrowRight }
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { getSupabaseConfigStatus } from "@/lib/supabase/config";
-import { signInWithPassword, signUpWithPassword, requestPasswordReset } from "@/app/auth/actions";
+import {
+  signInWithPassword,
+  signUpWithPassword,
+  requestPasswordReset,
+  checkOAuthProviderEnabled,
+} from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
@@ -30,6 +35,18 @@ export default function LoginPage() {
     setIsLoading(true);
     setStatusMessage(null);
     try {
+      // Pre-check if Google provider is active in Supabase to avoid raw 400 error page
+      const providerCheck = await checkOAuthProviderEnabled("google");
+      if (!providerCheck.enabled) {
+        setIsLoading(false);
+        setStatusMessage({
+          type: "info",
+          text: "Google Sign-In is not enabled yet in your Supabase dashboard (Authentication → Providers → Google). You can enable it there, or sign in directly with Email & Password below!",
+        });
+        setAuthMethod("password");
+        return;
+      }
+
       const supabase = createClient();
       const appUrl = typeof window !== "undefined" ? window.location.origin : "https://study-place.onrender.com";
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -41,21 +58,8 @@ export default function LoginPage() {
 
       if (error) {
         setIsLoading(false);
-        if (
-          error.message.includes("provider is not enabled") ||
-          error.message.includes("validation_failed") ||
-          error.message.includes("Unsupported provider")
-        ) {
-          setStatusMessage({
-            type: "info",
-            text: "Google Sign-In is not enabled yet in your Supabase project (Authentication > Providers > Google). Use the 1-click Email Magic Pass / OTP below!",
-          });
-          setAuthMethod("magic_pass");
-        } else {
-          setStatusMessage({ type: "error", text: error.message });
-        }
+        setStatusMessage({ type: "error", text: error.message });
       } else if (data?.url) {
-        // Redirection to Google
         window.location.href = data.url;
       }
     } catch (err: unknown) {
