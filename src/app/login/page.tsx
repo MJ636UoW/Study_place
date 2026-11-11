@@ -79,25 +79,25 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-6">
         {/* Masthead */}
         <div className="text-center space-y-3">
-          <div className="inline-flex items-center justify-center p-3 border border-ivory-300 bg-ivory-100 shadow-editorial mb-1">
-            <Compass className="w-6 h-6 text-forest-800" strokeWidth={1.5} />
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-forest-700 text-white font-mono font-bold text-2xl shadow-sm mb-1">
+            E
           </div>
-          <div className="text-[10px] uppercase font-mono tracking-widest text-amber-800">
-            Sanctuary Access Ledger
+          <div className="text-[11px] uppercase font-mono tracking-widest text-forest-700 font-bold">
+            ELITE STUDY ZONE • STUDENT & MEMBER ACCESS
           </div>
-          <h1 className="font-serif text-3xl sm:text-4xl text-charcoal-900 tracking-tight">
+          <h1 className="font-sans font-extrabold text-3xl sm:text-4xl text-charcoal-900 tracking-tight">
             {authMethod === "register"
-              ? "Apply for Membership"
+              ? "Create Student Account"
               : authMethod === "forgot_password"
-              ? "Recover Access Key"
-              : "Enter Sanctuary"}
+              ? "Recover Your Password"
+              : "Login to Elite Study Zone"}
           </h1>
           <p className="text-xs text-charcoal-600 font-sans max-w-sm mx-auto leading-relaxed">
             {authMethod === "register"
-              ? "Register a verified scholar profile to access workstation bookings and archive privileges."
+              ? "Register to reserve hourly study sessions, monthly desks, and sync your biometric gate pass."
               : authMethod === "forgot_password"
-              ? "Provide your registered email to receive cryptographically signed recovery instructions."
-              : "Access your assigned desk reservations, keycard access codes, and locker combinations."}
+              ? "Enter your registered email to receive a secure password reset link."
+              : "Access your booked desks, live biometric QR pass, hourly slots, and membership receipts."}
           </p>
         </div>
 
@@ -259,11 +259,19 @@ export default function LoginPage() {
         </div>
 
         {/* Footer Link */}
-        <div className="text-center text-xs font-sans text-charcoal-600">
-          <span>Explore physical studio floorplan? </span>
-          <Link href="/book" className="text-forest-900 font-medium hover:underline">
-            Inspect workstations on plat →
-          </Link>
+        <div className="text-center text-xs font-sans text-charcoal-600 space-y-2">
+          <div>
+            <span>Admin Staff? </span>
+            <Link href="/admin/login" className="text-forest-700 font-bold hover:underline">
+              Access Admin & Biometrics Portal →
+            </Link>
+          </div>
+          <div>
+            <span>Explore physical studio floorplan? </span>
+            <Link href="/book" className="text-forest-700 font-medium hover:underline">
+              Inspect workstations on plat →
+            </Link>
+          </div>
         </div>
       </div>
     </div>
