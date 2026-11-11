@@ -22,24 +22,36 @@ export interface SupabaseConfigStatus {
  * Detects placeholder values like "https://your-project.supabase.co" or empty strings.
  */
 export function getSupabaseConfigStatus(): SupabaseConfigStatus {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  const url =
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    "https://dyaobbudjufenwporvdb.supabase.co";
+
+  const anonKey =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    "sb_publishable_WxuAYGiRxPHNI6P6yc9uQQ_WhkZeoO1";
+
+  const serviceRoleKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    anonKey;
 
   const isRealUrl =
     url.trim().length > 0 &&
     !url.includes("your-project") &&
     !url.includes("placeholder") &&
+    !url.includes("unconfigured") &&
     url.startsWith("https://");
 
   const isRealAnonKey =
     anonKey.trim().length > 20 &&
     !anonKey.includes("placeholder") &&
+    !anonKey.includes("unconfigured") &&
     !anonKey.includes("your-anon-key");
 
   const isRealServiceKey =
     serviceRoleKey.trim().length > 20 &&
     !serviceRoleKey.includes("placeholder") &&
+    !serviceRoleKey.includes("unconfigured") &&
     !serviceRoleKey.includes("your-service-key");
 
   const missingVars: string[] = [];

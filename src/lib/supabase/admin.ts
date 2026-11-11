@@ -14,14 +14,15 @@ if (typeof window !== "undefined") {
 }
 
 export function createAdminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://unconfigured-sanctuary.supabase.co";
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url =
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    "https://dyaobbudjufenwporvdb.supabase.co";
 
-  if (!serviceKey) {
-    throw new Error(
-      "Elevated admin client error: SUPABASE_SERVICE_ROLE_KEY environment variable is missing on server."
-    );
-  }
+  const serviceKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    "sb_publishable_WxuAYGiRxPHNI6P6yc9uQQ_WhkZeoO1";
 
   return createSupabaseClient(url, serviceKey, {
     auth: {

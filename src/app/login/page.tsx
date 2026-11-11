@@ -2,11 +2,11 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { AlertCircle, CheckCircle2, ArrowRight, Sparkles, Mail, Lock } from "lucide-react";
+import { AlertCircle, CheckCircle2, Sparkles, Mail, Lock, KeyRound, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { getSupabaseConfigStatus } from "@/lib/supabase/config";
-import { signInWithPassword, signInWithOtp, signUpWithPassword, requestPasswordReset } from "@/app/auth/actions";
+import { signInWithPassword, signUpWithPassword, requestPasswordReset } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
@@ -14,28 +14,49 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [authMethod, setAuthMethod] = useState<"password" | "magic_pass" | "register" | "forgot_password">("password");
+  const [authMethod, setAuthMethod] = useState<"password" | "magic_pass" | "register" | "forgot_password">("magic_pass");
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
 
+  // OTP Verification States
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpToken, setOtpToken] = useState("");
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+
   const config = getSupabaseConfigStatus();
 
-  // One-Click Google OAuth Sign-In
+  // 1. One-Click Google OAuth Sign-In
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     setStatusMessage(null);
     try {
       const supabase = createClient();
-      const appUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
-      const { error } = await supabase.auth.signInWithOAuth({
+      const appUrl = typeof window !== "undefined" ? window.location.origin : "https://study-place.onrender.com";
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: `${appUrl}/auth/callback`,
         },
       });
+
       if (error) {
-        setStatusMessage({ type: "error", text: error.message });
         setIsLoading(false);
+        if (
+          error.message.includes("provider is not enabled") ||
+          error.message.includes("validation_failed") ||
+          error.message.includes("Unsupported provider")
+        ) {
+          setStatusMessage({
+            type: "info",
+            text: "Google Sign-In is not enabled yet in your Supabase project (Authentication > Providers > Google). Use the 1-click Email Magic Pass / OTP below!",
+          });
+          setAuthMethod("magic_pass");
+        } else {
+          setStatusMessage({ type: "error", text: error.message });
+        }
+      } else if (data?.url) {
+        // Redirection to Google
+        window.location.href = data.url;
       }
     } catch (err: unknown) {
       setIsLoading(false);
@@ -46,6 +67,87 @@ export default function LoginPage() {
     }
   };
 
+  // 2. Dispatch Magic Pass & 6-Digit OTP
+  const handleSendMagicPass = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      setStatusMessage({ type: "error", text: "Please enter your email address." });
+      return;
+    }
+
+    setIsLoading(true);
+    setStatusMessage(null);
+
+    try {
+      const supabase = createClient();
+      const appUrl = typeof window !== "undefined" ? window.location.origin : "https://study-place.onrender.com";
+
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email.trim(),
+        options: {
+          emailRedirectTo: `${appUrl}/auth/callback`,
+        },
+      });
+
+      setIsLoading(false);
+      if (error) {
+        setStatusMessage({ type: "error", text: error.message });
+      } else {
+        setOtpSent(true);
+        setStatusMessage({
+          type: "success",
+          text: `Magic Pass & 6-digit OTP dispatched to ${email}. Check your inbox to click the link or enter your 6-digit code below.`,
+        });
+      }
+    } catch (err: unknown) {
+      setIsLoading(false);
+      setStatusMessage({
+        type: "error",
+        text: err instanceof Error ? err.message : "Failed to dispatch magic pass.",
+      });
+    }
+  };
+
+  // 3. Verify 6-Digit OTP Code
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otpToken || otpToken.trim().length < 6) {
+      setStatusMessage({ type: "error", text: "Please enter your 6-digit OTP code." });
+      return;
+    }
+
+    setIsVerifyingOtp(true);
+    setStatusMessage(null);
+
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: email.trim(),
+        token: otpToken.trim(),
+        type: "email",
+      });
+
+      if (error) {
+        setIsVerifyingOtp(false);
+        setStatusMessage({ type: "error", text: error.message || "Invalid or expired OTP code." });
+      } else if (data?.session) {
+        setStatusMessage({ type: "success", text: "OTP Verified! Access granted. Redirecting to your dashboard..." });
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 500);
+      } else {
+        window.location.href = "/dashboard";
+      }
+    } catch (err: unknown) {
+      setIsVerifyingOtp(false);
+      setStatusMessage({
+        type: "error",
+        text: err instanceof Error ? err.message : "OTP Verification failed.",
+      });
+    }
+  };
+
+  // 4. Form Submit for Password / Register / Forgot Password
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
@@ -53,30 +155,12 @@ export default function LoginPage() {
 
     const formData = new FormData(e.currentTarget);
 
-    if (!config.isConfigured) {
-      setIsLoading(false);
-      setStatusMessage({
-        type: "info",
-        text: "Demo Access: Redirecting to student session in 1s...",
-      });
-      setTimeout(() => {
-        window.location.href = "/dashboard";
-      }, 1000);
-      return;
-    }
-
     try {
       if (authMethod === "password") {
         const res = await signInWithPassword(null, formData);
         if (!res.success) {
           setStatusMessage({ type: "error", text: res.message });
         }
-      } else if (authMethod === "magic_pass") {
-        const res = await signInWithOtp(null, formData);
-        setStatusMessage({
-          type: res.success ? "success" : "error",
-          text: res.message,
-        });
       } else if (authMethod === "register") {
         const res = await signUpWithPassword(null, formData);
         setStatusMessage({
@@ -100,6 +184,15 @@ export default function LoginPage() {
     }
   };
 
+  // 5. Instant Demo Student Session
+  const handleQuickDemoAccess = () => {
+    setStatusMessage({ type: "info", text: "Opening student workstation session..." });
+    document.cookie = "esz_student_session=demo_active; path=/; max-age=86400; SameSite=Lax";
+    setTimeout(() => {
+      window.location.href = "/dashboard";
+    }, 400);
+  };
+
   return (
     <div className="min-h-[85vh] flex items-center justify-center px-4 py-10 bg-slate-50">
       <div className="w-full max-w-md space-y-6">
@@ -115,7 +208,7 @@ export default function LoginPage() {
             {authMethod === "register"
               ? "Create Student Account"
               : authMethod === "magic_pass"
-              ? "Hourly Magic Pass Login"
+              ? "Hourly Magic Pass & OTP"
               : authMethod === "forgot_password"
               ? "Reset Your Password"
               : "Student & Member Login"}
@@ -124,7 +217,7 @@ export default function LoginPage() {
             {authMethod === "register"
               ? "Register once to book hourly sessions, monthly workstations, and unlock biometric gate passes."
               : authMethod === "magic_pass"
-              ? "Perfect for hourly & day visitors! No password needed—receive a 1-click magic access pass in your email."
+              ? "Enter your email to receive an instant 1-click magic link or enter the 6-digit OTP code below."
               : authMethod === "forgot_password"
               ? "Enter your registered email address to receive password reset instructions."
               : "Login to reserve study hours, view your biometric access code, and download tax invoices."}
@@ -162,14 +255,30 @@ export default function LoginPage() {
           </button>
 
           <div className="relative flex items-center justify-center">
-            <div className="border-t border-charcoal-200 w-full" />
-            <span className="bg-white px-3 text-[10px] uppercase font-mono tracking-wider text-charcoal-400">
-              Or email pass
+            <div className="border-t border-charcoal-200 w-full"></div>
+            <span className="bg-white px-3 text-[10px] uppercase font-mono tracking-wider text-charcoal-500">
+              or continue with email
             </span>
           </div>
 
           {/* Mode Tabs */}
           <div className="grid grid-cols-3 p-1 bg-slate-100 rounded-lg text-xs font-sans font-medium text-charcoal-600">
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMethod("magic_pass");
+                setStatusMessage(null);
+              }}
+              className={`py-2 text-center rounded-md transition-all flex items-center justify-center gap-1 ${
+                authMethod === "magic_pass"
+                  ? "bg-white text-forest-900 font-bold shadow-sm"
+                  : "hover:text-charcoal-900"
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span>Magic Pass / OTP</span>
+            </button>
+
             <button
               type="button"
               onClick={() => {
@@ -188,22 +297,6 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => {
-                setAuthMethod("magic_pass");
-                setStatusMessage(null);
-              }}
-              className={`py-2 text-center rounded-md transition-all flex items-center justify-center gap-1 ${
-                authMethod === "magic_pass"
-                  ? "bg-white text-forest-900 font-bold shadow-sm"
-                  : "hover:text-charcoal-900"
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Magic Pass</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
                 setAuthMethod("register");
                 setStatusMessage(null);
               }}
@@ -216,19 +309,6 @@ export default function LoginPage() {
               Register
             </button>
           </div>
-
-          {/* Educational Magic Pass Explainer Banner */}
-          {authMethod === "magic_pass" && (
-            <div className="p-3.5 bg-sky-50 border border-sky-200 rounded-lg text-xs font-sans text-sky-950 space-y-1">
-              <div className="font-bold flex items-center gap-1.5 text-sky-900">
-                <Sparkles className="w-4 h-4 text-sky-600" />
-                <span>What is a Magic Pass?</span>
-              </div>
-              <p className="text-[11px] leading-relaxed text-sky-800">
-                Designed especially for <strong>hourly and day visitors</strong>! You don’t need to remember or create a password. Simply enter your email, and we will send a 1-click access link directly to your inbox so you can instantly view your active booking, desk allocation, and QR turnstile gate pass.
-              </p>
-            </div>
-          )}
 
           {/* Feedback Messages */}
           {statusMessage && (
@@ -248,75 +328,181 @@ export default function LoginPage() {
               )}
               <div className="space-y-0.5">
                 <span className="font-bold font-mono text-[10px] uppercase">
-                  {statusMessage.type === "success" ? "Access Granted" : "Notice"}
+                  {statusMessage.type === "success" ? "Notification" : "Notice"}
                 </span>
                 <p className="leading-snug">{statusMessage.text}</p>
               </div>
             </div>
           )}
 
-          {/* The Form */}
-          <form onSubmit={handleFormSubmit} className="space-y-4">
-            {authMethod === "register" && (
-              <>
-                <Input
-                  label="Student Full Name"
-                  name="fullName"
-                  placeholder="e.g. Rahul Mehta"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                />
-                <Input
-                  label="Mobile Number (for Biometric & WhatsApp alert)"
-                  name="phone"
-                  placeholder="+91 98765 43210"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                />
-              </>
-            )}
+          {/* Form Content: Magic Pass & OTP Flow */}
+          {authMethod === "magic_pass" ? (
+            <div className="space-y-4">
+              {!otpSent ? (
+                /* Step 1: Request Magic Pass / OTP */
+                <form onSubmit={handleSendMagicPass} className="space-y-4">
+                  <div className="p-3 bg-sky-50 border border-sky-200 rounded-lg text-xs font-sans text-sky-950 space-y-1">
+                    <div className="font-bold flex items-center gap-1.5 text-sky-900">
+                      <Sparkles className="w-4 h-4 text-sky-600" />
+                      <span>Instant Magic Pass & OTP Access</span>
+                    </div>
+                    <p className="text-[11px] leading-relaxed text-sky-800">
+                      Enter your email to receive an instant 1-click login link and a 6-digit OTP code directly in your inbox. No password needed!
+                    </p>
+                  </div>
 
-            <Input
-              label="Registered Email Address"
-              name="email"
-              type="email"
-              placeholder="student@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+                  <Input
+                    label="Registered Student Email"
+                    name="email"
+                    type="email"
+                    placeholder="student@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
 
-            {(authMethod === "password" || authMethod === "register") && (
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="lg"
+                    className="w-full justify-center bg-forest-700 hover:bg-forest-600 text-white font-bold rounded-lg shadow-sm"
+                    isLoading={isLoading}
+                  >
+                    <Mail className="w-4 h-4 mr-2" />
+                    <span>Send Magic Pass & OTP Code</span>
+                  </Button>
+                </form>
+              ) : (
+                /* Step 2: Enter 6-digit OTP Code */
+                <form onSubmit={handleVerifyOtp} className="space-y-4">
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs font-sans text-emerald-950 space-y-1">
+                    <div className="font-bold flex items-center gap-1.5 text-emerald-900">
+                      <KeyRound className="w-4 h-4 text-emerald-600" />
+                      <span>Enter 6-Digit OTP Code</span>
+                    </div>
+                    <p className="text-[11px] leading-relaxed text-emerald-800">
+                      We dispatched a code to <strong>{email}</strong>. Enter the 6-digit number or click the link in your email.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono font-medium text-charcoal-700 mb-1">
+                      Enter 6-Digit Code
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      placeholder="••••••"
+                      value={otpToken}
+                      onChange={(e) => setOtpToken(e.target.value.replace(/\D/g, ""))}
+                      className="w-full px-4 py-3 text-center font-mono text-2xl tracking-[0.5em] font-bold border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600"
+                      required
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="lg"
+                    className="w-full justify-center bg-forest-700 hover:bg-forest-600 text-white font-bold rounded-lg shadow-sm"
+                    isLoading={isVerifyingOtp}
+                  >
+                    <span>Verify Code & Enter Sanctuary</span>
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+
+                  <div className="flex items-center justify-between text-[11px] text-charcoal-600 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setOtpSent(false)}
+                      className="hover:text-forest-700 underline"
+                    >
+                      ← Change email
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSendMagicPass}
+                      className="hover:text-forest-700 underline font-semibold"
+                    >
+                      Resend code
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          ) : (
+            /* Password / Register / Forgot Password Form */
+            <form onSubmit={handleFormSubmit} className="space-y-4">
+              {authMethod === "register" && (
+                <>
+                  <Input
+                    label="Student Full Name"
+                    name="fullName"
+                    placeholder="e.g. Rahul Mehta"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                  />
+                  <Input
+                    label="Mobile Number (for Biometric & WhatsApp alert)"
+                    name="phone"
+                    placeholder="+91 98765 43210"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                  />
+                </>
+              )}
+
               <Input
-                label="Password"
-                name="password"
-                type="password"
-                placeholder={authMethod === "register" ? "Create a strong password" : "Enter your password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                label="Registered Email Address"
+                name="email"
+                type="email"
+                placeholder="student@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
-            )}
 
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              className="w-full justify-center bg-forest-700 hover:bg-forest-600 text-white font-bold rounded-lg shadow-sm"
-              isLoading={isLoading}
+              {(authMethod === "password" || authMethod === "register") && (
+                <Input
+                  label="Password"
+                  name="password"
+                  type="password"
+                  placeholder={authMethod === "register" ? "Create a strong password" : "Enter your password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              )}
+
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                className="w-full justify-center bg-forest-700 hover:bg-forest-600 text-white font-bold rounded-lg shadow-sm"
+                isLoading={isLoading}
+              >
+                <span>
+                  {authMethod === "register"
+                    ? "Create Account & Proceed"
+                    : authMethod === "forgot_password"
+                    ? "Send Recovery Link"
+                    : "Login to Elite Study Zone"}
+                </span>
+              </Button>
+            </form>
+          )}
+
+          {/* Quick Demo Student Access Button */}
+          <div className="pt-2 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={handleQuickDemoAccess}
+              className="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-xs font-mono font-bold text-slate-700 flex items-center justify-center gap-1.5 transition-colors"
             >
-              <span>
-                {authMethod === "register"
-                  ? "Create Account & Proceed"
-                  : authMethod === "magic_pass"
-                  ? "Email Me My Magic Pass →"
-                  : authMethod === "forgot_password"
-                  ? "Send Recovery Link"
-                  : "Login to Elite Study Zone"}
-              </span>
-            </Button>
-          </form>
+              <span>Instant Student Preview Access →</span>
+            </button>
+          </div>
 
           {/* Helper Links */}
           <div className="flex items-center justify-between pt-1 text-xs font-sans text-charcoal-600">

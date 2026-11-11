@@ -8,8 +8,14 @@ import { cookies } from "next/headers";
 export async function createClient() {
   const cookieStore = await cookies();
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://unconfigured-sanctuary.supabase.co";
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.unconfigured";
+  const url =
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    "https://dyaobbudjufenwporvdb.supabase.co";
+
+  const anonKey =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    "sb_publishable_WxuAYGiRxPHNI6P6yc9uQQ_WhkZeoO1";
 
   return createServerClient(url, anonKey, {
     cookies: {
