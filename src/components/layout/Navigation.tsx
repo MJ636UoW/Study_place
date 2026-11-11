@@ -21,7 +21,6 @@ export const Navigation: React.FC = () => {
     { href: "/reviews", label: "Reviews" },
     { href: "/contact", label: "Contact Us" },
     { href: "/dashboard", label: "Student Portal" },
-    { href: "/admin", label: "Admin & Biometrics" },
   ];
 
   return (
@@ -90,16 +89,16 @@ export const Navigation: React.FC = () => {
         <div className="hidden sm:flex items-center gap-3">
           <Link
             href="/login"
-            className="px-4 py-2 text-xs uppercase tracking-wider font-medium text-charcoal-700 hover:text-charcoal-950 border border-transparent hover:border-ivory-300 min-h-[44px] flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-900 transition-colors"
+            className="px-4 py-2 text-xs uppercase tracking-wider font-bold text-forest-700 hover:text-forest-900 border border-forest-200 bg-white rounded-md min-h-[44px] flex items-center gap-1.5 shadow-sm transition-all"
           >
-            <KeyRound className="w-3.5 h-3.5 text-charcoal-500" />
-            <span>Sign In</span>
+            <KeyRound className="w-3.5 h-3.5 text-forest-600" />
+            <span>Student Sign In</span>
           </Link>
           <Link
             href="/book"
-            className="px-5 py-2.5 text-xs uppercase tracking-widest font-medium bg-forest-900 text-ivory-50 hover:bg-forest-800 active:bg-forest-950 border border-forest-900 shadow-editorial min-h-[44px] flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-900 focus-visible:ring-offset-2 transition-all"
+            className="px-5 py-2.5 text-xs uppercase tracking-widest font-bold bg-forest-700 text-white hover:bg-forest-600 active:bg-forest-800 rounded-md shadow-md min-h-[44px] flex items-center transition-all"
           >
-            Find My Seat
+            Book Workstation
           </Link>
         </div>
 

@@ -32,28 +32,28 @@ export const Footer: React.FC = () => {
           <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-8 text-xs font-sans">
             {/* Column 1: Residency & Booking */}
             <div className="space-y-3">
-              <div className="text-[10px] uppercase font-mono tracking-widest text-amber-800 font-semibold">
-                Sanctuary Tiers
+              <div className="text-[10px] uppercase font-mono tracking-widest text-forest-700 font-bold">
+                Student & Plans
               </div>
               <ul className="space-y-1">
                 <li>
                   <Link href="/plans" className="text-charcoal-700 hover:text-charcoal-950 transition-colors py-2 inline-flex items-center min-h-[44px]">
-                    Residency Plans
+                    Hourly & Monthly Plans
                   </Link>
                 </li>
                 <li>
                   <Link href="/book" className="text-charcoal-700 hover:text-charcoal-950 transition-colors py-2 inline-flex items-center min-h-[44px]">
-                    Reserve a Desk
+                    Book Workstation Desk
                   </Link>
                 </li>
                 <li>
                   <Link href="/dashboard" className="text-charcoal-700 hover:text-charcoal-950 transition-colors py-2 inline-flex items-center min-h-[44px]">
-                    Member Portal
+                    Student Access Portal
                   </Link>
                 </li>
                 <li>
-                  <Link href="/admin" className="text-charcoal-700 hover:text-charcoal-950 transition-colors py-2 inline-flex items-center min-h-[44px]">
-                    Curator Ledger
+                  <Link href="/admin/login" className="text-forest-700 font-bold hover:underline transition-colors py-2 inline-flex items-center min-h-[44px]">
+                    Admin Portal (Staff Only) →
                   </Link>
                 </li>
               </ul>
