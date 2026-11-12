@@ -28,36 +28,61 @@ export const Navigation: React.FC = () => {
     setMobileMenuOpen(false);
     setProfileDropdownOpen(false);
 
-    // Check student authentication session
-    const cookies = typeof document !== "undefined" ? document.cookie : "";
-    const hasStudentSession =
-      cookies.includes("esz_student_session") ||
-      cookies.includes("sb-") ||
-      cookies.includes("supabase");
-
-    const emailMatch = cookies.match(/esz_student_email=([^;]+)/);
-    const nameMatch = cookies.match(/esz_student_name=([^;]+)/);
-
-    if (hasStudentSession) {
-      setIsLoggedIn(true);
-      const email = emailMatch ? decodeURIComponent(emailMatch[1]) : "mandarj2412@gmail.com";
-      const name = nameMatch ? decodeURIComponent(nameMatch[1]) : (email.split("@")[0] || "Mandar Joshi");
-      setUserEmail(email);
-      setUserName(name);
-
-      const initials = name
-        .split(" ")
-        .map((p) => p[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2) || "MJ";
-      setUserInitials(initials);
-    } else {
-      setIsLoggedIn(false);
-    }
+    // Fetch active session from MongoDB auth API
+    fetch("/api/auth/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.authenticated && data?.user) {
+          setIsLoggedIn(true);
+          const name = data.user.name || "Mandar Joshi";
+          const email = data.user.email || "mandarj2412@gmail.com";
+          setUserName(name);
+          setUserEmail(email);
+          const initials = name
+            .split(" ")
+            .map((p: string) => p[0])
+            .join("")
+            .toUpperCase()
+            .slice(0, 2) || "MJ";
+          setUserInitials(initials);
+        } else {
+          // Fallback to cookie check if needed
+          const cookies = typeof document !== "undefined" ? document.cookie : "";
+          const hasStudentSession =
+            cookies.includes("auth_token") ||
+            cookies.includes("esz_student_session");
+          if (hasStudentSession) {
+            setIsLoggedIn(true);
+            const emailMatch = cookies.match(/esz_student_email=([^;]+)/);
+            const nameMatch = cookies.match(/esz_student_name=([^;]+)/);
+            const email = emailMatch ? decodeURIComponent(emailMatch[1]) : "mandarj2412@gmail.com";
+            const name = nameMatch ? decodeURIComponent(nameMatch[1]) : (email.split("@")[0] || "Mandar Joshi");
+            setUserEmail(email);
+            setUserName(name);
+            const initials = name
+              .split(" ")
+              .map((p) => p[0])
+              .join("")
+              .toUpperCase()
+              .slice(0, 2) || "MJ";
+            setUserInitials(initials);
+          } else {
+            setIsLoggedIn(false);
+          }
+        }
+      })
+      .catch(() => {
+        setIsLoggedIn(false);
+      });
   }, [pathname]);
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch (e) {
+      // Ignore
+    }
+    document.cookie = "auth_token=; path=/; max-age=0";
     document.cookie = "esz_student_session=; path=/; max-age=0";
     document.cookie = "esz_student_email=; path=/; max-age=0";
     document.cookie = "esz_student_name=; path=/; max-age=0";

@@ -106,11 +106,24 @@ export default function DashboardPage() {
         setActiveTab(tab as "residencies" | "notifications" | "attendance" | "profile");
       }
 
-      const cookies = document.cookie;
-      const emailMatch = cookies.match(/esz_student_email=([^;]+)/);
-      const nameMatch = cookies.match(/esz_student_name=([^;]+)/);
-      if (emailMatch) setProfileEmail(decodeURIComponent(emailMatch[1]));
-      if (nameMatch) setProfileName(decodeURIComponent(nameMatch[1]));
+      // Fetch live student profile from MongoDB auth API
+      fetch("/api/auth/me")
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.authenticated && data?.user) {
+            setProfileName(data.user.name || "Mandar Joshi");
+            setProfileEmail(data.user.email || "mandarj2412@gmail.com");
+            if (data.user.phone) setProfilePhone(data.user.phone);
+            if (data.user.allottedHours) setAllocatedHours(data.user.allottedHours);
+          } else {
+            const cookies = document.cookie;
+            const emailMatch = cookies.match(/esz_student_email=([^;]+)/);
+            const nameMatch = cookies.match(/esz_student_name=([^;]+)/);
+            if (emailMatch) setProfileEmail(decodeURIComponent(emailMatch[1]));
+            if (nameMatch) setProfileName(decodeURIComponent(nameMatch[1]));
+          }
+        })
+        .catch(() => {});
     }
   }, []);
 
