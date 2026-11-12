@@ -37,6 +37,9 @@ import {
   Calendar,
   FileText,
   Mail,
+  User,
+  Clock,
+  ShieldCheck,
 } from "lucide-react";
 import { ConfigurationBanner } from "@/components/ui/ConfigurationBanner";
 import { Button } from "@/components/ui/Button";
@@ -84,9 +87,41 @@ interface BiometricPunchItem {
 }
 
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState<"residencies" | "notifications" | "attendance">("residencies");
+  const [activeTab, setActiveTab] = useState<"residencies" | "notifications" | "attendance" | "profile">("residencies");
 
   // Reservations list
+  const [profileName, setProfileName] = useState("Mandar Joshi");
+  const [profileEmail, setProfileEmail] = useState("mandarj2412@gmail.com");
+  const [profilePhone, setProfilePhone] = useState("+91 98753 59327");
+  const [studyGoal, setStudyGoal] = useState("Competitive Examinations & Self-Study Research");
+  const [allocatedShift, setAllocatedShift] = useState("Morning Focus Shift (08:00 — 14:00)");
+  const [allocatedHours, setAllocatedHours] = useState(48);
+  const [profileSaveSuccess, setProfileSaveSuccess] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get("tab");
+      if (tab === "profile" || tab === "residencies" || tab === "notifications" || tab === "attendance") {
+        setActiveTab(tab as "residencies" | "notifications" | "attendance" | "profile");
+      }
+
+      const cookies = document.cookie;
+      const emailMatch = cookies.match(/esz_student_email=([^;]+)/);
+      const nameMatch = cookies.match(/esz_student_name=([^;]+)/);
+      if (emailMatch) setProfileEmail(decodeURIComponent(emailMatch[1]));
+      if (nameMatch) setProfileName(decodeURIComponent(nameMatch[1]));
+    }
+  }, []);
+
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    document.cookie = `esz_student_name=${encodeURIComponent(profileName)}; path=/; max-age=86400; SameSite=Lax`;
+    document.cookie = `esz_student_email=${encodeURIComponent(profileEmail)}; path=/; max-age=86400; SameSite=Lax`;
+    setProfileSaveSuccess(true);
+    setTimeout(() => setProfileSaveSuccess(false), 3500);
+  };
+
   const [attendanceLogs, setAttendanceLogs] = useState<BiometricPunchItem[]>([
     {
       id: "punch-1",
@@ -816,6 +851,168 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      
+      {/* Tab Content 4: My Profile & Allocated Hours */}
+      {activeTab === "profile" && (
+        <div className="space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-ivory-200 gap-2">
+            <div>
+              <h2 className="font-serif text-2xl sm:text-3xl text-charcoal-900">
+                Student Account & Workstation Allocation
+              </h2>
+              <p className="text-xs text-charcoal-600 font-sans mt-1">
+                Manage your personal scholar profile, allocated shifts, and contact preferences for Elite Study Zone.
+              </p>
+            </div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded text-xs font-mono font-bold">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span>Verified Scholar Account</span>
+            </div>
+          </div>
+
+          {profileSaveSuccess && (
+            <div className="p-4 bg-emerald-50 border border-emerald-300 text-emerald-950 rounded-lg flex items-center gap-2 text-xs font-sans">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+              <span className="font-bold">Profile and workstation preferences updated successfully!</span>
+            </div>
+          )}
+
+          {/* Allotted Time & Workstation Card */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-6 bg-forest-900 text-white rounded-xl shadow-editorial space-y-3">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-300 font-bold block">
+                Allotted Study Hours
+              </span>
+              <div className="font-serif text-3xl font-bold">
+                {allocatedHours} Hours Remaining
+              </div>
+              <p className="text-xs text-forest-200 font-sans leading-relaxed">
+                Active Flexi-Pass valid for 30 days. Usable across all open hours (07:00 — 23:00).
+              </p>
+              <div className="pt-2">
+                <Link
+                  href="/book"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-forest-950 text-xs font-bold rounded-lg hover:bg-forest-50 transition-colors shadow-sm"
+                >
+                  <span>Top-Up Study Hours →</span>
+                </Link>
+              </div>
+            </div>
+
+            <div className="p-6 bg-white border border-ivory-300 rounded-xl shadow-editorial space-y-2">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-charcoal-500 font-bold block">
+                Assigned Desk Station
+              </span>
+              <div className="font-serif text-2xl text-charcoal-900 font-bold">
+                Desk #04 (North Pier)
+              </div>
+              <p className="text-xs text-charcoal-600 font-sans">
+                Equipped with dedicated power outlet, brass reading lamp, ergonomic mesh chair, and Wi-Fi 6.
+              </p>
+              <div className="text-[11px] font-mono text-emerald-700 font-semibold pt-1">
+                Locker #14 Included (2nd Floor West)
+              </div>
+            </div>
+
+            <div className="p-6 bg-white border border-ivory-300 rounded-xl shadow-editorial space-y-2">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-charcoal-500 font-bold block">
+                Biometric Hardware Access
+              </span>
+              <div className="font-mono text-xl text-charcoal-900 font-bold flex items-center gap-2">
+                <FingerprintIcon className="w-5 h-5 text-emerald-600" />
+                <span>Device PIN #001</span>
+              </div>
+              <p className="text-xs text-charcoal-600 font-sans">
+                Optical Fingerprint Enrolled on ZKTeco LX50 Hardware Terminal at center reception.
+              </p>
+              <div className="text-[11px] font-mono text-charcoal-500 pt-1">
+                Turnstile Code: #PASS-2610-STRL04
+              </div>
+            </div>
+          </div>
+
+          {/* Profile Form */}
+          <div className="p-6 sm:p-8 bg-white border border-ivory-300 rounded-xl shadow-editorial">
+            <h3 className="font-serif text-xl text-charcoal-900 mb-4 pb-2 border-b border-ivory-200">
+              Personal Scholar Profile & Examination Stream
+            </h3>
+
+            <form onSubmit={handleSaveProfile} className="space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <Input
+                  label="Full Scholar Name"
+                  type="text"
+                  value={profileName}
+                  onChange={(e) => setProfileName(e.target.value)}
+                  required
+                />
+
+                <Input
+                  label="Registered Email Address (Verified)"
+                  type="email"
+                  value={profileEmail}
+                  disabled
+                  className="bg-slate-50 text-slate-500 cursor-not-allowed"
+                />
+
+                <Input
+                  label="Mobile / WhatsApp Number"
+                  type="text"
+                  value={profilePhone}
+                  onChange={(e) => setProfilePhone(e.target.value)}
+                  placeholder="+91 98753 59327"
+                />
+
+                <div>
+                  <label className="block text-xs font-mono font-medium text-charcoal-700 mb-1">
+                    Preferred Daily Study Shift
+                  </label>
+                  <select
+                    value={allocatedShift}
+                    onChange={(e) => setAllocatedShift(e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-sans border border-charcoal-300 rounded-md focus:outline-none focus:ring-2 focus:ring-forest-700"
+                  >
+                    <option value="Morning Focus Shift (08:00 — 14:00)">Morning Focus Shift (08:00 — 14:00)</option>
+                    <option value="Afternoon Deep Work (14:00 — 19:00)">Afternoon Deep Work (14:00 — 19:00)</option>
+                    <option value="Night Owl Shift (19:00 — 23:00)">Night Owl Shift (19:00 — 23:00)</option>
+                    <option value="Full Day Immersion (07:00 — 23:00)">Full Day Immersion (07:00 — 23:00)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono font-medium text-charcoal-700 mb-1">
+                  Academic Focus / Competitive Exam Preparation
+                </label>
+                <input
+                  type="text"
+                  value={studyGoal}
+                  onChange={(e) => setStudyGoal(e.target.value)}
+                  placeholder="e.g. UPSC Civil Services, CA Final, NEET PG, Tech Research"
+                  className="w-full px-3 py-2 text-xs font-sans border border-charcoal-300 rounded-md focus:outline-none focus:ring-2 focus:ring-forest-700"
+                />
+              </div>
+
+              <div className="pt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-t border-ivory-200">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="md"
+                  className="bg-forest-700 hover:bg-forest-600 text-white font-bold px-6 py-2.5 rounded-lg shadow-sm"
+                >
+                  Save Profile Changes
+                </Button>
+
+                <span className="text-[11px] text-charcoal-500 font-mono">
+                  Changes synchronized with Elite Study Zone Operations
+                </span>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
 
       {/* Razorpay Test Checkout Modal */}
       {checkoutTarget && (

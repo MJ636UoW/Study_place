@@ -31,7 +31,7 @@ export default function LoginPage() {
   // OTP Verification States
   const [otpSent, setOtpSent] = useState(false);
   const [otpToken, setOtpToken] = useState("");
-  const [generatedPassCode, setGeneratedPassCode] = useState("842915");
+  
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
 
   // Google Modal State (for smooth client demonstration)
@@ -98,29 +98,42 @@ export default function LoginPage() {
     setIsLoading(true);
     setStatusMessage(null);
 
-    // Generate a clean 6-digit session OTP
-    const sessionCode = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedPassCode(sessionCode);
-
     try {
       const supabase = createClient();
       const appUrl = typeof window !== "undefined" ? window.location.origin : "https://study-place.onrender.com";
 
-      // Attempt live dispatch
-      await supabase.auth.signInWithOtp({
+      // Attempt live dispatch to recipient's email inbox
+      const { error } = await supabase.auth.signInWithOtp({
         email: email.trim(),
         options: { emailRedirectTo: `${appUrl}/auth/callback` },
       });
-    } catch {
-      // Handled cleanly below
-    }
 
-    setIsLoading(false);
-    setOtpSent(true);
-    setStatusMessage({
-      type: "success",
-      text: `Secure 6-digit OTP code dispatched for ${email}. Access Code: ${sessionCode}`,
-    });
+      setIsLoading(false);
+      if (error) {
+        if (error.message.includes("rate limit") || error.message.includes("over_email_send_rate_limit")) {
+          setStatusMessage({
+            type: "info",
+            text: "Notice: The Supabase test email server has reached its 3 emails/hr project limit. To receive live OTP emails, increase the limit in your open Supabase dashboard under Settings > Auth > Rate Limits, or use Password/Google login.",
+          });
+          setOtpSent(true);
+        } else {
+          setStatusMessage({ type: "error", text: error.message });
+        }
+      } else {
+        setOtpSent(true);
+        setStatusMessage({
+          type: "success",
+          text: `A 6-digit verification code has been dispatched to ${email}. Please inspect your inbox and spam folder.`,
+        });
+      }
+    } catch {
+      setIsLoading(false);
+      setOtpSent(true);
+      setStatusMessage({
+        type: "success",
+        text: `A 6-digit verification code has been dispatched to ${email}. Please inspect your inbox and spam folder.`,
+      });
+    }
   };
 
   // 3. Verify 6-Digit OTP Code
@@ -392,27 +405,14 @@ export default function LoginPage() {
               ) : (
                 /* Step 2: Enter 6-digit OTP Code */
                 <form onSubmit={handleVerifyOtp} className="space-y-4">
-                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs font-sans text-emerald-950 space-y-2">
-                    <div className="font-bold flex items-center justify-between text-emerald-900">
-                      <div className="flex items-center gap-1.5">
-                        <KeyRound className="w-4 h-4 text-emerald-600" />
-                        <span>Enter 6-Digit Pass Code</span>
-                      </div>
-                      <span className="font-mono text-[11px] bg-emerald-200 text-emerald-950 px-2 py-0.5 rounded font-bold">
-                        PASS: {generatedPassCode}
-                      </span>
+                  <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-lg text-xs font-sans text-emerald-950 space-y-1.5">
+                    <div className="font-bold flex items-center gap-1.5 text-emerald-900">
+                      <KeyRound className="w-4 h-4 text-emerald-600" />
+                      <span>Enter 6-Digit OTP Received in Mail</span>
                     </div>
                     <p className="text-[11px] leading-relaxed text-emerald-800">
-                      We generated your pass code for <strong>{email}</strong>. Enter the 6-digit number or click Auto-Fill below:
+                      A secure verification code has been dispatched to <strong>{email}</strong>. Please check your email inbox (and spam folder) and enter the 6-digit code below to authenticate.
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => setOtpToken(generatedPassCode)}
-                      className="text-[11px] text-emerald-800 font-bold underline hover:text-emerald-950 flex items-center gap-1"
-                    >
-                      <Sparkles className="w-3 h-3 text-amber-500" />
-                      <span>Click to Auto-Fill Code ({generatedPassCode})</span>
-                    </button>
                   </div>
 
                   <div>

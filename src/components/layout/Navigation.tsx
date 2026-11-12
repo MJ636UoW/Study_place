@@ -4,15 +4,67 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
-import { Menu, X, Compass, KeyRound } from "lucide-react";
+import {
+  Menu,
+  X,
+  KeyRound,
+  User,
+  LogOut,
+  Clock,
+  ShieldCheck,
+  ChevronDown,
+} from "lucide-react";
 
 export const Navigation: React.FC = () => {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userName, setUserName] = useState("Mandar Joshi");
+  const [userEmail, setUserEmail] = useState("mandarj2412@gmail.com");
+  const [userInitials, setUserInitials] = useState("MJ");
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
   useEffect(() => {
     setMobileMenuOpen(false);
+    setProfileDropdownOpen(false);
+
+    // Check student authentication session
+    const cookies = typeof document !== "undefined" ? document.cookie : "";
+    const hasStudentSession =
+      cookies.includes("esz_student_session") ||
+      cookies.includes("sb-") ||
+      cookies.includes("supabase");
+
+    const emailMatch = cookies.match(/esz_student_email=([^;]+)/);
+    const nameMatch = cookies.match(/esz_student_name=([^;]+)/);
+
+    if (hasStudentSession) {
+      setIsLoggedIn(true);
+      const email = emailMatch ? decodeURIComponent(emailMatch[1]) : "mandarj2412@gmail.com";
+      const name = nameMatch ? decodeURIComponent(nameMatch[1]) : (email.split("@")[0] || "Mandar Joshi");
+      setUserEmail(email);
+      setUserName(name);
+
+      const initials = name
+        .split(" ")
+        .map((p) => p[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2) || "MJ";
+      setUserInitials(initials);
+    } else {
+      setIsLoggedIn(false);
+    }
   }, [pathname]);
+
+  const handleSignOut = () => {
+    document.cookie = "esz_student_session=; path=/; max-age=0";
+    document.cookie = "esz_student_email=; path=/; max-age=0";
+    document.cookie = "esz_student_name=; path=/; max-age=0";
+    setIsLoggedIn(false);
+    setProfileDropdownOpen(false);
+    window.location.href = "/login";
+  };
 
   const navLinks = [
     { href: "/", label: "Home" },
@@ -87,13 +139,93 @@ export const Navigation: React.FC = () => {
 
         {/* Desktop Right CTAs */}
         <div className="hidden sm:flex items-center gap-3">
-          <Link
-            href="/login"
-            className="px-4 py-2 text-xs uppercase tracking-wider font-bold text-forest-700 hover:text-forest-900 border border-forest-200 bg-white rounded-md min-h-[44px] flex items-center gap-1.5 shadow-sm transition-all"
-          >
-            <KeyRound className="w-3.5 h-3.5 text-forest-600" />
-            <span>Student Sign In</span>
-          </Link>
+          {isLoggedIn ? (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-forest-300 bg-white hover:bg-forest-50/60 shadow-sm transition-all focus:outline-none"
+              >
+                <div className="w-8 h-8 rounded-full bg-forest-700 text-white font-bold flex items-center justify-center text-xs shadow-sm">
+                  {userInitials}
+                </div>
+                <div className="text-left hidden md:block">
+                  <div className="text-xs font-bold text-charcoal-900 leading-tight">
+                    {userName}
+                  </div>
+                  <div className="text-[10px] font-mono text-emerald-700 font-semibold leading-tight flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Active Member</span>
+                  </div>
+                </div>
+                <ChevronDown
+                  className={`w-3.5 h-3.5 text-charcoal-500 transition-transform ${
+                    profileDropdownOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {/* Profile Dropdown Menu */}
+              {profileDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-72 bg-white border border-charcoal-200 rounded-xl shadow-xl z-50 p-2 space-y-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 mb-1">
+                    <div className="text-xs font-bold text-charcoal-900">{userName}</div>
+                    <div className="text-[11px] font-mono text-charcoal-500 truncate">{userEmail}</div>
+                    <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 bg-forest-100 text-forest-800 rounded text-[9px] font-mono uppercase font-bold">
+                      Workstation Desk #04 • Flexi-Hours Active
+                    </div>
+                  </div>
+
+                  <Link
+                    href="/dashboard?tab=profile"
+                    onClick={() => setProfileDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-sans text-charcoal-800 hover:bg-forest-50 hover:text-forest-900 rounded-lg transition-colors"
+                  >
+                    <User className="w-4 h-4 text-forest-700" />
+                    <span>My Account & Profile</span>
+                  </Link>
+
+                  <Link
+                    href="/dashboard?tab=residencies"
+                    onClick={() => setProfileDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-sans text-charcoal-800 hover:bg-forest-50 hover:text-forest-900 rounded-lg transition-colors"
+                  >
+                    <Clock className="w-4 h-4 text-forest-700" />
+                    <span>Allotted Hours & Bookings</span>
+                  </Link>
+
+                  <Link
+                    href="/dashboard?tab=attendance"
+                    onClick={() => setProfileDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-sans text-charcoal-800 hover:bg-forest-50 hover:text-forest-900 rounded-lg transition-colors"
+                  >
+                    <ShieldCheck className="w-4 h-4 text-emerald-700" />
+                    <span>Biometric Gate Pass & Attendance</span>
+                  </Link>
+
+                  <div className="border-t border-slate-100 my-1"></div>
+
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-sans text-rose-700 hover:bg-rose-50 rounded-lg transition-colors text-left"
+                  >
+                    <LogOut className="w-4 h-4 text-rose-600" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="px-4 py-2 text-xs uppercase tracking-wider font-bold text-forest-700 hover:text-forest-900 border border-forest-200 bg-white rounded-md min-h-[44px] flex items-center gap-1.5 shadow-sm transition-all"
+            >
+              <KeyRound className="w-3.5 h-3.5 text-forest-600" />
+              <span>Student Sign In</span>
+            </Link>
+          )}
+
           <Link
             href="/book"
             className="px-5 py-2.5 text-xs uppercase tracking-widest font-bold bg-forest-700 text-white hover:bg-forest-600 active:bg-forest-800 rounded-md shadow-md min-h-[44px] flex items-center transition-all"
@@ -147,20 +279,43 @@ export const Navigation: React.FC = () => {
             })}
           </nav>
 
-          <div className="pt-4 border-t border-ivory-200 grid grid-cols-2 gap-3">
-            <Link
-              href="/login"
-              className="px-4 py-3 min-h-[44px] flex items-center justify-center gap-2 text-xs uppercase tracking-wider font-medium text-charcoal-800 border border-charcoal-300 hover:bg-ivory-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-900"
-            >
-              <KeyRound className="w-4 h-4 text-charcoal-500" />
-              <span>Sign In</span>
-            </Link>
-            <Link
-              href="/book"
-              className="px-4 py-3 min-h-[44px] flex items-center justify-center text-xs uppercase tracking-widest font-medium bg-forest-900 text-ivory-50 hover:bg-forest-800 border border-forest-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-900"
-            >
-              Find My Seat
-            </Link>
+          <div className="pt-4 border-t border-ivory-200">
+            {isLoggedIn ? (
+              <div className="space-y-3">
+                <div className="p-3 bg-white border border-forest-200 rounded-lg flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-bold text-charcoal-900">{userName}</div>
+                    <div className="text-[11px] font-mono text-charcoal-500">{userEmail}</div>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-forest-700 text-white font-bold flex items-center justify-center text-xs">
+                    {userInitials}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="w-full py-2.5 px-4 bg-rose-50 text-rose-700 border border-rose-200 text-xs uppercase tracking-wider font-bold rounded flex items-center justify-center gap-1.5"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                <Link
+                  href="/login"
+                  className="px-4 py-2.5 border border-forest-700 text-forest-700 text-xs uppercase tracking-wider font-bold rounded min-h-[44px] flex items-center justify-center"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/book"
+                  className="px-4 py-2.5 bg-forest-700 text-white text-xs uppercase tracking-wider font-bold rounded min-h-[44px] flex items-center justify-center"
+                >
+                  Book Seat
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}
