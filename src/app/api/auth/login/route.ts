@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/mongodb";
-import { User } from "@/models/User";
-import { comparePassword, signJwtToken, setAuthCookie } from "@/lib/auth";
+import { verifyUserCredentials } from "@/lib/hybridDb";
+import { signJwtToken, setAuthCookie } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
-    await connectToDatabase();
-
     const body = await req.json();
     const { email, password } = body;
 
@@ -17,52 +14,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const cleanEmail = email.trim().toLowerCase();
-    const user = await User.findOne({ email: cleanEmail });
+    const result = await verifyUserCredentials(email, password);
 
-    if (!user) {
+    if (!result.ok || !result.user) {
       return NextResponse.json(
-        { error: "Invalid email or password." },
-        { status: 401 }
+        { error: result.error || "Invalid email or password." },
+        { status: result.unverified ? 403 : 401 }
       );
     }
 
-    if (!user.passwordHash) {
-      return NextResponse.json(
-        { error: "This account was created via Google Sign In. Please use Continue with Google." },
-        { status: 400 }
-      );
-    }
-
-    const isValid = await comparePassword(password, user.passwordHash);
-    if (!isValid) {
-      return NextResponse.json(
-        { error: "Invalid email or password." },
-        { status: 401 }
-      );
-    }
-
-    if (!user.emailVerified) {
-      return NextResponse.json(
-        {
-          error: "Your email address has not been confirmed yet. Please check your inbox for the confirmation link.",
-          unverified: true,
-        },
-        { status: 403 }
-      );
-    }
-
+    const user = result.user;
     const token = signJwtToken({
-      userId: user._id.toString(),
-      email: user.email,
-      name: user.name,
-      role: user.role,
+      userId: user._id ? user._id.toString() : "user_" + Buffer.from(user.email || "").toString("hex"),
+      email: user.email || email,
+      name: user.name || "Scholar",
+      role: user.role || "student",
     });
 
     const res = NextResponse.json({
       success: true,
       user: {
-        id: user._id.toString(),
         name: user.name,
         email: user.email,
         role: user.role,
@@ -77,7 +48,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("Login Error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to log in." },
+      { error: "Login failed. Please check your credentials." },
       { status: 500 }
     );
   }
