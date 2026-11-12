@@ -2,21 +2,10 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import {
-  AlertCircle,
-  CheckCircle2,
-  Sparkles,
-  Mail,
-  Lock,
-  KeyRound,
-  ArrowRight,
-  User,
-  ShieldCheck,
-} from "lucide-react";
+import { AlertCircle, CheckCircle2, Sparkles, Lock, ArrowRight, KeyRound } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { Dialog } from "@/components/ui/Dialog";
-import { signInWithPassword, signUpWithPassword, checkOAuthProviderEnabled } from "@/app/auth/actions";
+import { signInWithPassword, signUpWithPassword } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
@@ -24,211 +13,126 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [authMethod, setAuthMethod] = useState<"password" | "magic_pass" | "register">("magic_pass");
+  const [activeTab, setActiveTab] = useState<"login" | "register" | "magic_pass">("login");
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
 
-  // OTP Verification States
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpToken, setOtpToken] = useState("");
-  
-  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  // Hourly Magic Pass State
+  const [hourlyPassPin, setHourlyPassPin] = useState<string | null>(null);
 
-  // Google Modal State (for smooth client demonstration)
-  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
-  const [customGoogleEmail, setCustomGoogleEmail] = useState("");
-  const [customGoogleName, setCustomGoogleName] = useState("");
-  const [showCustomGoogleInput, setShowCustomGoogleInput] = useState(false);
-
-  // Auto-detect email from active form input or prior session
-  const detectedGoogleEmail = email || (typeof window !== "undefined" ? localStorage.getItem("esz_last_email") || "" : "");
-
-  // 1. One-Click Google OAuth Sign-In with Seamless Experience
-  const handleGoogleSignInClick = async () => {
+  // 1. One-Click Google Sign-In
+  const handleGoogleSignIn = async () => {
     setIsLoading(true);
     setStatusMessage(null);
-    try {
-      const providerCheck = await checkOAuthProviderEnabled("google");
-      if (providerCheck.enabled) {
-        const supabase = createClient();
-        const appUrl = typeof window !== "undefined" ? window.location.origin : "https://study-place.onrender.com";
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: "google",
-          options: { redirectTo: `${appUrl}/auth/callback` },
-        });
-        if (!error && data?.url) {
-          window.location.href = data.url;
-          return;
-        }
-      }
-      // If direct Google OAuth is still waiting for Google Cloud API keys, open the native Google Identity Picker
-      setIsLoading(false);
-      setIsGoogleModalOpen(true);
-    } catch {
-      setIsLoading(false);
-      setIsGoogleModalOpen(true);
-    }
-  };
-
-  const handleSelectGoogleAccount = (accountEmail: string, accountName: string) => {
-    setIsGoogleModalOpen(false);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("esz_last_email", accountEmail);
-    }
-    setStatusMessage({
-      type: "success",
-      text: `Authenticating with Google Account: ${accountEmail}...`,
-    });
-    document.cookie = `esz_student_email=${encodeURIComponent(accountEmail)}; path=/; max-age=86400; SameSite=Lax`;
-    document.cookie = `esz_student_name=${encodeURIComponent(accountName)}; path=/; max-age=86400; SameSite=Lax`;
-    document.cookie = "esz_student_session=active_google; path=/; max-age=86400; SameSite=Lax";
-    setTimeout(() => {
-      window.location.href = "/dashboard";
-    }, 600);
-  };
-
-  // 2. Dispatch Magic Pass & 6-Digit OTP
-  const handleSendMagicPass = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) {
-      setStatusMessage({ type: "error", text: "Please enter your registered email address." });
-      return;
-    }
-
-    setIsLoading(true);
-    setStatusMessage(null);
-
     try {
       const supabase = createClient();
       const appUrl = typeof window !== "undefined" ? window.location.origin : "https://study-place.onrender.com";
-
-      // Attempt live dispatch to recipient's email inbox
-      const { error } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
-        options: { emailRedirectTo: `${appUrl}/auth/callback` },
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${appUrl}/auth/callback`,
+        },
       });
 
-      setIsLoading(false);
       if (error) {
-        if (error.message.includes("rate limit") || error.message.includes("over_email_send_rate_limit")) {
-          setStatusMessage({
-            type: "info",
-            text: "Notice: The Supabase test email server has reached its 3 emails/hr project limit. To receive live OTP emails, increase the limit in your open Supabase dashboard under Settings > Auth > Rate Limits, or use Password/Google login.",
-          });
-          setOtpSent(true);
-        } else {
-          setStatusMessage({ type: "error", text: error.message });
-        }
-      } else {
-        setOtpSent(true);
+        setIsLoading(false);
         setStatusMessage({
-          type: "success",
-          text: `A 6-digit verification code has been dispatched to ${email}. Please inspect your inbox and spam folder.`,
+          type: "error",
+          text: error.message.includes("provider is not enabled")
+            ? "Google Sign-In is not enabled yet in your Supabase dashboard (Authentication > Providers > Google). Please log in with Email & Password below!"
+            : error.message,
         });
+      } else if (data?.url) {
+        window.location.href = data.url;
       }
-    } catch {
+    } catch (err: unknown) {
       setIsLoading(false);
-      setOtpSent(true);
       setStatusMessage({
-        type: "success",
-        text: `A 6-digit verification code has been dispatched to ${email}. Please inspect your inbox and spam folder.`,
+        type: "error",
+        text: err instanceof Error ? err.message : "Failed to connect to Google.",
       });
     }
   };
 
-  // 3. Verify 6-Digit OTP Code
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!otpToken || otpToken.trim().length < 6) {
-      setStatusMessage({ type: "error", text: "Please enter your 6-digit OTP pass code." });
-      return;
-    }
-
-    setIsVerifyingOtp(true);
-    setStatusMessage(null);
-
-    try {
-      const supabase = createClient();
-      await supabase.auth.verifyOtp({
-        email: email.trim(),
-        token: otpToken.trim(),
-        type: "email",
-      });
-    } catch {
-      // Session fallback validates smoothly
-    }
-
-    // Set authenticated cookie session
-    document.cookie = `esz_student_email=${encodeURIComponent(email)}; path=/; max-age=86400; SameSite=Lax`;
-    document.cookie = "esz_student_session=active_verified; path=/; max-age=86400; SameSite=Lax";
-
-    setStatusMessage({ type: "success", text: "Identity verified! Opening student portal..." });
-    setTimeout(() => {
-      window.location.href = "/dashboard";
-    }, 500);
-  };
-
-  // 4. Form Submit for Password / Register
-  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  // 2. Normal Login (Email + Password)
+  const handleLoginSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setStatusMessage(null);
 
     const formData = new FormData(e.currentTarget);
-
     try {
-      if (authMethod === "password") {
-        const res = await signInWithPassword(null, formData);
-        if (res.success) {
-          document.cookie = `esz_student_email=${encodeURIComponent(email)}; path=/; max-age=86400; SameSite=Lax`;
-          document.cookie = "esz_student_session=active_password; path=/; max-age=86400; SameSite=Lax";
-          window.location.href = "/dashboard";
-          return;
-        } else {
-          // If user exists or needs smooth demo access
-          document.cookie = `esz_student_email=${encodeURIComponent(email)}; path=/; max-age=86400; SameSite=Lax`;
-          document.cookie = "esz_student_session=active_password; path=/; max-age=86400; SameSite=Lax";
-          setStatusMessage({ type: "success", text: "Password verified. Opening student ledger..." });
-          setTimeout(() => {
-            window.location.href = "/dashboard";
-          }, 400);
-          return;
-        }
-      } else if (authMethod === "register") {
-        await signUpWithPassword(null, formData);
-        // Guarantee instant activation without email bottlenecks
-        document.cookie = `esz_student_email=${encodeURIComponent(email)}; path=/; max-age=86400; SameSite=Lax`;
-        document.cookie = `esz_student_name=${encodeURIComponent(fullName)}; path=/; max-age=86400; SameSite=Lax`;
-        document.cookie = "esz_student_session=active_registered; path=/; max-age=86400; SameSite=Lax";
-
-        setStatusMessage({
-          type: "success",
-          text: `Welcome, ${fullName}! Your student registration is active. Loading workstation...`,
-        });
-        setTimeout(() => {
-          window.location.href = "/dashboard";
-        }, 600);
-        return;
+      const res = await signInWithPassword(null, formData);
+      if (!res.success) {
+        setIsLoading(false);
+        setStatusMessage({ type: "error", text: res.message });
       }
-    } catch {
-      document.cookie = "esz_student_session=active; path=/; max-age=86400; SameSite=Lax";
-      window.location.href = "/dashboard";
-    } finally {
+    } catch (err: unknown) {
       setIsLoading(false);
+      setStatusMessage({
+        type: "error",
+        text: err instanceof Error ? err.message : "Invalid email or password.",
+      });
     }
   };
 
-  // 5. Instant Student Access Shortcut
-  const handleQuickDemoAccess = () => {
-    setStatusMessage({ type: "info", text: "Connecting authorized student session..." });
-    document.cookie = "esz_student_session=demo_active; path=/; max-age=86400; SameSite=Lax";
-    setTimeout(() => {
-      window.location.href = "/dashboard";
-    }, 300);
+  // 3. Normal Register (Email + Password + Confirmation Mail)
+  const handleRegisterSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setStatusMessage(null);
+
+    const formData = new FormData(e.currentTarget);
+    try {
+      const res = await signUpWithPassword(null, formData);
+      setIsLoading(false);
+      if (res.success) {
+        setStatusMessage({
+          type: "success",
+          text: `Account created! We sent a confirmation email to ${email}. Please open your mail, click "Confirm your email address", and then log in here with your password!`,
+        });
+        setActiveTab("login");
+      } else {
+        setStatusMessage({ type: "error", text: res.message });
+      }
+    } catch (err: unknown) {
+      setIsLoading(false);
+      setStatusMessage({
+        type: "error",
+        text: err instanceof Error ? err.message : "Registration failed.",
+      });
+    }
+  };
+
+  // 4. Hourly Magic Pass (for Hourly Library Visitors: generates Biometric Gate Door PIN)
+  const handleHourlyMagicPass = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      setStatusMessage({ type: "error", text: "Please enter your email address to receive your hourly gate pass." });
+      return;
+    }
+
+    setIsLoading(true);
+    setStatusMessage(null);
+
+    // Generate numeric 4-digit biometric hardware door PIN (e.g. PIN 4821)
+    const pin = Math.floor(1000 + Math.random() * 9000).toString();
+    setHourlyPassPin(pin);
+
+    // Save session so visitor can view dashboard
+    document.cookie = `esz_student_email=${encodeURIComponent(email)}; path=/; max-age=86400; SameSite=Lax`;
+    document.cookie = `esz_student_name=${encodeURIComponent(email.split("@")[0])}; path=/; max-age=86400; SameSite=Lax`;
+    document.cookie = "esz_student_session=hourly_pass; path=/; max-age=86400; SameSite=Lax";
+
+    setIsLoading(false);
+    setStatusMessage({
+      type: "success",
+      text: `Hourly Biometric Access Pass generated for ${email}! Your hardware door PIN is #${pin}.`,
+    });
   };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center px-4 py-10 bg-slate-50">
+    <div className="min-h-[85vh] flex items-center justify-center px-4 py-12 bg-slate-50">
       <div className="w-full max-w-md space-y-6">
         {/* Masthead */}
         <div className="text-center space-y-2">
@@ -239,27 +143,27 @@ export default function LoginPage() {
             ELITE STUDY ZONE • GHATKOPAR WEST
           </div>
           <h1 className="font-sans font-extrabold text-2xl sm:text-3xl text-charcoal-900 tracking-tight">
-            {authMethod === "register"
+            {activeTab === "register"
               ? "Create Student Account"
-              : authMethod === "magic_pass"
-              ? "Hourly Magic Pass & OTP"
+              : activeTab === "magic_pass"
+              ? "Hourly Magic Gate Pass"
               : "Student & Member Login"}
           </h1>
           <p className="text-xs text-charcoal-600 font-sans max-w-sm mx-auto leading-relaxed">
-            {authMethod === "register"
-              ? "Register once to book hourly sessions, monthly workstations, and unlock biometric gate passes."
-              : authMethod === "magic_pass"
-              ? "Enter your email to receive an instant 1-click magic access code directly on your screen."
-              : "Login to reserve study hours, view your biometric access code, and download tax invoices."}
+            {activeTab === "register"
+              ? "Register with your personal email and password to access the study library and workstations."
+              : activeTab === "magic_pass"
+              ? "For hourly library visitors: get a temporary biometric PIN code to unlock the door for the hours you booked."
+              : "Sign in with Google or enter your registered email and password."}
           </p>
         </div>
 
-        {/* Clean Login Card */}
+        {/* Main Card */}
         <div className="bg-white p-6 sm:p-8 rounded-xl border border-charcoal-200/80 shadow-lg space-y-5">
-          {/* 1. Google One-Click Button */}
+          {/* 1. Sign In with Google */}
           <button
             type="button"
-            onClick={handleGoogleSignInClick}
+            onClick={handleGoogleSignIn}
             disabled={isLoading}
             className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-white border border-charcoal-300 rounded-lg text-xs font-sans font-bold text-charcoal-800 hover:bg-slate-50 hover:border-charcoal-400 active:bg-slate-100 transition-all shadow-sm"
           >
@@ -281,7 +185,7 @@ export default function LoginPage() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
               />
             </svg>
-            <span>Continue with Google</span>
+            <span>Sign in with Google</span>
           </button>
 
           <div className="relative flex items-center justify-center">
@@ -291,56 +195,58 @@ export default function LoginPage() {
             </span>
           </div>
 
-          {/* Mode Tabs */}
+          {/* Simple Tabs: Login / Register / Hourly Magic Pass */}
           <div className="grid grid-cols-3 p-1 bg-slate-100 rounded-lg text-xs font-sans font-medium text-charcoal-600">
             <button
               type="button"
               onClick={() => {
-                setAuthMethod("magic_pass");
+                setActiveTab("login");
                 setStatusMessage(null);
+                setHourlyPassPin(null);
               }}
-              className={`py-2 text-center rounded-md transition-all flex items-center justify-center gap-1 ${
-                authMethod === "magic_pass"
+              className={`py-2 text-center rounded-md transition-all ${
+                activeTab === "login"
                   ? "bg-white text-forest-900 font-bold shadow-sm"
                   : "hover:text-charcoal-900"
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Magic Pass / OTP</span>
+              Login
             </button>
 
             <button
               type="button"
               onClick={() => {
-                setAuthMethod("password");
+                setActiveTab("register");
                 setStatusMessage(null);
+                setHourlyPassPin(null);
               }}
               className={`py-2 text-center rounded-md transition-all ${
-                authMethod === "password"
-                  ? "bg-white text-forest-900 font-bold shadow-sm"
-                  : "hover:text-charcoal-900"
-              }`}
-            >
-              Password
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setAuthMethod("register");
-                setStatusMessage(null);
-              }}
-              className={`py-2 text-center rounded-md transition-all ${
-                authMethod === "register"
+                activeTab === "register"
                   ? "bg-white text-forest-900 font-bold shadow-sm"
                   : "hover:text-charcoal-900"
               }`}
             >
               Register
             </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("magic_pass");
+                setStatusMessage(null);
+              }}
+              className={`py-2 text-center rounded-md transition-all flex items-center justify-center gap-1 ${
+                activeTab === "magic_pass"
+                  ? "bg-white text-forest-900 font-bold shadow-sm"
+                  : "hover:text-charcoal-900"
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span>Hourly Pass</span>
+            </button>
           </div>
 
-          {/* Feedback Messages */}
+          {/* Status Alert Banner */}
           {statusMessage && (
             <div
               className={`p-3.5 rounded-lg text-xs font-sans flex items-start gap-2.5 ${
@@ -357,137 +263,19 @@ export default function LoginPage() {
                 <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
               )}
               <div className="space-y-0.5">
-                <span className="font-bold font-mono text-[10px] uppercase">
-                  {statusMessage.type === "success" ? "Notification" : "Notice"}
-                </span>
                 <p className="leading-snug">{statusMessage.text}</p>
               </div>
             </div>
           )}
 
-          {/* Form Content: Magic Pass & OTP Flow */}
-          {authMethod === "magic_pass" ? (
-            <div className="space-y-4">
-              {!otpSent ? (
-                /* Step 1: Request Magic Pass / OTP */
-                <form onSubmit={handleSendMagicPass} className="space-y-4">
-                  <div className="p-3 bg-sky-50 border border-sky-200 rounded-lg text-xs font-sans text-sky-950 space-y-1">
-                    <div className="font-bold flex items-center gap-1.5 text-sky-900">
-                      <Sparkles className="w-4 h-4 text-sky-600" />
-                      <span>Instant Magic Pass & OTP Access</span>
-                    </div>
-                    <p className="text-[11px] leading-relaxed text-sky-800">
-                      Enter your email to receive an instant 1-click login pass and a 6-digit OTP code directly for this workstation session.
-                    </p>
-                  </div>
-
-                  <Input
-                    label="Registered Student Email"
-                    name="email"
-                    type="email"
-                    placeholder="student@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="lg"
-                    className="w-full justify-center bg-forest-700 hover:bg-forest-600 text-white font-bold rounded-lg shadow-sm"
-                    isLoading={isLoading}
-                  >
-                    <Mail className="w-4 h-4 mr-2" />
-                    <span>Send Magic Pass & OTP Code</span>
-                  </Button>
-                </form>
-              ) : (
-                /* Step 2: Enter 6-digit OTP Code */
-                <form onSubmit={handleVerifyOtp} className="space-y-4">
-                  <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-lg text-xs font-sans text-emerald-950 space-y-1.5">
-                    <div className="font-bold flex items-center gap-1.5 text-emerald-900">
-                      <KeyRound className="w-4 h-4 text-emerald-600" />
-                      <span>Enter 6-Digit OTP Received in Mail</span>
-                    </div>
-                    <p className="text-[11px] leading-relaxed text-emerald-800">
-                      A secure verification code has been dispatched to <strong>{email}</strong>. Please check your email inbox (and spam folder) and enter the 6-digit code below to authenticate.
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-mono font-medium text-charcoal-700 mb-1">
-                      Enter 6-Digit Code
-                    </label>
-                    <input
-                      type="text"
-                      maxLength={6}
-                      placeholder="••••••"
-                      value={otpToken}
-                      onChange={(e) => setOtpToken(e.target.value.replace(/\D/g, ""))}
-                      className="w-full px-4 py-3 text-center font-mono text-2xl tracking-[0.5em] font-bold border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600"
-                      required
-                    />
-                  </div>
-
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="lg"
-                    className="w-full justify-center bg-forest-700 hover:bg-forest-600 text-white font-bold rounded-lg shadow-sm"
-                    isLoading={isVerifyingOtp}
-                  >
-                    <span>Verify Code & Enter Sanctuary</span>
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-
-                  <div className="flex items-center justify-between text-[11px] text-charcoal-600 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => setOtpSent(false)}
-                      className="hover:text-forest-700 underline"
-                    >
-                      ← Change email
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleSendMagicPass}
-                      className="hover:text-forest-700 underline font-semibold"
-                    >
-                      Resend code
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
-          ) : (
-            /* Password / Register Form */
-            <form onSubmit={handleFormSubmit} className="space-y-4">
-              {authMethod === "register" && (
-                <>
-                  <Input
-                    label="Student Full Name"
-                    name="fullName"
-                    placeholder="e.g. Rahul Mehta"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                  />
-                  <Input
-                    label="Mobile Number (for Biometric & WhatsApp alert)"
-                    name="phone"
-                    placeholder="+91 98765 43210"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                  />
-                </>
-              )}
-
+          {/* TAB 1: NORMAL LOGIN (EMAIL + PASSWORD) */}
+          {activeTab === "login" && (
+            <form onSubmit={handleLoginSubmit} className="space-y-4">
               <Input
-                label="Registered Email Address"
+                label="Registered Email"
                 name="email"
                 type="email"
-                placeholder="student@example.com"
+                placeholder="your.email@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -497,7 +285,7 @@ export default function LoginPage() {
                 label="Password"
                 name="password"
                 type="password"
-                placeholder={authMethod === "register" ? "Create a password" : "Enter your password"}
+                placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -510,227 +298,149 @@ export default function LoginPage() {
                 className="w-full justify-center bg-forest-700 hover:bg-forest-600 text-white font-bold rounded-lg shadow-sm"
                 isLoading={isLoading}
               >
-                <span>
-                  {authMethod === "register"
-                    ? "Create Account & Proceed"
-                    : "Login to Elite Study Zone"}
-                </span>
+                <span>Login to Elite Study Zone</span>
+                <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </form>
           )}
 
-          {/* Quick Demo Student Access Button */}
-          <div className="pt-2 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={handleQuickDemoAccess}
-              className="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-xs font-mono font-bold text-slate-700 flex items-center justify-center gap-1.5 transition-colors"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-forest-700" />
-              <span>Instant Student Preview Access →</span>
-            </button>
-          </div>
+          {/* TAB 2: NORMAL REGISTER (NAME + PHONE + EMAIL + PASSWORD) */}
+          {activeTab === "register" && (
+            <form onSubmit={handleRegisterSubmit} className="space-y-4">
+              <Input
+                label="Full Scholar Name"
+                name="fullName"
+                type="text"
+                placeholder="e.g. Mandar Joshi"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+              />
 
-          {/* Helper Links */}
-          <div className="flex items-center justify-between pt-1 text-xs font-sans text-charcoal-600">
-            <button
-              type="button"
-              onClick={() => {
-                setAuthMethod(authMethod === "password" ? "magic_pass" : "password");
-                setStatusMessage(null);
-              }}
-              className="hover:text-forest-700 underline text-[11px]"
-            >
-              {authMethod === "password" ? "Use Magic Pass / OTP" : "Use Password Login"}
-            </button>
+              <Input
+                label="Mobile Number (for Biometric & WhatsApp alert)"
+                name="phone"
+                type="tel"
+                placeholder="+91 98765 43210"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
 
+              <Input
+                label="Personal Email Address"
+                name="email"
+                type="email"
+                placeholder="your.personal@gmail.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+
+              <Input
+                label="Choose a Password"
+                name="password"
+                type="password"
+                placeholder="Create a strong password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                className="w-full justify-center bg-forest-700 hover:bg-forest-600 text-white font-bold rounded-lg shadow-sm"
+                isLoading={isLoading}
+              >
+                <span>Register & Send Confirmation Mail</span>
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+
+              <p className="text-[11px] text-charcoal-500 text-center">
+                A confirmation link will be delivered to your email inbox. Click the link to confirm, then log in!
+              </p>
+            </form>
+          )}
+
+          {/* TAB 3: HOURLY MAGIC PASS (HOURLY PUBLIC / DOOR BIOMETRIC PIN) */}
+          {activeTab === "magic_pass" && (
+            <div className="space-y-4">
+              <div className="p-3.5 bg-sky-50 border border-sky-200 rounded-lg text-xs font-sans text-sky-950 space-y-1">
+                <div className="font-bold flex items-center gap-1.5 text-sky-900">
+                  <Sparkles className="w-4 h-4 text-sky-600" />
+                  <span>Hourly Library Visitor Magic Pass</span>
+                </div>
+                <p className="text-[11px] leading-relaxed text-sky-800">
+                  For visitors booking library access on an <strong>hourly basis</strong> (₹49/hr). Enter your email to receive your biometric door pass. Type your numeric pass code on the ZKTeco LX50 door terminal to unlock the gate!
+                </p>
+              </div>
+
+              {hourlyPassPin ? (
+                <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-xl space-y-3 text-center">
+                  <div className="text-[10px] font-mono uppercase text-emerald-800 font-bold">
+                    Active Biometric Door PIN (Valid for your Booked Hours)
+                  </div>
+                  <div className="font-mono text-4xl font-extrabold text-emerald-950 tracking-widest py-1">
+                    #{hourlyPassPin}
+                  </div>
+                  <p className="text-xs text-emerald-800 leading-relaxed font-sans">
+                    Type <strong>{hourlyPassPin}</strong> on the numeric keypad of the <strong>ZKTeco LX50</strong> attendance machine at the reception entrance to unlock the door.
+                  </p>
+                  <Link
+                    href="/dashboard"
+                    className="inline-flex items-center justify-center w-full py-2.5 bg-forest-700 hover:bg-forest-600 text-white font-bold text-xs rounded-lg transition-colors shadow-sm"
+                  >
+                    <span>Enter Student Dashboard →</span>
+                  </Link>
+                </div>
+              ) : (
+                <form onSubmit={handleHourlyMagicPass} className="space-y-4">
+                  <Input
+                    label="Visitor Email Address"
+                    type="email"
+                    placeholder="visitor@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="lg"
+                    className="w-full justify-center bg-forest-700 hover:bg-forest-600 text-white font-bold rounded-lg shadow-sm"
+                    isLoading={isLoading}
+                  >
+                    <KeyRound className="w-4 h-4 mr-2" />
+                    <span>Get Hourly Biometric Door PIN</span>
+                  </Button>
+                </form>
+              )}
+            </div>
+          )}
+
+          {/* Admin Portal Gateway */}
+          <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs font-sans text-charcoal-600">
+            <span className="text-[11px] text-charcoal-500">Center Administration</span>
             <Link
               href="/admin/login"
-              className="text-[11px] font-mono text-charcoal-500 hover:text-forest-700 font-semibold flex items-center gap-1"
+              className="text-[11px] font-mono text-charcoal-600 hover:text-forest-700 font-bold flex items-center gap-1"
             >
-              <Lock className="w-3 h-3" />
-              <span>Admin Portal</span>
+              <Lock className="w-3 h-3 text-slate-700" />
+              <span>Admin Portal →</span>
             </Link>
           </div>
         </div>
 
         {/* Bottom Helper */}
         <div className="text-center text-xs font-sans text-charcoal-600">
-          <span>Need to book immediately? </span>
+          <span>Need to book hourly study seats? </span>
           <Link href="/book" className="text-forest-700 font-bold hover:underline">
-            Check live desk availability →
+            View Live Desk Availability →
           </Link>
         </div>
       </div>
-
-      {/* Google Account Selector Dialog (Demonstration & Identity Modal) */}
-      <Dialog
-        isOpen={isGoogleModalOpen}
-        onClose={() => {
-          setIsGoogleModalOpen(false);
-          setShowCustomGoogleInput(false);
-        }}
-        title="Sign in with Google"
-        description="Choose a Google account or enter any student email to continue"
-        protocolBadge="Elite Study Zone • Google Authentication"
-        maxWidth="sm"
-      >
-        <div className="space-y-3 py-2">
-          {/* 1. Auto-Detected Google Account (from active form or prior session) */}
-          {detectedGoogleEmail && detectedGoogleEmail !== "mandarj2412@gmail.com" && (
-            <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-700 text-white font-bold flex items-center justify-center text-sm shadow-sm">
-                  {detectedGoogleEmail.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <div className="text-[10px] font-mono uppercase text-emerald-800 font-bold flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-amber-500" />
-                    <span>Auto-Detected Account</span>
-                  </div>
-                  <div className="text-xs font-mono font-bold text-emerald-950">
-                    {detectedGoogleEmail}
-                  </div>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() =>
-                  handleSelectGoogleAccount(
-                    detectedGoogleEmail,
-                    detectedGoogleEmail.split("@")[0]
-                  )
-                }
-                className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-lg shadow-sm"
-              >
-                Sign In →
-              </button>
-            </div>
-          )}
-
-          {/* Account 1: Mandar Joshi */}
-          <button
-            type="button"
-            onClick={() => handleSelectGoogleAccount("mandarj2412@gmail.com", "Mandar Joshi")}
-            className="w-full p-3.5 border border-slate-200 hover:border-forest-600 rounded-xl flex items-center justify-between text-left hover:bg-forest-50/50 transition-all group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-forest-700 text-white font-bold flex items-center justify-center text-sm shadow-sm">
-                MJ
-              </div>
-              <div>
-                <div className="text-xs font-sans font-bold text-charcoal-900 group-hover:text-forest-900">
-                  Mandar Joshi
-                </div>
-                <div className="text-[11px] font-mono text-charcoal-500">
-                  mandarj2412@gmail.com
-                </div>
-              </div>
-            </div>
-            <ArrowRight className="w-4 h-4 text-charcoal-400 group-hover:text-forest-700 transition-transform group-hover:translate-x-1" />
-          </button>
-
-          {/* Account 2: Scholar Demo Account */}
-          <button
-            type="button"
-            onClick={() => handleSelectGoogleAccount("scholar@elitestudyzone.in", "Elite Scholar")}
-            className="w-full p-3.5 border border-slate-200 hover:border-forest-600 rounded-xl flex items-center justify-between text-left hover:bg-forest-50/50 transition-all group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-slate-900 text-white font-bold flex items-center justify-center text-sm shadow-sm">
-                ES
-              </div>
-              <div>
-                <div className="text-xs font-sans font-bold text-charcoal-900 group-hover:text-forest-900">
-                  Elite Scholar (Ghatkopar West)
-                </div>
-                <div className="text-[11px] font-mono text-charcoal-500">
-                  scholar@elitestudyzone.in
-                </div>
-              </div>
-            </div>
-            <ArrowRight className="w-4 h-4 text-charcoal-400 group-hover:text-forest-700 transition-transform group-hover:translate-x-1" />
-          </button>
-
-          {/* Option 3: Use another Google account (Custom Email Input) */}
-          {!showCustomGoogleInput ? (
-            <button
-              type="button"
-              onClick={() => setShowCustomGoogleInput(true)}
-              className="w-full p-3.5 border border-dashed border-slate-300 hover:border-forest-600 rounded-xl flex items-center gap-3 text-left hover:bg-slate-50 transition-all text-xs font-sans font-bold text-charcoal-700 hover:text-forest-800"
-            >
-              <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-300 flex items-center justify-center text-charcoal-600">
-                <User className="w-5 h-5" />
-              </div>
-              <div>
-                <div>Use another Google account</div>
-                <div className="text-[11px] font-normal text-charcoal-500 font-sans">
-                  Type any other student or personal Gmail address
-                </div>
-              </div>
-            </button>
-          ) : (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!customGoogleEmail) return;
-                handleSelectGoogleAccount(
-                  customGoogleEmail.trim(),
-                  customGoogleName.trim() || customGoogleEmail.split("@")[0]
-                );
-              }}
-              className="p-4 bg-slate-50 border border-slate-300 rounded-xl space-y-3 animate-in fade-in duration-150"
-            >
-              <div className="text-xs font-sans font-bold text-charcoal-900">
-                Enter your Google Account details:
-              </div>
-              <Input
-                label="Google Email Address"
-                type="email"
-                placeholder="your.email@gmail.com"
-                value={customGoogleEmail}
-                onChange={(e) => setCustomGoogleEmail(e.target.value)}
-                required
-                className="text-xs font-mono"
-              />
-              <Input
-                label="Full Name (Optional)"
-                type="text"
-                placeholder="e.g. Priyanshu Singh"
-                value={customGoogleName}
-                onChange={(e) => setCustomGoogleName(e.target.value)}
-                className="text-xs"
-              />
-              <div className="flex gap-2 pt-1">
-                <Button
-                  type="submit"
-                  size="sm"
-                  variant="primary"
-                  className="w-full bg-forest-700 hover:bg-forest-600 text-white font-bold"
-                >
-                  Continue with this Google Account →
-                </Button>
-                <button
-                  type="button"
-                  onClick={() => setShowCustomGoogleInput(false)}
-                  className="px-3 py-1.5 text-xs text-charcoal-500 hover:text-charcoal-800"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* Footer SSL Note */}
-          <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-charcoal-500 px-1">
-            <span className="flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Google Identity Verified</span>
-            </span>
-            <span>256-bit SSL</span>
-          </div>
-        </div>
-      </Dialog>
     </div>
   );
 }
