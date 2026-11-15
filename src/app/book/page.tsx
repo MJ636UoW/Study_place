@@ -39,7 +39,7 @@ function BookDemoContent() {
   const [duration, setDuration] = useState<DurationType>("hour");
   const [hourlyCount, setHourlyCount] = useState<number>(3); // Default 3 hours
   const [hourlyTimeSlot, setHourlyTimeSlot] = useState<string>("09:00 - 12:00");
-  const [startDate, setStartDate] = useState<string>("2026-10-28");
+  const [startDate, setStartDate] = useState<string>(() => formatDate(new Date()));
   const [viewMode, setViewMode] = useState<"map" | "list">("map");
 
   // 2. Data State from Replaceable Adapter
@@ -61,13 +61,30 @@ function BookDemoContent() {
   const [holdResult, setHoldResult] = useState<HoldResponse | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState<boolean>(false);
 
-  // Detect mobile viewport
+  // Detect mobile viewport & pre-fill scholar profile
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 1024);
     };
     checkMobile();
     window.addEventListener("resize", checkMobile);
+
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.authenticated && d?.user) {
+          if (d.user.name) setGuestName(d.user.name);
+          if (d.user.email) setGuestEmail(d.user.email);
+        } else {
+          const cookies = document.cookie;
+          const emailMatch = cookies.match(/esz_student_email=([^;]+)/);
+          const nameMatch = cookies.match(/esz_student_name=([^;]+)/);
+          if (nameMatch) setGuestName(decodeURIComponent(nameMatch[1]));
+          if (emailMatch) setGuestEmail(decodeURIComponent(emailMatch[1]));
+        }
+      })
+      .catch(() => {});
+
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 

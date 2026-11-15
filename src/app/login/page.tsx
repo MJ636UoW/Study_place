@@ -19,6 +19,7 @@ function LoginContent() {
   const [selectedHours, setSelectedHours] = useState(2);
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
+  const [registeredConfirmUrl, setRegisteredConfirmUrl] = useState<string | null>(null);
 
   // Google Modal State
   const [showGoogleModal, setShowGoogleModal] = useState(false);
@@ -141,9 +142,13 @@ function LoginContent() {
         return;
       }
 
+      if (data.confirmUrl) {
+        setRegisteredConfirmUrl(data.confirmUrl);
+      }
+
       setStatusMessage({
         type: "success",
-        text: `Account registered! A confirmation message was sent to ${email}. You can now sign in below.`,
+        text: `Account registered! A confirmation message was dispatched for ${email}. You can confirm via your email or click the instant button below.`,
       });
       setActiveTab("login");
     } catch (err: unknown) {
@@ -321,7 +326,7 @@ function LoginContent() {
           {/* Status Alert Banner */}
           {statusMessage && (
             <div
-              className={`p-3.5 rounded-lg text-xs font-sans flex items-start gap-2.5 ${
+              className={`p-3.5 rounded-lg text-xs font-sans flex flex-col gap-2 ${
                 statusMessage.type === "success"
                   ? "bg-emerald-50 border border-emerald-300 text-emerald-950"
                   : statusMessage.type === "error"
@@ -329,14 +334,26 @@ function LoginContent() {
                   : "bg-blue-50 border border-blue-300 text-blue-950"
               }`}
             >
-              {statusMessage.type === "success" ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-              ) : (
-                <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
-              )}
-              <div className="space-y-0.5">
-                <p className="leading-snug">{statusMessage.text}</p>
+              <div className="flex items-start gap-2.5">
+                {statusMessage.type === "success" ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+                )}
+                <div className="space-y-0.5 flex-1">
+                  <p className="leading-snug">{statusMessage.text}</p>
+                </div>
               </div>
+              {registeredConfirmUrl && (
+                <div className="pt-1">
+                  <a
+                    href={registeredConfirmUrl}
+                    className="inline-flex items-center justify-center w-full py-2 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs rounded-md transition-colors shadow-sm"
+                  >
+                    <span>Instant Confirm & Enter Dashboard →</span>
+                  </a>
+                </div>
+              )}
             </div>
           )}
 

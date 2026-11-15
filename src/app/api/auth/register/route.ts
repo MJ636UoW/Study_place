@@ -33,11 +33,16 @@ export async function POST(req: NextRequest) {
     });
 
     const origin = req.nextUrl.origin || "https://study-place.onrender.com";
-    await sendVerificationEmail(cleanEmail, name, token, origin);
+    const confirmUrl = `${origin}/api/auth/verify?token=${encodeURIComponent(token)}&email=${encodeURIComponent(cleanEmail)}`;
+
+    sendVerificationEmail(cleanEmail, name, token, origin).catch((e) =>
+      console.warn("sendVerificationEmail error:", e)
+    );
 
     return NextResponse.json({
       success: true,
-      message: `Registration successful! A confirmation email has been sent to ${cleanEmail}. Please click the link to confirm your account, then log in.`,
+      message: `Account created for ${cleanEmail}! Please confirm your email to sign in.`,
+      confirmUrl,
     });
   } catch (error: any) {
     console.error("Register Error:", error);

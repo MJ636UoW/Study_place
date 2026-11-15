@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/mongodb";
-import { User } from "@/models/User";
+import { verifyEmailToken, findUserByEmail } from "@/lib/hybridDb";
 import { signJwtToken, setAuthCookie } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
-    await connectToDatabase();
-
     const { searchParams } = new URL(req.url);
     const token = searchParams.get("token");
     const email = searchParams.get("email");
@@ -18,20 +15,17 @@ export async function GET(req: NextRequest) {
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const user = await User.findOne({
-      email: cleanEmail,
-      verificationToken: token,
-    });
+    const result = await verifyEmailToken(cleanEmail, token);
 
-    if (!user) {
+    if (!result.ok || !result.user) {
       // Check if user is already verified
-      const verifiedUser = await User.findOne({ email: cleanEmail, emailVerified: true });
-      if (verifiedUser) {
+      const existing = await findUserByEmail(cleanEmail);
+      if (existing && existing.emailVerified) {
         const jwtToken = signJwtToken({
-          userId: verifiedUser._id.toString(),
-          email: verifiedUser.email,
-          name: verifiedUser.name,
-          role: verifiedUser.role,
+          userId: existing._id ? existing._id.toString() : "user_" + Buffer.from(cleanEmail).toString("hex"),
+          email: existing.email || cleanEmail,
+          name: existing.name || "Scholar",
+          role: existing.role || "student",
         });
         const res = NextResponse.redirect(new URL("/dashboard?verified=already", req.url));
         setAuthCookie(res, jwtToken);
@@ -43,16 +37,12 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Verify user
-    user.emailVerified = true;
-    user.verificationToken = null;
-    await user.save();
-
+    const user = result.user;
     const jwtToken = signJwtToken({
-      userId: user._id.toString(),
-      email: user.email,
-      name: user.name,
-      role: user.role,
+      userId: user._id ? user._id.toString() : "user_" + Buffer.from(cleanEmail).toString("hex"),
+      email: user.email || cleanEmail,
+      name: user.name || "Scholar",
+      role: user.role || "student",
     });
 
     const redirectUrl = new URL("/dashboard?welcome=true", req.url);

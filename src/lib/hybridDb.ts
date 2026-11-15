@@ -26,17 +26,28 @@ const fallbackUsers: Map<string, Partial<IUser>> = new Map([
 
 const fallbackPasses: Map<string, Partial<IHourlyMagicPass>> = new Map();
 
+let lastMongoCheck = 0;
+let lastMongoStatus = false;
+const MONGO_CHECK_INTERVAL = 30000; // 30s cache
+
 export async function isMongoAvailable(): Promise<boolean> {
+  const now = Date.now();
+  if (now - lastMongoCheck < MONGO_CHECK_INTERVAL) {
+    return lastMongoStatus;
+  }
+  lastMongoCheck = now;
+
   try {
     const mongoose = await Promise.race([
       connectToDatabase(),
       new Promise<null>((_, reject) =>
-        setTimeout(() => reject(new Error("Mongo connection timeout")), 4000)
+        setTimeout(() => reject(new Error("Mongo connection timeout")), 2500)
       ),
     ]);
-    return !!mongoose;
+    lastMongoStatus = !!mongoose;
+    return lastMongoStatus;
   } catch (err) {
-    console.warn("MongoDB Atlas not reachable yet (likely IP whitelist 0.0.0.0/0 pending). Using resilient store.");
+    lastMongoStatus = false;
     return false;
   }
 }
@@ -46,7 +57,8 @@ export async function findUserByEmail(email: string) {
   const mongoOk = await isMongoAvailable();
   if (mongoOk) {
     try {
-      return await User.findOne({ email: cleanEmail });
+      const u = await User.findOne({ email: cleanEmail });
+      if (u) return u;
     } catch (e) {
       console.warn("Error querying mongo user:", e);
     }
@@ -129,6 +141,36 @@ export async function verifyUserCredentials(email: string, passwordAttempt: stri
   }
 
   return { ok: true, user };
+}
+
+export async function verifyEmailToken(email: string, token: string) {
+  const cleanEmail = email.trim().toLowerCase();
+  const mongoOk = await isMongoAvailable();
+  if (mongoOk) {
+    try {
+      const user = await User.findOne({ email: cleanEmail });
+      if (user) {
+        if (user.verificationToken === token || user.emailVerified) {
+          user.emailVerified = true;
+          user.verificationToken = null;
+          await user.save();
+          return { ok: true, user };
+        }
+      }
+    } catch (e) {
+      console.warn("MongoDB verifyEmailToken error:", e);
+    }
+  }
+
+  // Memory store verification
+  const memUser = fallbackUsers.get(cleanEmail);
+  if (memUser) {
+    memUser.emailVerified = true;
+    memUser.verificationToken = null;
+    return { ok: true, user: memUser };
+  }
+
+  return { ok: false, error: "Invalid token or user not found" };
 }
 
 export async function createMagicPass(email: string, hours: number, name: string = "Hourly Scholar") {
