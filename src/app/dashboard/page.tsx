@@ -89,10 +89,10 @@ interface BiometricPunchItem {
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<"residencies" | "notifications" | "attendance" | "profile">("residencies");
 
-  // Reservations list
-  const [profileName, setProfileName] = useState("Mandar Joshi");
-  const [profileEmail, setProfileEmail] = useState("mandarj2412@gmail.com");
-  const [profilePhone, setProfilePhone] = useState("+91 98753 59327");
+  // Dynamic profile state
+  const [profileName, setProfileName] = useState("Scholar");
+  const [profileEmail, setProfileEmail] = useState("");
+  const [profilePhone, setProfilePhone] = useState("+91 98765 43210");
   const [studyGoal, setStudyGoal] = useState("Competitive Examinations & Self-Study Research");
   const [allocatedShift, setAllocatedShift] = useState("Morning Focus Shift (08:00 — 14:00)");
   const [allocatedHours, setAllocatedHours] = useState(48);
@@ -111,8 +111,9 @@ export default function DashboardPage() {
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
           if (data?.authenticated && data?.user) {
-            setProfileName(data.user.name || "Mandar Joshi");
-            setProfileEmail(data.user.email || "mandarj2412@gmail.com");
+            const derivedName = data.user.name || (data.user.email ? data.user.email.split("@")[0] : "Scholar");
+            setProfileName(derivedName);
+            setProfileEmail(data.user.email || "");
             if (data.user.phone) setProfilePhone(data.user.phone);
             if (data.user.allottedHours) setAllocatedHours(data.user.allottedHours);
           } else {

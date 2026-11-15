@@ -19,9 +19,9 @@ export const Navigation: React.FC = () => {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userName, setUserName] = useState("Mandar Joshi");
-  const [userEmail, setUserEmail] = useState("mandarj2412@gmail.com");
-  const [userInitials, setUserInitials] = useState("MJ");
+  const [userName, setUserName] = useState("Scholar");
+  const [userEmail, setUserEmail] = useState("");
+  const [userInitials, setUserInitials] = useState("SC");
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
   useEffect(() => {
@@ -34,16 +34,17 @@ export const Navigation: React.FC = () => {
       .then((data) => {
         if (data?.authenticated && data?.user) {
           setIsLoggedIn(true);
-          const name = data.user.name || "Mandar Joshi";
-          const email = data.user.email || "mandarj2412@gmail.com";
+          const name = data.user.name || (data.user.email ? data.user.email.split("@")[0] : "Scholar");
+          const email = data.user.email || "";
           setUserName(name);
           setUserEmail(email);
           const initials = name
             .split(" ")
+            .filter(Boolean)
             .map((p: string) => p[0])
             .join("")
             .toUpperCase()
-            .slice(0, 2) || "MJ";
+            .slice(0, 2) || "SC";
           setUserInitials(initials);
         } else {
           // Fallback to cookie check if needed
@@ -55,16 +56,17 @@ export const Navigation: React.FC = () => {
             setIsLoggedIn(true);
             const emailMatch = cookies.match(/esz_student_email=([^;]+)/);
             const nameMatch = cookies.match(/esz_student_name=([^;]+)/);
-            const email = emailMatch ? decodeURIComponent(emailMatch[1]) : "mandarj2412@gmail.com";
-            const name = nameMatch ? decodeURIComponent(nameMatch[1]) : (email.split("@")[0] || "Mandar Joshi");
+            const email = emailMatch ? decodeURIComponent(emailMatch[1]) : "";
+            const name = nameMatch ? decodeURIComponent(nameMatch[1]) : (email ? email.split("@")[0] : "Scholar");
             setUserEmail(email);
             setUserName(name);
             const initials = name
               .split(" ")
-              .map((p) => p[0])
+              .filter(Boolean)
+              .map((p: string) => p[0])
               .join("")
               .toUpperCase()
-              .slice(0, 2) || "MJ";
+              .slice(0, 2) || "SC";
             setUserInitials(initials);
           } else {
             setIsLoggedIn(false);
