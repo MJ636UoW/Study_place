@@ -13,6 +13,8 @@ let cachedSettings = {
   ifscCode: "HDFC0000123",
   qrCodeUrl: "",
   centerPhone: "+91 98753 59327",
+  razorpayKeyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
+  razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET || "",
 };
 
 export async function GET() {
@@ -33,6 +35,8 @@ export async function GET() {
           ifscCode: settings.ifscCode,
           qrCodeUrl: settings.qrCodeUrl,
           centerPhone: settings.centerPhone,
+          razorpayKeyId: settings.razorpayKeyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
+          razorpayKeySecret: settings.razorpayKeySecret ? "••••••••" : "",
         },
       });
     }
@@ -42,7 +46,10 @@ export async function GET() {
 
   return NextResponse.json({
     success: true,
-    settings: cachedSettings,
+    settings: {
+      ...cachedSettings,
+      razorpayKeySecret: cachedSettings.razorpayKeySecret ? "••••••••" : "",
+    },
   });
 }
 
@@ -59,6 +66,8 @@ export async function POST(req: NextRequest) {
       ifscCode,
       qrCodeUrl,
       centerPhone,
+      razorpayKeyId,
+      razorpayKeySecret,
     } = body;
 
     const mongoOk = await isMongoAvailable();
@@ -120,6 +129,16 @@ export async function POST(req: NextRequest) {
     if (centerPhone !== undefined) {
       if (settingsDoc) settingsDoc.centerPhone = centerPhone.trim();
       cachedSettings.centerPhone = centerPhone.trim();
+    }
+
+    if (razorpayKeyId !== undefined) {
+      if (settingsDoc) settingsDoc.razorpayKeyId = razorpayKeyId.trim();
+      cachedSettings.razorpayKeyId = razorpayKeyId.trim();
+    }
+
+    if (razorpayKeySecret !== undefined && razorpayKeySecret && !razorpayKeySecret.includes("••")) {
+      if (settingsDoc) settingsDoc.razorpayKeySecret = razorpayKeySecret.trim();
+      cachedSettings.razorpayKeySecret = razorpayKeySecret.trim();
     }
 
     if (settingsDoc) {

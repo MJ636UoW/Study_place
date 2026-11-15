@@ -167,6 +167,8 @@ export default function AdminPage() {
   const [ifscCodeInput, setIfscCodeInput] = useState("HDFC0000123");
   const [qrCodeUrlInput, setQrCodeUrlInput] = useState("");
   const [centerPhoneInput, setCenterPhoneInput] = useState("+91 98753 59327");
+  const [razorpayKeyIdInput, setRazorpayKeyIdInput] = useState("");
+  const [razorpayKeySecretInput, setRazorpayKeySecretInput] = useState("");
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [settingsFeedback, setSettingsFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -182,6 +184,8 @@ export default function AdminPage() {
           if (d.settings.ifscCode) setIfscCodeInput(d.settings.ifscCode);
           if (d.settings.qrCodeUrl) setQrCodeUrlInput(d.settings.qrCodeUrl);
           if (d.settings.centerPhone) setCenterPhoneInput(d.settings.centerPhone);
+          if (d.settings.razorpayKeyId) setRazorpayKeyIdInput(d.settings.razorpayKeyId);
+          if (d.settings.razorpayKeySecret) setRazorpayKeySecretInput(d.settings.razorpayKeySecret);
         }
       })
       .catch(() => {});
@@ -211,6 +215,8 @@ export default function AdminPage() {
           ifscCode: ifscCodeInput,
           qrCodeUrl: qrCodeUrlInput,
           centerPhone: centerPhoneInput,
+          razorpayKeyId: razorpayKeyIdInput,
+          razorpayKeySecret: razorpayKeySecretInput,
         }),
       });
 
@@ -1555,6 +1561,43 @@ export default function AdminPage() {
                         {upiIdInput || "elitestudyzone@okhdfcbank"}
                       </div>
                     </div>
+                  </div>
+
+                  {/* Razorpay Gateway API Keys */}
+                  <div className="pt-3 border-t border-charcoal-200/80 space-y-2">
+                    <div className="font-bold text-xs text-charcoal-900 flex items-center gap-1.5">
+                      <CreditCard className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Razorpay Official Gateway Keys (Optional)</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                          Razorpay Key ID
+                        </label>
+                        <input
+                          type="text"
+                          value={razorpayKeyIdInput}
+                          onChange={(e) => setRazorpayKeyIdInput(e.target.value)}
+                          placeholder="rzp_live_... or rzp_test_..."
+                          className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-forest-600"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                          Razorpay Key Secret
+                        </label>
+                        <input
+                          type="password"
+                          value={razorpayKeySecretInput}
+                          onChange={(e) => setRazorpayKeySecretInput(e.target.value)}
+                          placeholder="••••••••"
+                          className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-forest-600"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-charcoal-500">
+                      Obtain your API Key from razorpay.com → Settings → API Keys to activate Credit Cards, Net Banking & Wallets.
+                    </p>
                   </div>
                 </div>
               </div>

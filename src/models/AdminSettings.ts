@@ -9,6 +9,8 @@ export interface IAdminSettings extends Document {
   ifscCode: string;
   qrCodeUrl: string;
   centerPhone: string;
+  razorpayKeyId?: string;
+  razorpayKeySecret?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,6 +25,8 @@ const AdminSettingsSchema: Schema<IAdminSettings> = new Schema(
     ifscCode: { type: String, default: "HDFC0000123", trim: true },
     qrCodeUrl: { type: String, default: "" },
     centerPhone: { type: String, default: "+91 98753 59327", trim: true },
+    razorpayKeyId: { type: String, default: "", trim: true },
+    razorpayKeySecret: { type: String, default: "", trim: true },
   },
   {
     timestamps: true,

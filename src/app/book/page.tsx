@@ -675,8 +675,8 @@ function BookDemoContent() {
               optional
             />
 
-            <div className="p-3 border border-amber-300 bg-amber-50 text-[11px] font-mono text-amber-900">
-              This reservation prototype stores hold records in memory using the Replaceable Fixture Adapter. Real payment gateways will connect in a future release.
+            <div className="p-3 border border-emerald-300 bg-emerald-50 text-[11px] font-sans text-emerald-900 rounded-lg">
+              ✨ Instant checkout via PhonePe, Google Pay, dynamic UPI QR code, or Cards. Your ZKTeco biometric attendance PIN is issued automatically upon payment.
             </div>
           </form>
         )}

@@ -15,6 +15,7 @@ export async function GET() {
           accountNumber: settings.accountNumber || "50200084920192",
           ifscCode: settings.ifscCode || "HDFC0000123",
           qrCodeUrl: settings.qrCodeUrl || "",
+          razorpayKeyId: settings.razorpayKeyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
         });
       }
     }
@@ -29,5 +30,6 @@ export async function GET() {
     accountNumber: "50200084920192",
     ifscCode: "HDFC0000123",
     qrCodeUrl: "",
+    razorpayKeyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
   });
 }
