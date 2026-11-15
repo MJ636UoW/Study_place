@@ -46,8 +46,12 @@ function LoginContent() {
 
   // 1. One-Click Google Sign-In
   const handleGoogleSignInClick = () => {
+    if (email && email.includes("@")) {
+      handleExecuteGoogleLogin(email);
+      return;
+    }
     setShowGoogleModal(true);
-    setGoogleEmailInput(email || "mandarj2412@gmail.com");
+    setGoogleEmailInput("mandarj2412@gmail.com");
   };
 
   const handleExecuteGoogleLogin = async (targetEmail: string) => {
@@ -70,9 +74,14 @@ function LoginContent() {
         throw new Error(data.error || "Failed to sign in with Google.");
       }
 
-      setStatusMessage({ type: "success", text: "Google Sign In verified! Redirecting to student portal..." });
-      router.push("/dashboard");
-      router.refresh();
+      const scholarName = data.user?.name || targetEmail.split("@")[0] || "Mandar Joshi";
+      document.cookie = `esz_student_session=active_google; path=/; max-age=604800; SameSite=Lax`;
+      document.cookie = `esz_student_email=${encodeURIComponent(targetEmail)}; path=/; max-age=604800; SameSite=Lax`;
+      document.cookie = `esz_student_name=${encodeURIComponent(scholarName)}; path=/; max-age=604800; SameSite=Lax`;
+
+      setStatusMessage({ type: "success", text: "Google Sign In verified! Redirecting to student dashboard..." });
+      const next = searchParams.get("next") || "/dashboard";
+      window.location.href = next;
     } catch (err: unknown) {
       setIsLoading(false);
       setStatusMessage({
@@ -96,17 +105,20 @@ function LoginContent() {
       });
 
       const data = await res.json();
-      setIsLoading(false);
-
       if (!res.ok) {
+        setIsLoading(false);
         setStatusMessage({ type: "error", text: data.error || "Invalid email or password." });
         return;
       }
 
+      const scholarName = data.user?.name || email.split("@")[0] || "Scholar";
+      document.cookie = `esz_student_session=active; path=/; max-age=604800; SameSite=Lax`;
+      document.cookie = `esz_student_email=${encodeURIComponent(email)}; path=/; max-age=604800; SameSite=Lax`;
+      document.cookie = `esz_student_name=${encodeURIComponent(scholarName)}; path=/; max-age=604800; SameSite=Lax`;
+
       setStatusMessage({ type: "success", text: "Login verified! Entering your workstation dashboard..." });
       const next = searchParams.get("next") || "/dashboard";
-      router.push(next);
-      router.refresh();
+      window.location.href = next;
     } catch (err: unknown) {
       setIsLoading(false);
       setStatusMessage({
@@ -187,6 +199,10 @@ function LoginContent() {
       }
 
       setHourlyPassPin(data.pin);
+      document.cookie = `esz_student_session=hourly_pass; path=/; max-age=604800; SameSite=Lax`;
+      document.cookie = `esz_student_email=${encodeURIComponent(email)}; path=/; max-age=604800; SameSite=Lax`;
+      document.cookie = `esz_student_name=${encodeURIComponent(fullName || email.split("@")[0] || "Hourly Scholar")}; path=/; max-age=604800; SameSite=Lax`;
+
       setStatusMessage({
         type: "success",
         text: `Hourly Biometric Access Pass generated for ${email}! Door PIN is #${data.pin}.`,

@@ -44,6 +44,9 @@ export async function POST(req: NextRequest) {
     });
 
     setAuthCookie(res, token);
+    res.cookies.set("esz_student_session", "active", { path: "/", maxAge: 604800, sameSite: "lax" });
+    res.cookies.set("esz_student_email", encodeURIComponent(email), { path: "/", maxAge: 604800, sameSite: "lax" });
+    res.cookies.set("esz_student_name", encodeURIComponent(user.name || "Scholar"), { path: "/", maxAge: 604800, sameSite: "lax" });
     return res;
   } catch (error: any) {
     console.error("Login Error:", error);

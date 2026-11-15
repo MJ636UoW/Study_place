@@ -61,6 +61,9 @@ export async function POST(req: NextRequest) {
     });
 
     setAuthCookie(res, token);
+    res.cookies.set("esz_student_session", "hourly_pass", { path: "/", maxAge: 604800, sameSite: "lax" });
+    res.cookies.set("esz_student_email", encodeURIComponent(cleanEmail), { path: "/", maxAge: 604800, sameSite: "lax" });
+    res.cookies.set("esz_student_name", encodeURIComponent(name), { path: "/", maxAge: 604800, sameSite: "lax" });
     return res;
   } catch (error: any) {
     console.error("Magic Pass Error:", error);

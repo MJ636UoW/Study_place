@@ -48,19 +48,26 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // IMPORTANT: Check MongoDB JWT auth_token, student session cookie, or Supabase user
+  const authToken = request.cookies.get("auth_token")?.value;
+  const studentSession = request.cookies.get("esz_student_session")?.value;
+  const hasStudentSession = Boolean(authToken || studentSession || user);
+
   const pathname = request.nextUrl.pathname;
 
-  // 1. Protected Member Routes: /dashboard & /book (Login First to Proceed)
-  if (pathname.startsWith("/dashboard") || pathname.startsWith("/book")) {
-    if (!user) {
-      // Check if temporary guest session or prompt login
+  // 1. Protected Member Routes: /dashboard (Login First to Proceed)
+  if (pathname.startsWith("/dashboard")) {
+    if (!hasStudentSession) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("next", pathname);
-      // If user is accessing /book without login, allow them to view or route to login
-      if (pathname.startsWith("/dashboard")) {
-        return NextResponse.redirect(loginUrl);
-      }
+      return NextResponse.redirect(loginUrl);
     }
+  }
+
+  // If already logged in and visiting /login, redirect to /dashboard
+  if (pathname === "/login" && hasStudentSession) {
+    const next = request.nextUrl.searchParams.get("next") || "/dashboard";
+    return NextResponse.redirect(new URL(next, request.url));
   }
 
   // 2. Protected Admin Routes: /admin (excluding /admin/login and /admin/mfa)
