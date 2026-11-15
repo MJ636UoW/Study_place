@@ -27,10 +27,22 @@ export function RazorpayCheckoutModal({
   const [selectedMethod, setSelectedMethod] = useState<"upi" | "card" | "netbanking">("upi");
   const [selectedUpiApp, setSelectedUpiApp] = useState<"gpay" | "phonepe" | "paytm" | "qr">("gpay");
   const [upiIdInput, setUpiIdInput] = useState("");
+  const [merchantUpiId, setMerchantUpiId] = useState("elitestudyzone@okhdfcbank");
+  const [merchantQrUrl, setMerchantQrUrl] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successInfo, setSuccessInfo] = useState<{ paymentId: string; passCode?: string } | null>(null);
   const [copiedPass, setCopiedPass] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/payment-config")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.upiId) setMerchantUpiId(d.upiId);
+        if (d?.qrCodeUrl) setMerchantQrUrl(d.qrCodeUrl);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -264,23 +276,36 @@ export function RazorpayCheckoutModal({
 
                 {selectedUpiApp === "qr" ? (
                   <div className="p-3 bg-white rounded-lg border border-charcoal-200 text-center space-y-2">
-                    <div className="w-28 h-28 mx-auto bg-slate-100 border border-dashed border-charcoal-400 rounded-lg flex items-center justify-center">
-                      <QrCode className="w-20 h-20 text-charcoal-800" />
+                    <div className="w-32 h-32 mx-auto bg-slate-50 border border-charcoal-300 rounded-lg flex items-center justify-center overflow-hidden">
+                      {merchantQrUrl ? (
+                        <img src={merchantQrUrl} alt="UPI QR Code" className="w-full h-full object-contain" />
+                      ) : (
+                        <QrCode className="w-24 h-24 text-charcoal-800" />
+                      )}
                     </div>
                     <div className="text-[11px] text-charcoal-600">
                       Scan with Google Pay, PhonePe, or Paytm to pay <strong>₹{amountRupees}</strong>
                     </div>
+                    <div className="font-mono text-[10px] text-forest-800 bg-forest-50 p-1.5 rounded">
+                      UPI ID: <strong>{merchantUpiId}</strong>
+                    </div>
                   </div>
                 ) : (
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-charcoal-700">Enter UPI ID (Optional):</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. yourname@okhdfcbank"
-                      value={upiIdInput}
-                      onChange={(e) => setUpiIdInput(e.target.value)}
-                      className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 bg-white"
-                    />
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-[11px] bg-white p-2 rounded border border-charcoal-200">
+                      <span className="text-charcoal-600">Center Receiving UPI ID:</span>
+                      <span className="font-mono font-bold text-forest-800">{merchantUpiId}</span>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-semibold text-charcoal-700">Enter Your Paying UPI ID (Optional):</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. yourname@okhdfcbank"
+                        value={upiIdInput}
+                        onChange={(e) => setUpiIdInput(e.target.value)}
+                        className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 bg-white"
+                      />
+                    </div>
                   </div>
                 )}
               </div>

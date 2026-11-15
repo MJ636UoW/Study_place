@@ -18,6 +18,12 @@ import {
   Calendar,
   Sparkles,
   History,
+  QrCode,
+  Building,
+  Save,
+  Key,
+  Mail,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
@@ -30,7 +36,7 @@ import { bookingsFixture } from "@/fixtures";
 export default function AdminPage() {
   // Operational Navigation
   const [activeQueue, setActiveQueue] = useState<
-    "pending" | "holds" | "attendance" | "endings" | "exceptions" | "enquiries" | "reviews" | "audit" | "biometrics"
+    "pending" | "holds" | "attendance" | "endings" | "exceptions" | "enquiries" | "reviews" | "audit" | "biometrics" | "settings"
   >("pending");
 
   // Biometric Hardware State (ZKTeco LX50 Dedicated)
@@ -149,6 +155,86 @@ export default function AdminPage() {
   const [restrictReason, setRestrictReason] = useState("Acoustic noise threshold repeated violation");
   const [restrictRefundDecision, setRestrictRefundDecision] = useState<"initiate_refund" | "forfeit_per_terms" | "manual_review">("manual_review");
   const [restrictConfirmed, setRestrictConfirmed] = useState(false);
+
+  // Admin & Payment Settings State
+  const [adminEmailInput, setAdminEmailInput] = useState("admin@elitestudyzone.in");
+  const [currentPasswordInput, setCurrentPasswordInput] = useState("");
+  const [newPasswordInput, setNewPasswordInput] = useState("");
+  const [confirmPasswordInput, setConfirmPasswordInput] = useState("");
+  const [upiIdInput, setUpiIdInput] = useState("elitestudyzone@okhdfcbank");
+  const [accountHolderInput, setAccountHolderInput] = useState("Elite Study Zone");
+  const [accountNumberInput, setAccountNumberInput] = useState("50200084920192");
+  const [ifscCodeInput, setIfscCodeInput] = useState("HDFC0000123");
+  const [qrCodeUrlInput, setQrCodeUrlInput] = useState("");
+  const [centerPhoneInput, setCenterPhoneInput] = useState("+91 98753 59327");
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [settingsFeedback, setSettingsFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/settings")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.settings) {
+          if (d.settings.adminEmail) setAdminEmailInput(d.settings.adminEmail);
+          if (d.settings.upiId) setUpiIdInput(d.settings.upiId);
+          if (d.settings.accountHolder) setAccountHolderInput(d.settings.accountHolder);
+          if (d.settings.accountNumber) setAccountNumberInput(d.settings.accountNumber);
+          if (d.settings.ifscCode) setIfscCodeInput(d.settings.ifscCode);
+          if (d.settings.qrCodeUrl) setQrCodeUrlInput(d.settings.qrCodeUrl);
+          if (d.settings.centerPhone) setCenterPhoneInput(d.settings.centerPhone);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSettingsFeedback(null);
+
+    if (newPasswordInput && newPasswordInput !== confirmPasswordInput) {
+      setSettingsFeedback({ type: "error", text: "New passwords do not match." });
+      return;
+    }
+
+    setIsSavingSettings(true);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          adminEmail: adminEmailInput,
+          currentPassword: currentPasswordInput,
+          newPassword: newPasswordInput || undefined,
+          upiId: upiIdInput,
+          accountHolder: accountHolderInput,
+          accountNumber: accountNumberInput,
+          ifscCode: ifscCodeInput,
+          qrCodeUrl: qrCodeUrlInput,
+          centerPhone: centerPhoneInput,
+        }),
+      });
+
+      const data = await res.json();
+      setIsSavingSettings(false);
+
+      if (!res.ok) {
+        setSettingsFeedback({ type: "error", text: data.error || "Failed to save settings." });
+        return;
+      }
+
+      setSettingsFeedback({ type: "success", text: "Settings saved successfully! Receiving UPI ID & Bank updated." });
+      setCurrentPasswordInput("");
+      setNewPasswordInput("");
+      setConfirmPasswordInput("");
+      showToast("Admin credentials and payment accounts updated successfully!");
+    } catch (err: unknown) {
+      setIsSavingSettings(false);
+      setSettingsFeedback({
+        type: "error",
+        text: err instanceof Error ? err.message : "Error saving settings.",
+      });
+    }
+  };
 
   // Status feedback toast
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -449,6 +535,7 @@ export default function AdminPage() {
           { id: "enquiries", label: "Inbound Enquiries", count: enquiries.filter((e) => e.status === "new").length },
           { id: "reviews", label: "Review Moderation", count: reviews.length },
           { id: "audit", label: "Audit Ledger", count: auditLog.length },
+          { id: "settings", label: "Admin & Payment Settings", count: 0 },
         ].map((tab) => {
           const isActive = activeQueue === tab.id;
           return (
@@ -1246,6 +1333,258 @@ export default function AdminPage() {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* QUEUE 10: ADMIN & PAYMENT SETTINGS */}
+      {activeQueue === "settings" && (
+        <div className="p-6 border border-ivory-300 bg-ivory-50 shadow-editorial space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-ivory-200 gap-2">
+            <div>
+              <h2 className="font-serif text-2xl text-charcoal-900 flex items-center gap-2">
+                <ShieldCheck className="w-6 h-6 text-forest-800" />
+                <span>Admin Security & Payment Accounts</span>
+              </h2>
+              <p className="text-xs text-charcoal-600 mt-0.5">
+                Manage admin login credentials, email ID, password, and the bank/UPI accounts that receive student payments.
+              </p>
+            </div>
+          </div>
+
+          {/* Feedback Banner */}
+          {settingsFeedback && (
+            <div
+              className={`p-3.5 rounded-lg text-xs font-sans flex items-start gap-2.5 ${
+                settingsFeedback.type === "success"
+                  ? "bg-emerald-50 border border-emerald-300 text-emerald-950"
+                  : "bg-rose-50 border border-rose-300 text-rose-950"
+              }`}
+            >
+              {settingsFeedback.type === "success" ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+              ) : (
+                <ShieldAlert className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+              )}
+              <div className="space-y-0.5">
+                <p className="leading-snug">{settingsFeedback.text}</p>
+              </div>
+            </div>
+          )}
+
+          <form onSubmit={handleSaveSettings} className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-left">
+              {/* SECTION A: ADMIN LOGIN & SECURITY */}
+              <div className="p-5 bg-white border border-ivory-200 rounded-xl space-y-4 shadow-sm">
+                <div className="flex items-center gap-2 pb-2 border-b border-ivory-100">
+                  <Key className="w-4 h-4 text-forest-700" />
+                  <h3 className="font-serif text-base font-bold text-charcoal-900">Admin Account Credentials</h3>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                      Admin Email ID (Username for Login)
+                    </label>
+                    <input
+                      type="email"
+                      value={adminEmailInput}
+                      onChange={(e) => setAdminEmailInput(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 bg-slate-50/50"
+                    />
+                    <p className="text-[10px] text-charcoal-500 mt-1">
+                      This email receives admin alerts, booking notifications, and is used to log in.
+                    </p>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100 space-y-3">
+                    <div className="text-[11px] font-bold text-charcoal-800">Change Admin Password</div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-charcoal-600 mb-1">
+                        Current Password
+                      </label>
+                      <input
+                        type="password"
+                        placeholder="Enter current password to verify"
+                        value={currentPasswordInput}
+                        onChange={(e) => setCurrentPasswordInput(e.target.value)}
+                        className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-medium text-charcoal-600 mb-1">
+                          New Password
+                        </label>
+                        <input
+                          type="password"
+                          placeholder="Create new password"
+                          value={newPasswordInput}
+                          onChange={(e) => setNewPasswordInput(e.target.value)}
+                          className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-medium text-charcoal-600 mb-1">
+                          Confirm New Password
+                        </label>
+                        <input
+                          type="password"
+                          placeholder="Re-type new password"
+                          value={confirmPasswordInput}
+                          onChange={(e) => setConfirmPasswordInput(e.target.value)}
+                          className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100">
+                    <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                      Center Contact Mobile / WhatsApp
+                    </label>
+                    <input
+                      type="text"
+                      value={centerPhoneInput}
+                      onChange={(e) => setCenterPhoneInput(e.target.value)}
+                      className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION B: UPI & BANK ACCOUNT FOR STUDENT PAYMENTS */}
+              <div className="p-5 bg-white border border-ivory-200 rounded-xl space-y-4 shadow-sm">
+                <div className="flex items-center gap-2 pb-2 border-b border-ivory-100">
+                  <CreditCard className="w-4 h-4 text-forest-700" />
+                  <h3 className="font-serif text-base font-bold text-charcoal-900">
+                    Student Payment Receiving Accounts (UPI & Bank)
+                  </h3>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                      Receiving UPI ID (PhonePe / GPay / Paytm / BHIM)
+                    </label>
+                    <input
+                      type="text"
+                      value={upiIdInput}
+                      onChange={(e) => setUpiIdInput(e.target.value)}
+                      placeholder="e.g. elitestudyzone@okhdfcbank or 9876543210@paytm"
+                      required
+                      className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg font-mono font-bold text-forest-900 focus:outline-none focus:ring-2 focus:ring-forest-600 bg-slate-50/50"
+                    />
+                    <p className="text-[10px] text-charcoal-500 mt-1">
+                      This exact UPI ID is presented to students when booking workstations on the website.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                      Bank Account Beneficiary / Holder Name
+                    </label>
+                    <input
+                      type="text"
+                      value={accountHolderInput}
+                      onChange={(e) => setAccountHolderInput(e.target.value)}
+                      placeholder="e.g. Elite Study Zone"
+                      className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                        Bank Account Number
+                      </label>
+                      <input
+                        type="text"
+                        value={accountNumberInput}
+                        onChange={(e) => setAccountNumberInput(e.target.value)}
+                        placeholder="e.g. 50200084920192"
+                        className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-forest-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                        Bank IFSC Code
+                      </label>
+                      <input
+                        type="text"
+                        value={ifscCodeInput}
+                        onChange={(e) => setIfscCodeInput(e.target.value)}
+                        placeholder="e.g. HDFC0000123"
+                        className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg font-mono uppercase focus:outline-none focus:ring-2 focus:ring-forest-600"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                      Custom UPI QR Code Image URL (Optional)
+                    </label>
+                    <input
+                      type="url"
+                      value={qrCodeUrlInput}
+                      onChange={(e) => setQrCodeUrlInput(e.target.value)}
+                      placeholder="https://your-domain.com/my-upi-qr.png"
+                      className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono"
+                    />
+                    <p className="text-[10px] text-charcoal-500 mt-1">
+                      Paste a direct image URL of your shop or business UPI QR code to display it to students.
+                    </p>
+                  </div>
+
+                  {/* QR Code Preview Box */}
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center gap-4">
+                    <div className="w-16 h-16 bg-white border border-charcoal-300 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {qrCodeUrlInput ? (
+                        <img src={qrCodeUrlInput} alt="Preview QR" className="w-full h-full object-contain" />
+                      ) : (
+                        <QrCode className="w-10 h-10 text-charcoal-700" />
+                      )}
+                    </div>
+                    <div className="text-xs space-y-0.5">
+                      <div className="font-bold text-charcoal-900">Student Checkout Preview</div>
+                      <div className="text-[11px] text-charcoal-600">
+                        Paying to: <strong>{accountHolderInput || "Elite Study Zone"}</strong>
+                      </div>
+                      <div className="font-mono text-[10px] text-forest-800">
+                        {upiIdInput || "elitestudyzone@okhdfcbank"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Save Action Bar */}
+            <div className="p-4 bg-white border border-ivory-200 rounded-xl flex items-center justify-between shadow-sm">
+              <span className="text-xs text-charcoal-600">
+                Changes apply immediately to your admin login and to student checkouts across the site.
+              </span>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={isSavingSettings}
+                className="bg-forest-700 hover:bg-forest-600 text-white font-bold gap-2 px-6"
+              >
+                {isSavingSettings ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Saving Changes…</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Save All Admin & Payment Settings</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
         </div>
       )}
 

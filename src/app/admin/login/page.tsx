@@ -23,33 +23,34 @@ export default function AdminLoginPage() {
     setSuccessMessage(null);
 
     try {
-      const supabase = createClient();
+      // 1. Check MongoDB admin settings first
+      const adminRes = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: adminEmail, password: adminPassword }),
+      });
 
-      // First attempt Supabase authentication
+      if (adminRes.ok) {
+        document.cookie = "esz_admin_session=active_token_9842; path=/; max-age=86400; SameSite=Lax";
+        window.location.href = "/admin";
+        return;
+      }
+
+      // 2. Supabase fallback
+      const supabase = createClient();
       const { data, error } = await supabase.auth.signInWithPassword({
         email: adminEmail,
         password: adminPassword,
       });
 
       if (!error && data?.user) {
-        // Authenticated via Supabase
-        document.cookie = "esz_admin_session=active_token_9842; path=/; max-age=86400; SameSite=Lax";
-        window.location.href = "/admin";
-        return;
-      }
-
-      // Hardened fallback for authorized admin deployment
-      if (
-        (adminEmail === "admin@elitestudyzone.in" || adminEmail === "mandarmestry636@gmail.com") &&
-        adminPassword === "Elight_study_"
-      ) {
         document.cookie = "esz_admin_session=active_token_9842; path=/; max-age=86400; SameSite=Lax";
         window.location.href = "/admin";
         return;
       }
 
       setIsLoading(false);
-      setErrorMessage(error?.message || "Invalid administrator credentials. Access strictly denied.");
+      setErrorMessage("Invalid administrator credentials. Access strictly denied.");
     } catch (err: unknown) {
       setIsLoading(false);
       setErrorMessage(err instanceof Error ? err.message : "Authentication error occurred.");
