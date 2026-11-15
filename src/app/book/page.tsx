@@ -687,7 +687,7 @@ function BookDemoContent() {
         bookingRequestId={holdResult?.holdRef || "REQ-PENDING"}
         seatLabel={selectedSeat ? `${selectedSeat.seatNumber} (${selectedSeat.name})` : "Desk"}
         durationLabel={currentDurationRule.label}
-        amountPaise={(holdResult?.totalPrice || currentDurationRule.basePrice) * 100 * 83}
+        amountPaise={(holdResult?.totalPrice || currentDurationRule.basePrice) * 100}
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
         onSuccess={() => {

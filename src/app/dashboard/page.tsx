@@ -1040,7 +1040,7 @@ export default function DashboardPage() {
             setReservations((prev) =>
               prev.map((r) =>
                 r.id === checkoutTarget.id
-                  ? { ...r, requestStatus: "approved", paymentStatus: "paid" }
+                  ? { ...r, requestStatus: "approved", paymentStatus: "paid", passCode: "PASS-2026-PIN004" }
                   : r
               )
             );
