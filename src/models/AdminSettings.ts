@@ -14,6 +14,11 @@ export interface IAdminSettings extends Document {
   gmailUser?: string;
   gmailAppPass?: string;
   googleClientId?: string;
+  whatsappPhoneId?: string;
+  whatsappToken?: string;
+  whatsappNumber?: string;
+  whatsappVerifyToken?: string;
+  aiBotPrompt?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,6 +38,11 @@ const AdminSettingsSchema: Schema<IAdminSettings> = new Schema(
     gmailUser: { type: String, default: "", trim: true },
     gmailAppPass: { type: String, default: "", trim: true },
     googleClientId: { type: String, default: "", trim: true },
+    whatsappPhoneId: { type: String, default: "", trim: true },
+    whatsappToken: { type: String, default: "", trim: true },
+    whatsappNumber: { type: String, default: "+91 98753 59327", trim: true },
+    whatsappVerifyToken: { type: String, default: "esz_whatsapp_verify_token_2026", trim: true },
+    aiBotPrompt: { type: String, default: "You are the AI Concierge for Elite Study Zone in Ghatkopar West, Mumbai. Help students with timings, passes, Wi-Fi and seat bookings." },
   },
   {
     timestamps: true,

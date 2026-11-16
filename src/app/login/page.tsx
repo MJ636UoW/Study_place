@@ -16,9 +16,48 @@ import {
   Clock,
   ShieldCheck,
   Clipboard,
+  MessageCircle,
+  Calendar,
+  Hash,
 } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+
+const AVAILABLE_START_TIMES = [
+  "07:00 AM",
+  "08:00 AM",
+  "09:00 AM",
+  "10:00 AM",
+  "11:00 AM",
+  "12:00 PM",
+  "01:00 PM",
+  "02:00 PM",
+  "03:00 PM",
+  "04:00 PM",
+  "05:00 PM",
+  "06:00 PM",
+  "07:00 PM",
+  "08:00 PM",
+  "09:00 PM",
+  "10:00 PM",
+];
+
+function computeSlotEndTime(startTime12h: string, hours: number): string {
+  const parts = startTime12h.split(" ");
+  if (parts.length !== 2) return startTime12h;
+  let [h, m] = parts[0].split(":").map(Number);
+  const modifier = parts[1];
+  if (modifier === "PM" && h < 12) h += 12;
+  if (modifier === "AM" && h === 12) h = 0;
+
+  const totalMinutes = h * 60 + (m || 0) + hours * 60;
+  let endH = Math.floor(totalMinutes / 60) % 24;
+  const endM = totalMinutes % 60;
+  const endModifier = endH >= 12 ? "PM" : "AM";
+  if (endH > 12) endH -= 12;
+  if (endH === 0) endH = 12;
+  return `${endH.toString().padStart(2, "0")}:${endM.toString().padStart(2, "0")} ${endModifier}`;
+}
 
 function LoginContent() {
   const router = useRouter();
@@ -28,8 +67,12 @@ function LoginContent() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [activeTab, setActiveTab] = useState<"login" | "register" | "magic_pass">("login");
+  const [activeTab, setActiveTab] = useState<"login" | "register" | "magic_pass" | "code_login">("login");
   const [selectedHours, setSelectedHours] = useState(2);
+  const [hourlyStartTime, setHourlyStartTime] = useState("10:00 AM");
+  const [hourlyDate, setHourlyDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [hourlyPassSlot, setHourlyPassSlot] = useState<string | null>(null);
+  const [accessCodeInput, setAccessCodeInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
   const [registeredConfirmUrl, setRegisteredConfirmUrl] = useState<string | null>(null);
@@ -327,11 +370,19 @@ function LoginContent() {
     setIsLoading(true);
     setStatusMessage(null);
 
+    const slotWindow = `${hourlyStartTime} – ${computeSlotEndTime(hourlyStartTime, selectedHours)}`;
+
     try {
       const res = await fetch("/api/auth/magic-pass", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, hours: selectedHours, name: fullName || "Hourly Scholar" }),
+        body: JSON.stringify({
+          email,
+          hours: selectedHours,
+          name: fullName || "Hourly Scholar",
+          phone,
+          slot: `${slotWindow} (${hourlyDate})`,
+        }),
       });
 
       const data = await res.json();
@@ -343,19 +394,58 @@ function LoginContent() {
       }
 
       setHourlyPassPin(data.pin);
+      setHourlyPassSlot(slotWindow);
       document.cookie = `esz_student_session=hourly_pass; path=/; max-age=604800; SameSite=Lax`;
       document.cookie = `esz_student_email=${encodeURIComponent(email)}; path=/; max-age=604800; SameSite=Lax`;
       document.cookie = `esz_student_name=${encodeURIComponent(fullName || email.split("@")[0] || "Hourly Scholar")}; path=/; max-age=604800; SameSite=Lax`;
 
       setStatusMessage({
         type: "success",
-        text: `Hourly Biometric Access Pass generated for ${email}! Door PIN is #${data.pin}.`,
+        text: `Access pass generated for slot ${slotWindow}! Door PIN #${data.pin} dispatched to Email ${phone ? "and WhatsApp" : ""}.`,
       });
     } catch (err: unknown) {
       setIsLoading(false);
       setStatusMessage({
         type: "error",
         text: err instanceof Error ? err.message : "Failed to generate pass.",
+      });
+    }
+  };
+
+  // 5. Direct Access Code / Door PIN Login
+  const handleCodeLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!accessCodeInput.trim()) {
+      setStatusMessage({ type: "error", text: "Please enter your Access Code or Door PIN." });
+      return;
+    }
+
+    setIsLoading(true);
+    setStatusMessage(null);
+
+    try {
+      const res = await fetch("/api/auth/code-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: accessCodeInput.trim() }),
+      });
+
+      const data = await res.json();
+      setIsLoading(false);
+
+      if (!res.ok) {
+        setStatusMessage({ type: "error", text: data.error || "Invalid or expired Access Code." });
+        return;
+      }
+
+      setStatusMessage({ type: "success", text: `Pass Verified! Entering your workstation dashboard...` });
+      const next = searchParams.get("next") || "/dashboard";
+      window.location.href = next;
+    } catch (err: unknown) {
+      setIsLoading(false);
+      setStatusMessage({
+        type: "error",
+        text: err instanceof Error ? err.message : "Code login failed.",
       });
     }
   };
@@ -383,15 +473,19 @@ function LoginContent() {
             {activeTab === "register"
               ? "Create Student Account"
               : activeTab === "magic_pass"
-              ? "Hourly Magic Gate Pass"
+              ? "Hourly Workstation Pass"
+              : activeTab === "code_login"
+              ? "Enter with Pass Code / PIN"
               : "Student & Member Login"}
           </h1>
           <p className="text-xs text-charcoal-600 font-sans max-w-sm mx-auto leading-relaxed">
             {activeTab === "register"
-              ? "Register with your name, email and password to access workstations and reserved desks."
+              ? "Register to receive your ZKTeco Door PIN on WhatsApp and Email."
               : activeTab === "magic_pass"
-              ? "For hourly library visitors (₹49/hr): get an instant numeric PIN to unlock the ZKTeco biometric door."
-              : "Sign in with Google, registered credentials, or hourly visitor pass."}
+              ? "Book by the hour (₹49/hr) with custom time slots and instant door keypad PIN."
+              : activeTab === "code_login"
+              ? "Have an access code from WhatsApp or an hourly pass? Enter your code below."
+              : "Sign in with Google, registered email, or access pass code."}
           </p>
         </div>
 
@@ -432,8 +526,8 @@ function LoginContent() {
             </span>
           </div>
 
-          {/* Clean Responsive Tabs */}
-          <div className="grid grid-cols-3 p-1 bg-slate-100 rounded-lg text-xs font-sans font-medium text-charcoal-600">
+          {/* Clean Responsive 4 Tabs */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 p-1 bg-slate-100 rounded-lg text-xs font-sans font-medium text-charcoal-600 gap-1">
             <button
               type="button"
               onClick={() => {
@@ -441,7 +535,7 @@ function LoginContent() {
                 setStatusMessage(null);
                 setHourlyPassPin(null);
               }}
-              className={`py-2 text-center rounded-md transition-all ${
+              className={`py-2 px-2 text-center rounded-md transition-all ${
                 activeTab === "login"
                   ? "bg-white text-forest-900 font-bold shadow-sm"
                   : "hover:text-charcoal-900"
@@ -457,7 +551,7 @@ function LoginContent() {
                 setStatusMessage(null);
                 setHourlyPassPin(null);
               }}
-              className={`py-2 text-center rounded-md transition-all ${
+              className={`py-2 px-2 text-center rounded-md transition-all ${
                 activeTab === "register"
                   ? "bg-white text-forest-900 font-bold shadow-sm"
                   : "hover:text-charcoal-900"
@@ -472,7 +566,7 @@ function LoginContent() {
                 setActiveTab("magic_pass");
                 setStatusMessage(null);
               }}
-              className={`py-2 text-center rounded-md transition-all flex items-center justify-center gap-1 ${
+              className={`py-2 px-2 text-center rounded-md transition-all flex items-center justify-center gap-1 ${
                 activeTab === "magic_pass"
                   ? "bg-white text-forest-900 font-bold shadow-sm"
                   : "hover:text-charcoal-900"
@@ -480,6 +574,23 @@ function LoginContent() {
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
               <span>Hourly Pass</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("code_login");
+                setStatusMessage(null);
+                setHourlyPassPin(null);
+              }}
+              className={`py-2 px-2 text-center rounded-md transition-all flex items-center justify-center gap-1 ${
+                activeTab === "code_login"
+                  ? "bg-white text-forest-900 font-bold shadow-sm"
+                  : "hover:text-charcoal-900"
+              }`}
+            >
+              <KeyRound className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Enter with PIN</span>
             </button>
           </div>
 
@@ -521,45 +632,61 @@ function LoginContent() {
 
           {/* TAB 1: LOGIN (EMAIL + PASSWORD) */}
           {activeTab === "login" && (
-            <form onSubmit={handleLoginSubmit} className="space-y-4">
-              <Input
-                label="Registered Email"
-                name="email"
-                type="email"
-                placeholder="your.email@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+            <div className="space-y-4">
+              <form onSubmit={handleLoginSubmit} className="space-y-4">
+                <Input
+                  label="Registered Email"
+                  name="email"
+                  type="email"
+                  placeholder="your.email@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
 
-              <Input
-                label="Password"
-                name="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+                <Input
+                  label="Password"
+                  name="password"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
 
-              <Button
-                type="submit"
-                variant="primary"
-                size="lg"
-                className="w-full justify-center bg-forest-700 hover:bg-forest-600 text-white font-bold rounded-lg shadow-sm"
-                isLoading={isLoading}
-              >
-                <span>Login to Elite Study Zone</span>
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </form>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  className="w-full justify-center bg-forest-700 hover:bg-forest-600 text-white font-bold rounded-lg shadow-sm"
+                  isLoading={isLoading}
+                >
+                  <span>Login to Elite Study Zone</span>
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </form>
+
+              <div className="pt-2 text-center border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab("code_login");
+                    setStatusMessage(null);
+                  }}
+                  className="text-xs text-forest-700 hover:text-forest-800 font-semibold inline-flex items-center gap-1.5 transition-colors"
+                >
+                  <KeyRound className="w-3.5 h-3.5 text-forest-700" />
+                  <span>Have an Access Code or Door PIN? Enter with Code →</span>
+                </button>
+              </div>
+            </div>
           )}
 
-          {/* TAB 2: REGISTER (NAME + PHONE + EMAIL + PASSWORD) */}
+          {/* TAB 2: REGISTER (NAME + WHATSAPP + EMAIL + PASSWORD) */}
           {activeTab === "register" && (
             <form onSubmit={handleRegisterSubmit} className="space-y-4">
               <Input
-                label="Full Scholar Name"
+                label="Full Scholar Name *"
                 name="fullName"
                 type="text"
                 placeholder="e.g. Arjun Sharma"
@@ -568,17 +695,30 @@ function LoginContent() {
                 required
               />
 
-              <Input
-                label="Mobile Number (Optional)"
-                name="phone"
-                type="tel"
-                placeholder="+91 98765 43210"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-              />
+              <div>
+                <label className="block text-xs font-semibold text-charcoal-700 mb-1 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>WhatsApp Mobile Number *</span>
+                  </span>
+                  <span className="text-[10px] text-emerald-700 font-mono font-bold uppercase tracking-wider">Dual Delivery</span>
+                </label>
+                <input
+                  name="phone"
+                  type="tel"
+                  placeholder="+91 98765 43210"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  required
+                  className="w-full px-3.5 py-2.5 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-sans"
+                />
+                <p className="text-[10px] text-charcoal-500 mt-1">
+                  Your ZKTeco Door PIN and access pass will be sent to both your WhatsApp and Email.
+                </p>
+              </div>
 
               <Input
-                label="Personal Email Address"
+                label="Personal Email Address *"
                 name="email"
                 type="email"
                 placeholder="your.personal@gmail.com"
@@ -588,7 +728,7 @@ function LoginContent() {
               />
 
               <Input
-                label="Choose a Password"
+                label="Choose a Password *"
                 name="password"
                 type="password"
                 placeholder="Create a strong password"
@@ -604,58 +744,95 @@ function LoginContent() {
                 className="w-full justify-center bg-forest-700 hover:bg-forest-600 text-white font-bold rounded-lg shadow-sm"
                 isLoading={isLoading}
               >
-                <span>Complete Registration</span>
+                <span>Complete Registration & Get Pass PIN</span>
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </form>
           )}
 
-          {/* TAB 3: HOURLY MAGIC PASS (ZKTeco Biometric Door Gate PIN) */}
+          {/* TAB 3: HOURLY PASS WITH TIME SLOT SELECTOR */}
           {activeTab === "magic_pass" && (
             <div className="space-y-4">
               <div className="p-3.5 bg-sky-50 border border-sky-200 rounded-lg text-xs font-sans text-sky-950 space-y-1">
                 <div className="font-bold flex items-center gap-1.5 text-sky-900">
                   <Sparkles className="w-4 h-4 text-sky-600" />
-                  <span>Instant Hourly Biometric Gate Pass</span>
+                  <span>Hourly Pass Booking (₹49/hour)</span>
                 </div>
                 <p className="text-[11px] leading-relaxed text-sky-800">
-                  For visitors booking on an hourly basis (₹49/hr). Type your generated numeric PIN on the <strong>ZKTeco LX50</strong> biometric terminal keypad to open the entrance gate.
+                  Choose your dedicated study hours and time slot. Your access PIN is activated strictly for this slot and sent to your WhatsApp and Email.
                 </p>
               </div>
 
               {hourlyPassPin ? (
-                <div className="p-5 bg-emerald-50 border-2 border-emerald-400 rounded-xl space-y-3.5 text-center shadow-sm">
-                  <div className="text-[10px] font-mono uppercase text-emerald-800 font-bold tracking-wider">
-                    Your Active ZKTeco Door PIN
+                <div className="p-5 bg-emerald-50 border-2 border-emerald-400 rounded-xl space-y-4 text-center shadow-sm">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-200/80 text-emerald-900 text-[10px] font-mono font-bold rounded-full uppercase tracking-wider">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+                    <span>ZKTeco LX50 Pass Active</span>
                   </div>
-                  <div className="flex items-center justify-center gap-3">
-                    <div className="font-mono text-4xl sm:text-5xl font-extrabold text-emerald-950 tracking-widest py-1 bg-white px-5 rounded-lg border border-emerald-200 shadow-inner">
-                      #{hourlyPassPin}
+
+                  <div>
+                    <div className="text-[10px] font-mono uppercase text-emerald-800 font-bold tracking-wider mb-1">
+                      Your Biometric Door PIN
                     </div>
+                    <div className="flex items-center justify-center gap-3">
+                      <div className="font-mono text-4xl sm:text-5xl font-extrabold text-emerald-950 tracking-widest py-1 bg-white px-5 rounded-lg border border-emerald-200 shadow-inner">
+                        #{hourlyPassPin}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={copyPinToClipboard}
+                        className="p-3 bg-white border border-emerald-300 rounded-lg text-emerald-700 hover:bg-emerald-100 transition-colors"
+                        title="Copy PIN"
+                      >
+                        {copiedPin ? <Check className="w-5 h-5 text-emerald-600" /> : <Copy className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {hourlyPassSlot && (
+                    <div className="p-2.5 bg-white border border-emerald-300 rounded-lg text-xs font-mono text-emerald-900">
+                      <span className="font-bold block text-[10px] text-emerald-700 uppercase">Active Time Slot:</span>
+                      <span>{hourlyPassSlot}</span>
+                    </div>
+                  )}
+
+                  <p className="text-xs text-emerald-900 leading-relaxed font-sans">
+                    Type <strong>#{hourlyPassPin}</strong> on the numeric keypad of the <strong>ZKTeco LX50</strong> unit at the door to unlock.
+                  </p>
+
+                  {/* 2 Clear Options: Return to Login with Code OR Proceed to Dashboard */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                     <button
                       type="button"
-                      onClick={copyPinToClipboard}
-                      className="p-3 bg-white border border-emerald-300 rounded-lg text-emerald-700 hover:bg-emerald-100 transition-colors"
-                      title="Copy PIN"
+                      onClick={() => {
+                        setAccessCodeInput(hourlyPassPin);
+                        setActiveTab("code_login");
+                        setStatusMessage({
+                          type: "info",
+                          text: `PIN #${hourlyPassPin} is ready. Click "Verify Code" below to enter.`,
+                        });
+                      }}
+                      className="py-2.5 px-3 bg-white border border-emerald-600 text-emerald-900 hover:bg-emerald-100 font-bold text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5"
                     >
-                      {copiedPin ? <Check className="w-5 h-5 text-emerald-600" /> : <Copy className="w-5 h-5" />}
+                      <KeyRound className="w-4 h-4 text-emerald-700" />
+                      <span>Back to Login with PIN</span>
                     </button>
+
+                    <Link
+                      href="/dashboard"
+                      className="py-2.5 px-3 bg-forest-700 hover:bg-forest-600 text-white font-bold text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                    >
+                      <span>Enter Dashboard →</span>
+                    </Link>
                   </div>
-                  <p className="text-xs text-emerald-900 leading-relaxed font-sans">
-                    Type <strong>{hourlyPassPin}</strong> on the numeric keypad of the <strong>ZKTeco LX50</strong> machine at the door to unlock.
-                  </p>
-                  <Link
-                    href="/dashboard"
-                    className="inline-flex items-center justify-center w-full py-3 bg-forest-700 hover:bg-forest-600 text-white font-bold text-xs rounded-lg transition-colors shadow-sm"
-                  >
-                    <span>Proceed to Student Dashboard →</span>
-                  </Link>
                 </div>
               ) : (
                 <form onSubmit={handleHourlyMagicPass} className="space-y-4">
+                  {/* Step 1: Select Duration */}
                   <div>
-                    <label className="block text-xs font-semibold text-charcoal-700 mb-1.5">
-                      Select Access Duration
+                    <label className="block text-xs font-semibold text-charcoal-700 mb-1.5 flex items-center justify-between">
+                      <span>1. Select Access Duration</span>
+                      <span className="text-[10px] text-forest-700 font-mono font-bold">₹49 / hr</span>
                     </label>
                     <div className="grid grid-cols-4 gap-2">
                       {[1, 2, 4, 8].map((hrs) => (
@@ -676,14 +853,86 @@ function LoginContent() {
                     </div>
                   </div>
 
-                  <Input
-                    label="Visitor Email Address"
-                    type="email"
-                    placeholder="visitor@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
+                  {/* Step 2: Select Date & Time Slot */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-charcoal-700 mb-1 flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5 text-forest-700" />
+                        <span>Date</span>
+                      </label>
+                      <input
+                        type="date"
+                        value={hourlyDate}
+                        onChange={(e) => setHourlyDate(e.target.value)}
+                        className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono bg-white"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-charcoal-700 mb-1 flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5 text-forest-700" />
+                        <span>Start Time Slot</span>
+                      </label>
+                      <select
+                        value={hourlyStartTime}
+                        onChange={(e) => setHourlyStartTime(e.target.value)}
+                        className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono bg-white"
+                      >
+                        {AVAILABLE_START_TIMES.map((t) => (
+                          <option key={t} value={t}>
+                            {t} (to {computeSlotEndTime(t, selectedHours)})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Slot Confirmation Banner */}
+                  <div className="p-2.5 bg-forest-50 border border-forest-200 rounded-lg text-xs font-mono text-forest-950 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] uppercase text-forest-700 font-bold block">Assigned Slot Window:</span>
+                      <span className="font-bold">{hourlyStartTime} → {computeSlotEndTime(hourlyStartTime, selectedHours)}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] uppercase text-forest-700 font-bold block">Total Fee:</span>
+                      <span className="font-bold text-sm text-forest-900">₹{selectedHours * 49}</span>
+                    </div>
+                  </div>
+
+                  {/* Step 3: Contact Details */}
+                  <div className="space-y-3 pt-1">
+                    <Input
+                      label="Your Full Name"
+                      type="text"
+                      placeholder="e.g. Rahul Sharma"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                    />
+
+                    <div>
+                      <label className="block text-xs font-semibold text-charcoal-700 mb-1 flex items-center gap-1.5">
+                        <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>WhatsApp Number (for instant PIN dispatch)</span>
+                      </label>
+                      <input
+                        type="tel"
+                        placeholder="+91 98765 43210"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-sans"
+                      />
+                    </div>
+
+                    <Input
+                      label="Email Address *"
+                      type="email"
+                      placeholder="visitor@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
 
                   <Button
                     type="submit"
@@ -693,10 +942,70 @@ function LoginContent() {
                     isLoading={isLoading}
                   >
                     <KeyRound className="w-4 h-4 mr-2" />
-                    <span>Generate Door PIN (#{selectedHours} hrs)</span>
+                    <span>Book Slot & Issue Door PIN (₹{selectedHours * 49})</span>
                   </Button>
                 </form>
               )}
+            </div>
+          )}
+
+          {/* TAB 4: DIRECT CODE / DOOR PIN LOGIN */}
+          {activeTab === "code_login" && (
+            <div className="space-y-4">
+              <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-lg text-xs font-sans text-emerald-950 space-y-1">
+                <div className="font-bold flex items-center gap-1.5 text-emerald-900">
+                  <KeyRound className="w-4 h-4 text-emerald-700" />
+                  <span>Direct Pass Code & Keypad PIN Login</span>
+                </div>
+                <p className="text-[11px] leading-relaxed text-emerald-800">
+                  Enter your 6-digit Hourly Door PIN or reservation pass code (from WhatsApp or Email) to sign in directly without a password.
+                </p>
+              </div>
+
+              <form onSubmit={handleCodeLogin} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                    Access Code or Door PIN *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 748291 or PASS-2610-E73F10"
+                    value={accessCodeInput}
+                    onChange={(e) => setAccessCodeInput(e.target.value)}
+                    required
+                    autoFocus
+                    className="w-full px-3.5 py-3 text-sm font-mono tracking-wider border-2 border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 uppercase bg-slate-50 text-charcoal-900"
+                  />
+                  <p className="text-[10px] text-charcoal-500 mt-1">
+                    Accepts 6-digit numeric door PINs or reservation pass codes.
+                  </p>
+                </div>
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  className="w-full justify-center bg-forest-700 hover:bg-forest-600 text-white font-bold rounded-lg shadow-sm"
+                  isLoading={isLoading}
+                >
+                  <ShieldCheck className="w-4 h-4 mr-2" />
+                  <span>Verify Code & Enter Dashboard</span>
+                </Button>
+              </form>
+
+              <div className="pt-2 text-center border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab("magic_pass");
+                    setStatusMessage(null);
+                  }}
+                  className="text-xs text-forest-700 hover:text-forest-800 font-semibold inline-flex items-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Don't have a code? Book an hourly pass (₹49/hr) →</span>
+                </button>
+              </div>
             </div>
           )}
 

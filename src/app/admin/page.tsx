@@ -26,6 +26,7 @@ import {
   ShieldCheck,
   Printer,
   Download,
+  MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
@@ -190,6 +191,9 @@ export default function AdminPage() {
   const [gmailUserInput, setGmailUserInput] = useState("");
   const [gmailAppPassInput, setGmailAppPassInput] = useState("");
   const [googleClientIdInput, setGoogleClientIdInput] = useState("");
+  const [whatsappPhoneIdInput, setWhatsappPhoneIdInput] = useState("");
+  const [whatsappTokenInput, setWhatsappTokenInput] = useState("");
+  const [whatsappNumberInput, setWhatsappNumberInput] = useState("+91 98753 59327");
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [settingsFeedback, setSettingsFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -210,6 +214,8 @@ export default function AdminPage() {
           if (d.settings.gmailUser) setGmailUserInput(d.settings.gmailUser);
           if (d.settings.gmailAppPass) setGmailAppPassInput(d.settings.gmailAppPass);
           if (d.settings.googleClientId) setGoogleClientIdInput(d.settings.googleClientId);
+          if (d.settings.whatsappPhoneId) setWhatsappPhoneIdInput(d.settings.whatsappPhoneId);
+          if (d.settings.whatsappNumber) setWhatsappNumberInput(d.settings.whatsappNumber);
         }
       })
       .catch(() => {});
@@ -244,6 +250,9 @@ export default function AdminPage() {
           gmailUser: gmailUserInput,
           gmailAppPass: gmailAppPassInput,
           googleClientId: googleClientIdInput,
+          whatsappPhoneId: whatsappPhoneIdInput,
+          whatsappToken: whatsappTokenInput,
+          whatsappNumber: whatsappNumberInput,
         }),
       });
 
@@ -1710,6 +1719,63 @@ export default function AdminPage() {
                     <p className="text-[10px] text-charcoal-500 leading-relaxed">
                       To enable native Google One-Tap popup: Go to <strong>console.cloud.google.com</strong> → APIs &amp; Services → Credentials → Create OAuth Client ID (Web Application), set Authorized JavaScript Origin to <code>https://study-place.onrender.com</code>, and paste your Web Client ID here.
                     </p>
+                  </div>
+
+                  {/* WhatsApp Business Cloud API & AI Bot Settings */}
+                  <div className="pt-3 border-t border-charcoal-200/80 space-y-2">
+                    <div className="font-bold text-xs text-charcoal-900 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>WhatsApp Business Cloud API & AI Concierge Bot</span>
+                      </div>
+                      <span className="text-[10px] font-mono font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded uppercase">Dual Dispatch Ready</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                          WhatsApp Business Phone Number
+                        </label>
+                        <input
+                          type="text"
+                          value={whatsappNumberInput}
+                          onChange={(e) => setWhatsappNumberInput(e.target.value)}
+                          placeholder="+91 98753 59327"
+                          className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-sans"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                          Meta Phone Number ID
+                        </label>
+                        <input
+                          type="text"
+                          value={whatsappPhoneIdInput}
+                          onChange={(e) => setWhatsappPhoneIdInput(e.target.value)}
+                          placeholder="e.g. 109283746591029"
+                          className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-forest-600"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                        Meta Permanent Access Token (System User Token)
+                      </label>
+                      <input
+                        type="password"
+                        value={whatsappTokenInput}
+                        onChange={(e) => setWhatsappTokenInput(e.target.value)}
+                        placeholder="EAABw..."
+                        className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-forest-600"
+                      />
+                    </div>
+
+                    <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-mono text-charcoal-600 space-y-1">
+                      <div><strong>AI Bot Webhook Callback URL:</strong> <code>https://study-place.onrender.com/api/whatsapp/webhook</code></div>
+                      <div><strong>Verify Token:</strong> <code>esz_whatsapp_verify_token_2026</code></div>
+                      <div className="text-emerald-700">✓ Every student registration and hourly pass automatically sends door PIN and access details to both WhatsApp and Email!</div>
+                    </div>
                   </div>
                 </div>
               </div>

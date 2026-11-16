@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createMagicPass, createUser, findUserByEmail } from "@/lib/hybridDb";
 import { signJwtToken, setAuthCookie } from "@/lib/auth";
 import { sendEmail } from "@/lib/mailer";
+import { sendWhatsAppBookingPass } from "@/lib/whatsapp";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { email, hours = 2, name = "Hourly Scholar" } = body;
+    const { email, hours = 2, name = "Hourly Scholar", phone, slot } = body;
 
     if (!email) {
       return NextResponse.json({ error: "Email is required." }, { status: 400 });
@@ -44,6 +45,18 @@ export async function POST(req: NextRequest) {
       subject: `Your Biometric Pass PIN: #${pin} - Elite Study Zone`,
       html,
     }).catch(() => {});
+
+    // Dispatch pass details to WhatsApp if phone provided
+    if (phone) {
+      sendWhatsAppBookingPass({
+        phone,
+        name,
+        passCode: pin,
+        seatOrPass: "Hourly Flex Workstation",
+        slotOrDates: slot || `${durationHours} hour(s) access`,
+        amountRupees: String(durationHours * 49),
+      }).catch((e) => console.warn("[WhatsApp] Pass dispatch error:", e));
+    }
 
     const token = signJwtToken({
       userId: "hourly_" + pin,

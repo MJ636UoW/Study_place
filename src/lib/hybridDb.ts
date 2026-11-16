@@ -206,3 +206,68 @@ export async function createMagicPass(email: string, hours: number, name: string
 
   return { pin, durationHours, expiresAt };
 }
+
+export async function findPassOrUserByCode(rawCode: string) {
+  const clean = (rawCode || "").trim().toUpperCase().replace(/^#/, "");
+  if (!clean) return null;
+
+  // 1. Check Hourly Magic Pass in Mongo or fallback
+  const mongoOk = await isMongoAvailable();
+  if (mongoOk) {
+    try {
+      const pass = await HourlyMagicPass.findOne({ pin: clean });
+      if (pass) {
+        return {
+          type: "magic_pass" as const,
+          name: pass.userName || "Hourly Scholar",
+          email: pass.email,
+          pin: pass.pin,
+          expiresAt: pass.expiresAt,
+          deskNumber: "Hourly Flex Desk",
+        };
+      }
+    } catch (_) {}
+  }
+
+  const memoryPass = fallbackPasses.get(clean);
+  if (memoryPass) {
+    return {
+      type: "magic_pass" as const,
+      name: memoryPass.userName || "Hourly Scholar",
+      email: memoryPass.email || "scholar@elitestudyzone.in",
+      pin: memoryPass.pin,
+      expiresAt: memoryPass.expiresAt,
+      deskNumber: "Hourly Flex Desk",
+    };
+  }
+
+  // 2. Check User by biometric PIN
+  if (mongoOk) {
+    try {
+      const u = await User.findOne({ biometricPin: clean });
+      if (u) {
+        return {
+          type: "member" as const,
+          name: u.name,
+          email: u.email,
+          pin: u.biometricPin,
+          deskNumber: u.deskNumber || "Dedicated Desk",
+        };
+      }
+    } catch (_) {}
+  }
+
+  for (const [, u] of fallbackUsers.entries()) {
+    if (u.biometricPin === clean) {
+      return {
+        type: "member" as const,
+        name: u.name || "Scholar Member",
+        email: u.email || "scholar@elitestudyzone.in",
+        pin: u.biometricPin,
+        deskNumber: u.deskNumber || "Dedicated Desk",
+      };
+    }
+  }
+
+  return null;
+}

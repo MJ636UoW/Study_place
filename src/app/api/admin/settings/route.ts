@@ -18,6 +18,10 @@ let cachedSettings = {
   gmailUser: process.env.GMAIL_USER || "",
   gmailAppPass: process.env.GMAIL_APP_PASS || "",
   googleClientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
+  whatsappPhoneId: process.env.WHATSAPP_PHONE_ID || "",
+  whatsappToken: process.env.WHATSAPP_ACCESS_TOKEN || "",
+  whatsappNumber: process.env.WHATSAPP_NUMBER || "+91 98753 59327",
+  whatsappVerifyToken: process.env.WHATSAPP_VERIFY_TOKEN || "esz_whatsapp_verify_token_2026",
 };
 
 export async function GET() {
@@ -43,6 +47,10 @@ export async function GET() {
           gmailUser: settings.gmailUser || process.env.GMAIL_USER || "",
           gmailAppPass: settings.gmailAppPass ? "••••••••" : "",
           googleClientId: settings.googleClientId || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
+          whatsappPhoneId: settings.whatsappPhoneId || process.env.WHATSAPP_PHONE_ID || "",
+          whatsappToken: settings.whatsappToken ? "••••••••" : "",
+          whatsappNumber: settings.whatsappNumber || "+91 98753 59327",
+          whatsappVerifyToken: settings.whatsappVerifyToken || "esz_whatsapp_verify_token_2026",
         },
       });
     }
@@ -78,6 +86,10 @@ export async function POST(req: NextRequest) {
       gmailUser,
       gmailAppPass,
       googleClientId,
+      whatsappPhoneId,
+      whatsappToken,
+      whatsappNumber,
+      whatsappVerifyToken,
     } = body;
 
     const mongoOk = await isMongoAvailable();
@@ -165,6 +177,26 @@ export async function POST(req: NextRequest) {
     if (googleClientId !== undefined) {
       if (settingsDoc) settingsDoc.googleClientId = googleClientId.trim();
       cachedSettings.googleClientId = googleClientId.trim();
+    }
+
+    if (whatsappPhoneId !== undefined) {
+      if (settingsDoc) settingsDoc.whatsappPhoneId = whatsappPhoneId.trim();
+      cachedSettings.whatsappPhoneId = whatsappPhoneId.trim();
+    }
+
+    if (whatsappToken !== undefined && whatsappToken && !whatsappToken.includes("••")) {
+      if (settingsDoc) settingsDoc.whatsappToken = whatsappToken.trim();
+      cachedSettings.whatsappToken = whatsappToken.trim();
+    }
+
+    if (whatsappNumber !== undefined) {
+      if (settingsDoc) settingsDoc.whatsappNumber = whatsappNumber.trim();
+      cachedSettings.whatsappNumber = whatsappNumber.trim();
+    }
+
+    if (whatsappVerifyToken !== undefined) {
+      if (settingsDoc) settingsDoc.whatsappVerifyToken = whatsappVerifyToken.trim();
+      cachedSettings.whatsappVerifyToken = whatsappVerifyToken.trim();
     }
 
     if (settingsDoc) {

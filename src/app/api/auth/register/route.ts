@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findUserByEmail, createUser } from "@/lib/hybridDb";
 import { sendVerificationEmail } from "@/lib/mailer";
+import { sendWhatsAppWelcome } from "@/lib/whatsapp";
 
 export async function POST(req: NextRequest) {
   try {
@@ -44,6 +45,16 @@ export async function POST(req: NextRequest) {
     sendVerificationEmail(cleanEmail, name, token, origin).catch((e) =>
       console.warn("sendVerificationEmail error:", e)
     );
+
+    // Also dispatch welcome & credentials via WhatsApp
+    if (phone) {
+      sendWhatsAppWelcome({
+        phone,
+        name,
+        email: cleanEmail,
+        initialPassCode: user?.biometricPin,
+      }).catch((e) => console.warn("[WhatsApp] Welcome dispatch error:", e));
+    }
 
     return NextResponse.json({
       success: true,
