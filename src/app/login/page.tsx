@@ -271,7 +271,14 @@ function LoginContent() {
       }
 
       if (data.confirmUrl) {
-        setRegisteredConfirmUrl(data.confirmUrl);
+        let cleanUrl = data.confirmUrl;
+        if (cleanUrl.includes("/api/auth/verify")) {
+          const q = cleanUrl.indexOf("?");
+          if (q !== -1) {
+            cleanUrl = `/api/auth/verify${cleanUrl.substring(q)}`;
+          }
+        }
+        setRegisteredConfirmUrl(cleanUrl);
       }
 
       setStatusMessage({
@@ -286,6 +293,21 @@ function LoginContent() {
         text: err instanceof Error ? err.message : "Registration failed.",
       });
     }
+  };
+
+  const handleInstantConfirmClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!registeredConfirmUrl) return;
+    setIsLoading(true);
+
+    let targetEndpoint = registeredConfirmUrl;
+    if (targetEndpoint.includes("/api/auth/verify")) {
+      const q = targetEndpoint.indexOf("?");
+      if (q !== -1) {
+        targetEndpoint = `/api/auth/verify${targetEndpoint.substring(q)}`;
+      }
+    }
+    window.location.href = targetEndpoint;
   };
 
   // 4. Hourly Magic Pass (for Hourly Library Visitors: generates Biometric Gate Door PIN in MongoDB)
@@ -478,12 +500,14 @@ function LoginContent() {
               </div>
               {registeredConfirmUrl && (
                 <div className="pt-1">
-                  <a
-                    href={registeredConfirmUrl}
-                    className="inline-flex items-center justify-center w-full py-2 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs rounded-md transition-colors shadow-sm"
+                  <button
+                    type="button"
+                    onClick={handleInstantConfirmClick}
+                    disabled={isLoading}
+                    className="inline-flex items-center justify-center w-full py-2.5 bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 text-white font-bold text-xs rounded-md transition-all shadow-md transform active:scale-98"
                   >
                     <span>Instant Confirm & Enter Dashboard →</span>
-                  </a>
+                  </button>
                 </div>
               )}
             </div>

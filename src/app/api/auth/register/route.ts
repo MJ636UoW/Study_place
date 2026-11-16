@@ -32,7 +32,13 @@ export async function POST(req: NextRequest) {
       emailVerified: false,
     });
 
-    const origin = req.nextUrl.origin || "https://study-place.onrender.com";
+    const forwardedHost = req.headers.get("x-forwarded-host") || req.headers.get("host");
+    const forwardedProto = req.headers.get("x-forwarded-proto") || "https";
+    let origin = "https://study-place.onrender.com";
+    if (forwardedHost && !forwardedHost.includes("localhost:10000")) {
+      origin = `${forwardedProto}://${forwardedHost}`;
+    }
+
     const confirmUrl = `${origin}/api/auth/verify?token=${encodeURIComponent(token)}&email=${encodeURIComponent(cleanEmail)}`;
 
     sendVerificationEmail(cleanEmail, name, token, origin).catch((e) =>
