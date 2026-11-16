@@ -125,3 +125,30 @@ The center's **ZKTeco LX50** fingerprint and keypad terminal connects directly t
 3. **Punch Logs & Attendance**:
    - Punch records are synced via USB / TCP-IP network to `/api/biometric`.
    - The admin can view live check-ins and check-outs in the **ZKTeco LX50 Biometrics** tab.
+
+---
+
+## 6. Email Delivery & Gmail SMTP Configuration
+
+### Why Physical Emails Require an SMTP Account
+In internet web standards, an application server cannot send emails to `@gmail.com` addresses without an authenticated email provider (SMTP). Without SMTP credentials, Google's mail servers reject unauthenticated connections to protect inboxes from spam.
+
+### How the Platform Guarantees Zero Blocked Students
+To ensure students are never stuck even if an SMTP sender is not yet connected:
+- Every registration generates a cryptographic token and displays a green **`[ Instant Confirm & Enter Dashboard → ]`** button right on the registration card.
+- Tapping that button verifies their email in MongoDB Atlas immediately and grants instant access to their student portal.
+
+### How to Deliver Emails Directly to Inboxes (2-Minute Setup)
+To have actual verification and booking emails land directly in students' Gmail inboxes:
+
+1. **Open your Google Account**: Go to [myaccount.google.com](https://myaccount.google.com).
+2. Go to **Security** and ensure **2-Step Verification** is turned ON.
+3. Go to [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords).
+4. Enter an App name: `StudyZone Website` and click **Create**.
+5. Google will display a **16-letter password** (e.g. `abcd efgh ijkl mnop`).
+6. Open the **Admin Portal** (`/admin`), click **Admin & Payment Settings**, and scroll to **Email Delivery (Gmail SMTP)**:
+   - **Sender Gmail Address**: `yourname@gmail.com`
+   - **Google App Password**: Paste the 16-letter password
+   - Click **Save Changes**.
+7. Every new student registration will now send a branded verification email straight into the student's Gmail inbox.
+

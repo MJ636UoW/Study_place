@@ -169,6 +169,8 @@ export default function AdminPage() {
   const [centerPhoneInput, setCenterPhoneInput] = useState("+91 98753 59327");
   const [razorpayKeyIdInput, setRazorpayKeyIdInput] = useState("");
   const [razorpayKeySecretInput, setRazorpayKeySecretInput] = useState("");
+  const [gmailUserInput, setGmailUserInput] = useState("");
+  const [gmailAppPassInput, setGmailAppPassInput] = useState("");
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [settingsFeedback, setSettingsFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -186,6 +188,8 @@ export default function AdminPage() {
           if (d.settings.centerPhone) setCenterPhoneInput(d.settings.centerPhone);
           if (d.settings.razorpayKeyId) setRazorpayKeyIdInput(d.settings.razorpayKeyId);
           if (d.settings.razorpayKeySecret) setRazorpayKeySecretInput(d.settings.razorpayKeySecret);
+          if (d.settings.gmailUser) setGmailUserInput(d.settings.gmailUser);
+          if (d.settings.gmailAppPass) setGmailAppPassInput(d.settings.gmailAppPass);
         }
       })
       .catch(() => {});
@@ -217,6 +221,8 @@ export default function AdminPage() {
           centerPhone: centerPhoneInput,
           razorpayKeyId: razorpayKeyIdInput,
           razorpayKeySecret: razorpayKeySecretInput,
+          gmailUser: gmailUserInput,
+          gmailAppPass: gmailAppPassInput,
         }),
       });
 
@@ -1597,6 +1603,43 @@ export default function AdminPage() {
                     </div>
                     <p className="text-[10px] text-charcoal-500">
                       Obtain your API Key from razorpay.com → Settings → API Keys to activate Credit Cards, Net Banking & Wallets.
+                    </p>
+                  </div>
+
+                  {/* Gmail SMTP Dispatch Settings */}
+                  <div className="pt-3 border-t border-charcoal-200/80 space-y-2">
+                    <div className="font-bold text-xs text-charcoal-900 flex items-center gap-1.5">
+                      <Mail className="w-3.5 h-3.5 text-forest-700" />
+                      <span>Email Delivery (Gmail SMTP / Google App Password)</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                          Sender Gmail Address
+                        </label>
+                        <input
+                          type="email"
+                          value={gmailUserInput}
+                          onChange={(e) => setGmailUserInput(e.target.value)}
+                          placeholder="e.g. elitestudyzone@gmail.com"
+                          className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                          Google App Password (16 Letters)
+                        </label>
+                        <input
+                          type="password"
+                          value={gmailAppPassInput}
+                          onChange={(e) => setGmailAppPassInput(e.target.value)}
+                          placeholder="••••••••"
+                          className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-forest-600"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-charcoal-500">
+                      To send verification and booking confirmation emails directly to students' inboxes: Go to Google Account → Security → 2-Step Verification → App Passwords, generate a 16-letter App Password, and paste it here.
                     </p>
                   </div>
                 </div>

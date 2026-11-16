@@ -15,6 +15,8 @@ let cachedSettings = {
   centerPhone: "+91 98753 59327",
   razorpayKeyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
   razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET || "",
+  gmailUser: process.env.GMAIL_USER || "",
+  gmailAppPass: process.env.GMAIL_APP_PASS || "",
 };
 
 export async function GET() {
@@ -37,6 +39,8 @@ export async function GET() {
           centerPhone: settings.centerPhone,
           razorpayKeyId: settings.razorpayKeyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
           razorpayKeySecret: settings.razorpayKeySecret ? "••••••••" : "",
+          gmailUser: settings.gmailUser || process.env.GMAIL_USER || "",
+          gmailAppPass: settings.gmailAppPass ? "••••••••" : "",
         },
       });
     }
@@ -49,6 +53,7 @@ export async function GET() {
     settings: {
       ...cachedSettings,
       razorpayKeySecret: cachedSettings.razorpayKeySecret ? "••••••••" : "",
+      gmailAppPass: cachedSettings.gmailAppPass ? "••••••••" : "",
     },
   });
 }
@@ -68,6 +73,8 @@ export async function POST(req: NextRequest) {
       centerPhone,
       razorpayKeyId,
       razorpayKeySecret,
+      gmailUser,
+      gmailAppPass,
     } = body;
 
     const mongoOk = await isMongoAvailable();
@@ -139,6 +146,17 @@ export async function POST(req: NextRequest) {
     if (razorpayKeySecret !== undefined && razorpayKeySecret && !razorpayKeySecret.includes("••")) {
       if (settingsDoc) settingsDoc.razorpayKeySecret = razorpayKeySecret.trim();
       cachedSettings.razorpayKeySecret = razorpayKeySecret.trim();
+    }
+
+    if (gmailUser !== undefined) {
+      if (settingsDoc) settingsDoc.gmailUser = gmailUser.trim();
+      cachedSettings.gmailUser = gmailUser.trim();
+    }
+
+    if (gmailAppPass !== undefined && gmailAppPass && !gmailAppPass.includes("••")) {
+      const cleanPass = gmailAppPass.trim().replace(/\s+/g, "");
+      if (settingsDoc) settingsDoc.gmailAppPass = cleanPass;
+      cachedSettings.gmailAppPass = cleanPass;
     }
 
     if (settingsDoc) {

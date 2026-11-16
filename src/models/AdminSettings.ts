@@ -11,6 +11,8 @@ export interface IAdminSettings extends Document {
   centerPhone: string;
   razorpayKeyId?: string;
   razorpayKeySecret?: string;
+  gmailUser?: string;
+  gmailAppPass?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,6 +29,8 @@ const AdminSettingsSchema: Schema<IAdminSettings> = new Schema(
     centerPhone: { type: String, default: "+91 98753 59327", trim: true },
     razorpayKeyId: { type: String, default: "", trim: true },
     razorpayKeySecret: { type: String, default: "", trim: true },
+    gmailUser: { type: String, default: "", trim: true },
+    gmailAppPass: { type: String, default: "", trim: true },
   },
   {
     timestamps: true,

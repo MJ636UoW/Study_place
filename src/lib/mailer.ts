@@ -1,4 +1,6 @@
 import nodemailer from "nodemailer";
+import { isMongoAvailable } from "@/lib/hybridDb";
+import { AdminSettings } from "@/models/AdminSettings";
 
 interface SendEmailParams {
   to: string;
@@ -6,47 +8,66 @@ interface SendEmailParams {
   html: string;
 }
 
-let transporter: nodemailer.Transporter | null = null;
-
-function getTransporter(): nodemailer.Transporter | null {
-  if (transporter) return transporter;
-
+async function getTransporter(): Promise<{ transporter: nodemailer.Transporter | null; senderEmail: string }> {
+  // 1. Check environment variables
   const host = process.env.SMTP_HOST;
   const port = parseInt(process.env.SMTP_PORT || "587", 10);
-  const user = process.env.SMTP_USER || process.env.GMAIL_USER;
-  const pass = process.env.SMTP_PASS || process.env.GMAIL_APP_PASS;
+  const envUser = process.env.SMTP_USER || process.env.GMAIL_USER;
+  const envPass = process.env.SMTP_PASS || process.env.GMAIL_APP_PASS;
 
-  if (host && user && pass) {
-    transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure: port === 465,
-      auth: { user, pass },
-    });
-    return transporter;
+  if (host && envUser && envPass) {
+    return {
+      transporter: nodemailer.createTransport({
+        host,
+        port,
+        secure: port === 465,
+        auth: { user: envUser, pass: envPass },
+      }),
+      senderEmail: envUser,
+    };
   }
 
-  if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASS) {
-    transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASS,
-      },
-    });
-    return transporter;
+  if (envUser && envPass) {
+    return {
+      transporter: nodemailer.createTransport({
+        service: "gmail",
+        auth: { user: envUser, pass: envPass },
+      }),
+      senderEmail: envUser,
+    };
   }
 
-  return null;
+  // 2. Check AdminSettings in MongoDB Atlas
+  try {
+    const mongoOk = await isMongoAvailable();
+    if (mongoOk) {
+      const settings = await AdminSettings.findOne();
+      const dbUser = settings?.gmailUser?.trim();
+      const dbPass = settings?.gmailAppPass?.trim()?.replace(/\s+/g, "");
+      if (dbUser && dbPass) {
+        return {
+          transporter: nodemailer.createTransport({
+            service: "gmail",
+            auth: { user: dbUser, pass: dbPass },
+          }),
+          senderEmail: dbUser,
+        };
+      }
+    }
+  } catch (err) {
+    console.warn("Mailer settings query error:", err);
+  }
+
+  return { transporter: null, senderEmail: "noreply@elitestudyzone.in" };
 }
 
 export async function sendEmail({ to, subject, html }: SendEmailParams): Promise<{ success: boolean; previewUrl?: string }> {
-  const mailer = getTransporter();
+  const { transporter: mailer, senderEmail } = await getTransporter();
 
   if (mailer) {
     try {
       const info = await mailer.sendMail({
-        from: process.env.SMTP_FROM || `"Elite Study Zone" <${process.env.SMTP_USER || process.env.GMAIL_USER || "noreply@elitestudyzone.in"}>`,
+        from: `"Elite Study Zone" <${senderEmail}>`,
         to,
         subject,
         html,
@@ -62,7 +83,8 @@ export async function sendEmail({ to, subject, html }: SendEmailParams): Promise
   // If no SMTP configured yet, log clearly to console
   console.log(`\n======================================================`);
   console.log(`[EMAIL DISPATCH] To: ${to} | Subject: ${subject}`);
-  console.log(`No direct SMTP credentials found in .env (Add SMTP_HOST/SMTP_USER/SMTP_PASS or GMAIL_USER/GMAIL_APP_PASS).`);
+  console.log(`No active SMTP credentials found in Admin Settings or .env.`);
+  console.log(`Configure your Gmail + Google App Password in /admin settings to deliver directly to inboxes.`);
   console.log(`======================================================\n`);
   return { success: true };
 }
