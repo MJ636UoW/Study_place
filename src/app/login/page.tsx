@@ -70,16 +70,22 @@ function LoginContent() {
     } catch (_) {}
   }, [searchParams]);
 
-  // Google One-Tap / GIS Auto-Detection
+  // Google One-Tap / GIS Auto-Detection (Active only when a real client ID is configured)
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    const rawClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    // Guard against dummy sample ID to prevent Google's "Error 401: invalid_client" popup
+    if (!rawClientId || rawClientId.includes("sample") || rawClientId.includes("placeholder")) {
+      return;
+    }
 
     const setupGoogleGsi = () => {
       const g = (window as unknown as { google?: { accounts?: { id?: { initialize: Function; prompt: Function } } } })?.google;
       if (g?.accounts?.id) {
         try {
           g.accounts.id.initialize({
-            client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "10839281928-sample.apps.googleusercontent.com",
+            client_id: rawClientId,
             callback: (res: { credential?: string }) => {
               if (res?.credential) {
                 try {

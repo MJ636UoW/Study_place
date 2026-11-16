@@ -189,6 +189,7 @@ export default function AdminPage() {
   const [razorpayKeySecretInput, setRazorpayKeySecretInput] = useState("");
   const [gmailUserInput, setGmailUserInput] = useState("");
   const [gmailAppPassInput, setGmailAppPassInput] = useState("");
+  const [googleClientIdInput, setGoogleClientIdInput] = useState("");
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [settingsFeedback, setSettingsFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -208,6 +209,7 @@ export default function AdminPage() {
           if (d.settings.razorpayKeySecret) setRazorpayKeySecretInput(d.settings.razorpayKeySecret);
           if (d.settings.gmailUser) setGmailUserInput(d.settings.gmailUser);
           if (d.settings.gmailAppPass) setGmailAppPassInput(d.settings.gmailAppPass);
+          if (d.settings.googleClientId) setGoogleClientIdInput(d.settings.googleClientId);
         }
       })
       .catch(() => {});
@@ -241,6 +243,7 @@ export default function AdminPage() {
           razorpayKeySecret: razorpayKeySecretInput,
           gmailUser: gmailUserInput,
           gmailAppPass: gmailAppPassInput,
+          googleClientId: googleClientIdInput,
         }),
       });
 
@@ -1683,6 +1686,29 @@ export default function AdminPage() {
                     </div>
                     <p className="text-[10px] text-charcoal-500">
                       To send verification and booking confirmation emails directly to students' inboxes: Go to Google Account → Security → 2-Step Verification → App Passwords, generate a 16-letter App Password, and paste it here.
+                    </p>
+                  </div>
+
+                  {/* Google OAuth Client ID Settings */}
+                  <div className="pt-3 border-t border-charcoal-200/80 space-y-2">
+                    <div className="font-bold text-xs text-charcoal-900 flex items-center gap-1.5">
+                      <Key className="w-3.5 h-3.5 text-forest-700" />
+                      <span>Google OAuth 2.0 Web Client ID (Google Sign-In)</span>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                        Google Cloud Client ID
+                      </label>
+                      <input
+                        type="text"
+                        value={googleClientIdInput}
+                        onChange={(e) => setGoogleClientIdInput(e.target.value)}
+                        placeholder="e.g. 10839281928-xxxxxxxx.apps.googleusercontent.com"
+                        className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-forest-600"
+                      />
+                    </div>
+                    <p className="text-[10px] text-charcoal-500 leading-relaxed">
+                      To enable native Google One-Tap popup: Go to <strong>console.cloud.google.com</strong> → APIs &amp; Services → Credentials → Create OAuth Client ID (Web Application), set Authorized JavaScript Origin to <code>https://study-place.onrender.com</code>, and paste your Web Client ID here.
                     </p>
                   </div>
                 </div>

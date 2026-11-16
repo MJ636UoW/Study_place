@@ -13,6 +13,7 @@ export interface IAdminSettings extends Document {
   razorpayKeySecret?: string;
   gmailUser?: string;
   gmailAppPass?: string;
+  googleClientId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -31,6 +32,7 @@ const AdminSettingsSchema: Schema<IAdminSettings> = new Schema(
     razorpayKeySecret: { type: String, default: "", trim: true },
     gmailUser: { type: String, default: "", trim: true },
     gmailAppPass: { type: String, default: "", trim: true },
+    googleClientId: { type: String, default: "", trim: true },
   },
   {
     timestamps: true,

@@ -17,6 +17,7 @@ let cachedSettings = {
   razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET || "",
   gmailUser: process.env.GMAIL_USER || "",
   gmailAppPass: process.env.GMAIL_APP_PASS || "",
+  googleClientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
 };
 
 export async function GET() {
@@ -41,6 +42,7 @@ export async function GET() {
           razorpayKeySecret: settings.razorpayKeySecret ? "••••••••" : "",
           gmailUser: settings.gmailUser || process.env.GMAIL_USER || "",
           gmailAppPass: settings.gmailAppPass ? "••••••••" : "",
+          googleClientId: settings.googleClientId || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
         },
       });
     }
@@ -75,6 +77,7 @@ export async function POST(req: NextRequest) {
       razorpayKeySecret,
       gmailUser,
       gmailAppPass,
+      googleClientId,
     } = body;
 
     const mongoOk = await isMongoAvailable();
@@ -157,6 +160,11 @@ export async function POST(req: NextRequest) {
       const cleanPass = gmailAppPass.trim().replace(/\s+/g, "");
       if (settingsDoc) settingsDoc.gmailAppPass = cleanPass;
       cachedSettings.gmailAppPass = cleanPass;
+    }
+
+    if (googleClientId !== undefined) {
+      if (settingsDoc) settingsDoc.googleClientId = googleClientId.trim();
+      cachedSettings.googleClientId = googleClientId.trim();
     }
 
     if (settingsDoc) {
