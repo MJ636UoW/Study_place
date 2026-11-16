@@ -24,6 +24,8 @@ import {
   Key,
   Mail,
   ShieldCheck,
+  Printer,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
@@ -137,7 +139,23 @@ export default function AdminPage() {
   const [cashReqId, setCashReqId] = useState("");
   const [cashRef, setCashRef] = useState("CASH-2026-");
   const [cashAmountPaise, setCashAmountPaise] = useState(249900);
-  const [cashNotes, setCashNotes] = useState("Collected in person at Curatorial desk (Kandivali East).");
+  const [cashNotes, setCashNotes] = useState("Collected in person at Curatorial desk.");
+  const [targetHoldForCash, setTargetHoldForCash] = useState<any>(null);
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+  const [receiptModalData, setReceiptModalData] = useState<{
+    invoiceNumber: string;
+    receiptRef: string;
+    studentName: string;
+    studentEmail: string;
+    seatId: string;
+    planName: string;
+    startDate: string;
+    endDate: string;
+    amountRupees: string;
+    settledAt: string;
+    passCode: string;
+    staffName: string;
+  } | null>(null);
 
   const [selectedPlanId, setSelectedPlanId] = useState("tier-resident");
   const [newPlanPriceINR, setNewPlanPriceINR] = useState(2499);
@@ -357,6 +375,23 @@ export default function AdminPage() {
       showToast(`Cash payment verified & pass active! Pass: ${res.passCode}`);
       setIsCashOpen(false);
       refreshAllState();
+
+      // Open printable & downloadable PDF Receipt Modal immediately
+      setReceiptModalData({
+        invoiceNumber: res.invoiceNumber || `ESZ-CASH-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`,
+        receiptRef: res.receiptRef || cashRef,
+        studentName: targetHoldForCash?.userId || "Scholar Member",
+        studentEmail: targetHoldForCash?.userId === "user-resident-2" ? "deepakjoshi2149@gmail.com" : `${targetHoldForCash?.userId || "scholar"}@elitestudyzone.in`,
+        seatId: targetHoldForCash?.seatId || res.seatId || "Workstation Desk",
+        planName: "Dedicated Study Sanctuary Pass (1 Month)",
+        startDate: targetHoldForCash?.startDate || res.startDate || "2026-10-25",
+        endDate: targetHoldForCash?.endDate || res.endDate || "2026-11-24",
+        amountRupees: res.amountRupees || (Number(cashAmountPaise) / 100).toFixed(2),
+        settledAt: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" }),
+        passCode: res.passCode || targetHoldForCash?.passCode || "PASS-2610-E73F10",
+        staffName: "Staff Curator (Front Concierge Desk)",
+      });
+      setIsReceiptModalOpen(true);
     } else {
       showToast(`Cash recording failed: ${res.message}`);
     }
@@ -679,7 +714,11 @@ export default function AdminPage() {
                         variant="secondary"
                         size="sm"
                         onClick={() => {
-                          setCashReqId(hold.bookingRequestId);
+                          setCashReqId(hold.bookingRequestId || hold.id);
+                          setCashRef(`CASH-2026-${Math.floor(1000 + Math.random() * 9000)}`);
+                          setCashAmountPaise(249900);
+                          setCashNotes(`Curatorial counter cash settlement for ${hold.seatId} (${hold.userId}).`);
+                          setTargetHoldForCash(hold);
                           setIsCashOpen(true);
                         }}
                       >
@@ -689,8 +728,12 @@ export default function AdminPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          BookingEngine.releaseExpiredHolds();
-                          showToast("Hold released prematurely per curator instruction.");
+                          const res = AdminService.releaseHold(hold.id, staffId);
+                          if (res.success) {
+                            showToast(`Hold on workstation ${hold.seatId} released immediately. Seat is now vacant.`);
+                          } else {
+                            showToast(res.message);
+                          }
                           refreshAllState();
                         }}
                       >
@@ -1740,16 +1783,28 @@ export default function AdminPage() {
         isOpen={isCashOpen}
         onClose={() => setIsCashOpen(false)}
         title="Record In-Person Cash Settlement"
-        description="Register currency received at the Curatorial Desk and advance workstation hold to active."
+        description="Register currency received at the Curatorial Desk, advance workstation hold to active, and generate printable PDF receipt."
         maxWidth="lg"
       >
         <form onSubmit={handleCashSubmit} className="space-y-4 text-xs font-sans text-left">
+          {targetHoldForCash && (
+            <div className="p-3 bg-forest-50 border border-forest-200 rounded-lg text-forest-950 font-mono text-[11px] space-y-1">
+              <div className="font-bold flex items-center justify-between">
+                <span>WORKSTATION: {targetHoldForCash.seatId}</span>
+                <span className="text-forest-700">GUEST: {targetHoldForCash.userId}</span>
+              </div>
+              <div className="text-forest-800 text-[10px]">
+                Dates: {targetHoldForCash.startDate} → {targetHoldForCash.endDate} • Biometric PIN: {targetHoldForCash.passCode}
+              </div>
+            </div>
+          )}
+
           <Input
-            label="Booking Request Reference ID"
+            label="Booking Request / Hold Reference ID"
             value={cashReqId}
             onChange={(e) => setCashReqId(e.target.value)}
             required
-            placeholder="e.g. req-seed-1 or request number"
+            placeholder="e.g. req-seed-2 or alloc-seed-2"
           />
           <Input
             label="Physical Cash Voucher / Receipt Reference"
@@ -1758,7 +1813,7 @@ export default function AdminPage() {
             required
           />
           <Input
-            label="Amount in Integer Paise (e.g. 3800000 = ₹38,000)"
+            label="Amount in Integer Paise (e.g. 249900 = ₹2,499.00)"
             type="number"
             value={cashAmountPaise}
             onChange={(e) => setCashAmountPaise(Number(e.target.value))}
@@ -1772,9 +1827,178 @@ export default function AdminPage() {
           />
           <div className="pt-2 flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setIsCashOpen(false)}>Cancel</Button>
-            <Button variant="primary" type="submit">Record Cash & Issue Pass</Button>
+            <Button variant="primary" type="submit">Confirm Cash & Generate PDF Bill</Button>
           </div>
         </form>
+      </Dialog>
+
+      {/* 2b. Official Cash Receipt & Printable Bill Modal */}
+      <Dialog
+        isOpen={isReceiptModalOpen}
+        onClose={() => setIsReceiptModalOpen(false)}
+        title="Official Tax Invoice & Cash Payment Receipt"
+        description="Desk counter payment verification with active ZKTeco LX50 Biometric Access Pass."
+        maxWidth="2xl"
+      >
+        {receiptModalData && (
+          <div className="space-y-6 text-charcoal-900 font-sans">
+            {/* Printable Receipt Container */}
+            <div id="printable-receipt" className="p-6 sm:p-8 bg-white border border-charcoal-300 rounded-xl shadow-sm text-left space-y-6">
+              {/* Header with Branding */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-4 border-b-2 border-forest-800 gap-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-lg bg-forest-800 text-white font-serif font-black text-lg flex items-center justify-center">
+                      E
+                    </span>
+                    <span className="font-serif font-extrabold text-xl text-forest-950 tracking-tight">
+                      ELITE STUDY ZONE
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-charcoal-500 font-mono uppercase tracking-widest mt-0.5">
+                    Self-Study Space & Focus Hub • 24/7 Biometric Access
+                  </p>
+                  <p className="text-xs text-charcoal-600 mt-1">
+                    Amrut Nagar, Ghatkopar West, Mumbai, Maharashtra 400086
+                  </p>
+                  <p className="text-xs text-charcoal-600 font-mono">
+                    Tel: +91 98753 59327 | support@elitestudyzone.in
+                  </p>
+                </div>
+
+                <div className="text-left sm:text-right space-y-1">
+                  <div className="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 font-mono font-bold text-xs rounded uppercase tracking-wider">
+                    PAID IN CASH (VERIFIED)
+                  </div>
+                  <div className="text-xs font-mono text-charcoal-600">
+                    Invoice: <span className="font-bold text-charcoal-900">{receiptModalData.invoiceNumber}</span>
+                  </div>
+                  <div className="text-xs font-mono text-charcoal-600">
+                    Receipt Ref: <span className="font-bold text-charcoal-900">{receiptModalData.receiptRef}</span>
+                  </div>
+                  <div className="text-xs font-mono text-charcoal-500">
+                    Date: {receiptModalData.settledAt}
+                  </div>
+                </div>
+              </div>
+
+              {/* Student & Workstation Allocation Details */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono">
+                <div>
+                  <span className="text-[10px] uppercase text-charcoal-500 font-bold block">Scholar / Student</span>
+                  <span className="font-bold text-charcoal-900 text-sm">{receiptModalData.studentName}</span>
+                  <span className="text-charcoal-600 block">{receiptModalData.studentEmail}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase text-charcoal-500 font-bold block">Allocated Workstation</span>
+                  <span className="font-bold text-forest-800 text-sm">{receiptModalData.seatId}</span>
+                  <span className="text-charcoal-600 block">Dates: {receiptModalData.startDate} → {receiptModalData.endDate}</span>
+                </div>
+              </div>
+
+              {/* Itemized Bill Table */}
+              <div className="border border-charcoal-200 rounded-lg overflow-hidden">
+                <table className="w-full text-xs font-mono text-left">
+                  <thead className="bg-slate-100 border-b border-charcoal-200 uppercase text-[10px] text-charcoal-600">
+                    <tr>
+                      <th className="p-3">Item / Description</th>
+                      <th className="p-3 text-center">Tenure</th>
+                      <th className="p-3 text-right">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-charcoal-100">
+                    <tr>
+                      <td className="p-3 font-medium">
+                        <div className="font-bold text-charcoal-900">{receiptModalData.planName}</div>
+                        <div className="text-[11px] text-charcoal-500">
+                          Workstation {receiptModalData.seatId} • High-Speed 5G Wi-Fi • Power Backup • Ergonomic Desk
+                        </div>
+                      </td>
+                      <td className="p-3 text-center text-charcoal-600">
+                        {receiptModalData.startDate} → {receiptModalData.endDate}
+                      </td>
+                      <td className="p-3 text-right font-bold text-charcoal-900">
+                        ₹{receiptModalData.amountRupees}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="p-3">
+                        <div className="font-medium text-charcoal-800">ZKTeco LX50 Biometric Access Enrollment</div>
+                        <div className="text-[11px] text-charcoal-500">Optical Fingerprint & Door PIN Sync</div>
+                      </td>
+                      <td className="p-3 text-center text-charcoal-600">Included</td>
+                      <td className="p-3 text-right font-bold text-emerald-700">₹0.00</td>
+                    </tr>
+                  </tbody>
+                  <tfoot className="bg-slate-50 border-t border-charcoal-200">
+                    <tr>
+                      <td colSpan={2} className="p-3 text-right font-bold text-charcoal-800 uppercase text-xs">
+                        Total Amount Received (Cash)
+                      </td>
+                      <td className="p-3 text-right font-bold text-base text-forest-900">
+                        ₹{receiptModalData.amountRupees}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              {/* Biometric Pass Code Box */}
+              <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-1.5 text-emerald-900 font-bold text-xs uppercase font-mono">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+                    <span>ZKTeco LX50 Door Biometric Pass Active</span>
+                  </div>
+                  <p className="text-[11px] text-emerald-800 mt-0.5">
+                    Enter this PIN on the center door keypad or scan your enrolled fingerprint for instant access.
+                  </p>
+                </div>
+                <div className="px-3 py-1.5 bg-white border border-emerald-400 rounded-md font-mono font-bold text-emerald-900 text-sm tracking-wider shadow-sm">
+                  {receiptModalData.passCode}
+                </div>
+              </div>
+
+              {/* Signatures & Seal */}
+              <div className="pt-4 border-t border-charcoal-200 flex justify-between items-end text-xs font-mono text-charcoal-600">
+                <div>
+                  <div className="font-bold text-charcoal-900">Elite Study Zone Concierge</div>
+                  <div>Issued by: {receiptModalData.staffName}</div>
+                  <div className="text-[10px] text-charcoal-400 mt-1">This is an authorized computer-generated cash tax receipt.</div>
+                </div>
+                <div className="text-right">
+                  <div className="inline-block px-3 py-2 border border-charcoal-300 rounded bg-slate-50 font-serif italic text-charcoal-700 text-xs text-center">
+                    [ Official Cashier Seal ]
+                    <div className="text-[9px] font-mono not-italic uppercase tracking-widest text-emerald-700 mt-0.5">
+                      ✓ Audited & Paid
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 print:hidden">
+              <Button variant="ghost" onClick={() => setIsReceiptModalOpen(false)}>
+                Close Window
+              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    if (typeof window !== "undefined") {
+                      window.print();
+                    }
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>Print / Save PDF Receipt</span>
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </Dialog>
 
       {/* 3. Edit Membership Plans Dialog */}
@@ -2061,6 +2285,30 @@ export default function AdminPage() {
           </div>
         </div>
       </Dialog>
+
+      {/* Global Print Styles for Cash Receipts & Tax Bills */}
+      <style jsx global>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          #printable-receipt,
+          #printable-receipt * {
+            visibility: visible;
+          }
+          #printable-receipt {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100vw;
+            margin: 0;
+            padding: 28px;
+            background: white !important;
+            border: none !important;
+            box-shadow: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

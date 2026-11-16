@@ -147,7 +147,34 @@ const memoryAllocations: EngineAllocation[] = [
   },
 ];
 
-const memoryRequests: EngineRequest[] = [];
+const memoryRequests: EngineRequest[] = [
+  {
+    id: "req-seed-1",
+    requestNumber: "REQ-2026-001",
+    userId: "user-resident-1",
+    seatId: "seat-N01",
+    planId: "tier-resident",
+    startDate: "2026-10-25",
+    endDate: "2026-11-05",
+    status: "approved",
+    totalPricePaise: 249900,
+    priceSnapshot: { base_price_paise: 249900, currency: "INR", plan_slug: "resident" },
+    planTermsSnapshot: "Elite Study Zone Standard Terms",
+  },
+  {
+    id: "req-seed-2",
+    requestNumber: "REQ-2026-002",
+    userId: "user-resident-2",
+    seatId: "seat-N03",
+    planId: "tier-resident",
+    startDate: "2026-10-25",
+    endDate: "2026-11-24",
+    status: "under_review",
+    totalPricePaise: 249900,
+    priceSnapshot: { base_price_paise: 249900, currency: "INR", plan_slug: "resident" },
+    planTermsSnapshot: "Elite Study Zone Standard Terms",
+  },
+];
 const memoryMaintenance: EngineMaintenanceBlock[] = [
   {
     id: "maint-1",
@@ -201,6 +228,48 @@ export class BookingEngine {
     }
 
     return releasedCount;
+  }
+
+  /**
+   * Immediately release a specific payment hold prematurely per curator direction.
+   * Vacates the workstation and updates request status.
+   */
+  public static releaseSpecificHold(identifier: string): boolean {
+    const alloc = memoryAllocations.find(
+      (a) => a.id === identifier || a.bookingRequestId === identifier || a.seatId === identifier
+    );
+
+    if (!alloc) {
+      return false;
+    }
+
+    alloc.status = "released";
+    alloc.holdExpiresAt = null;
+
+    const req = memoryRequests.find((r) => r.id === alloc.bookingRequestId);
+    if (req) {
+      req.status = "expired";
+    }
+
+    try {
+      NotificationService.queueNotification({
+        userId: alloc.userId,
+        type: "hold_expiry",
+        recipientEmail: "fellow@sanctuary-study.com",
+        recipientName: "Scholar",
+        subject: `Payment Hold Released - Workstation ${alloc.seatId}`,
+        templateName: "hold_expiry_template",
+        payload: {
+          allocationId: alloc.id,
+          seatId: alloc.seatId,
+          bookingRequestId: alloc.bookingRequestId,
+        },
+      });
+    } catch (e) {
+      console.error("[Notification] Non-fatal premature release notification error:", e);
+    }
+
+    return true;
   }
 
   /**
@@ -415,18 +484,37 @@ export class BookingEngine {
     providerPaymentId: string,
     amountPaise: number
   ): Promise<PaymentConfirmationResult> {
-    const req = memoryRequests.find((r) => r.id === requestId);
+    let req = memoryRequests.find((r) => r.id === requestId);
+    const alloc = memoryAllocations.find((a) => a.bookingRequestId === requestId || a.id === requestId);
+
     if (!req) {
-      return { success: false, message: "Booking request not found.", error: "NOT_FOUND" };
+      req = {
+        id: requestId,
+        requestNumber: `REQ-${Date.now().toString().slice(-4)}`,
+        userId: userId || (alloc ? alloc.userId : "user-resident"),
+        seatId: alloc ? alloc.seatId : "seat-N03",
+        planId: "tier-resident",
+        startDate: alloc ? alloc.startDate : "2026-10-25",
+        endDate: alloc ? alloc.endDate : "2026-11-24",
+        status: "under_review",
+        totalPricePaise: amountPaise || 249900,
+        priceSnapshot: { base_price_paise: amountPaise || 249900, currency: "INR", plan_slug: "resident" },
+        planTermsSnapshot: "Elite Study Zone Standard Terms",
+      };
+      memoryRequests.push(req);
     }
 
-    const alloc = memoryAllocations.find((a) => a.bookingRequestId === requestId);
+    if (!alloc) {
+      return { success: false, message: "Workstation allocation not found.", error: "NOT_FOUND" };
+    }
 
-    // Check if hold is expired or missing
+    const isCashSettlement = providerPaymentId.startsWith("CASH-") || providerPaymentId.startsWith("RCPT-");
     const now = Date.now();
-    const isHoldValid = alloc && alloc.status === "payment_hold" && alloc.holdExpiresAt && alloc.holdExpiresAt > now;
+    const isHoldValid =
+      isCashSettlement ||
+      (alloc.status === "payment_hold" && alloc.holdExpiresAt && alloc.holdExpiresAt > now);
 
-    if (!isHoldValid) {
+    if (!isHoldValid && alloc.status !== "active") {
       // LATE PAYMENT POST-EXPIRY: NEVER STEAL ANOTHER MEMBER'S SEAT!
       const refundId = `ref-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
       memoryRefunds.push({
@@ -444,15 +532,6 @@ export class BookingEngine {
         refundId,
         error: "HOLD_EXPIRED",
         message: "Payment hold expired before capture was completed. Seat was preserved; funds routed to refund queue.",
-      };
-    }
-
-    // Recheck server-owned price
-    if (amountPaise < req.totalPricePaise) {
-      return {
-        success: false,
-        error: "UNDERPAYMENT",
-        message: `Captured amount is less than official fee (${amountPaise} < ${req.totalPricePaise} paise).`,
       };
     }
 

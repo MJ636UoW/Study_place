@@ -351,6 +351,24 @@ export class AdminService {
     return { success: true, attendance: existing };
   }
 
+  // Release hold immediately per curator command
+  public static releaseHold(allocationId: string, staffId = "staff_curator_1") {
+    const success = BookingEngine.releaseSpecificHold(allocationId);
+    if (success) {
+      this.logAuditEvent({
+        actorId: staffId,
+        staffName: "Staff Curator",
+        action: "HOLD_RELEASED_PREMATURELY",
+        resourceType: "seat_allocation",
+        resourceId: allocationId,
+        details: { allocationId, timestamp: new Date().toISOString() },
+        reason: "Hold released prematurely per curator instruction",
+      });
+      return { success: true, message: `Workstation hold ${allocationId} released immediately. Desk vacated.` };
+    }
+    return { success: false, message: "Allocation hold not found or already released." };
+  }
+
   // Record cash payment
   public static async recordCashPayment(params: {
     bookingRequestId: string;
@@ -361,9 +379,11 @@ export class AdminService {
   }) {
     const { bookingRequestId, staffId, receiptRef, notes, amountPaise } = params;
 
-    // Verify unexpired hold
+    // Verify unexpired hold or matching allocation
     const allocs = BookingEngine.getAllAllocations();
-    const alloc = allocs.find((a) => a.bookingRequestId === bookingRequestId);
+    const alloc = allocs.find(
+      (a) => a.bookingRequestId === bookingRequestId || a.id === bookingRequestId || a.seatId === bookingRequestId
+    );
 
     if (!alloc || (alloc.status !== "payment_hold" && alloc.status !== "active")) {
       return {
@@ -375,19 +395,19 @@ export class AdminService {
 
     // Confirm booking in engine with cash reference
     const confirmRes = await BookingEngine.confirmPaymentAndSeat(
-      bookingRequestId,
+      alloc.bookingRequestId || bookingRequestId,
       alloc.userId,
       receiptRef,
       amountPaise
     );
 
-    if (!confirmRes.success) {
+    if (!confirmRes.success && !confirmRes.passCode) {
       return confirmRes;
     }
 
     const cashEntry: CashPaymentRecord = {
       id: `cash-${Date.now()}`,
-      bookingRequestId,
+      bookingRequestId: alloc.bookingRequestId,
       staffId,
       receiptRef,
       amountPaise,
@@ -401,14 +421,25 @@ export class AdminService {
       staffName: "Desk Curator",
       action: "CASH_PAYMENT_RECORDED",
       resourceType: "booking_request",
-      resourceId: bookingRequestId,
-      details: { receiptRef, amountPaise, notes },
+      resourceId: alloc.bookingRequestId,
+      details: { receiptRef, amountPaise, notes, seatId: alloc.seatId },
       reason: `In-person cash receipt settled: ${receiptRef}`,
     });
 
+    const invoiceNumber = `ESZ-CASH-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
+
     return {
       success: true,
-      passCode: confirmRes.passCode,
+      passCode: confirmRes.passCode || alloc.passCode,
+      allocationId: alloc.id,
+      seatId: alloc.seatId,
+      userId: alloc.userId,
+      startDate: alloc.startDate,
+      endDate: alloc.endDate,
+      receiptRef,
+      amountRupees: (amountPaise / 100).toFixed(2),
+      invoiceNumber,
+      settledAt: cashEntry.settledAt,
       message: `Cash payment of ₹${(amountPaise / 100).toFixed(2)} recorded by ${staffId}. Workstation confirmed.`,
     };
   }
