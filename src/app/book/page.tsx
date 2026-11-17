@@ -648,7 +648,7 @@ function BookDemoContent() {
               <div>Zone: {selectedSeat?.zone}</div>
               <div>Period: {formatDisplayDate(startDate)} {duration === "hour" ? `(${hourlyTimeSlot})` : `→ ${formatDisplayDate(calculatedEndDate)}`}</div>
               <div>Cadence: {currentDurationRule.label} {duration === "hour" ? `(${hourlyCount} hrs × ₹49 = ₹${hourlyCount * 49} INR)` : `(₹${currentDurationRule.basePrice} INR)`}</div>
-              <div className="text-forest-700 font-bold">Biometric Access: Automatic fingerprint sync upon payment</div>
+              <div className="text-forest-700 font-bold">Door Access: Instant Keypad PIN sent via WhatsApp & Email upon payment</div>
             </div>
 
             <Input
@@ -676,7 +676,7 @@ function BookDemoContent() {
             />
 
             <div className="p-3 border border-emerald-300 bg-emerald-50 text-[11px] font-sans text-emerald-900 rounded-lg">
-              ✨ Instant checkout via PhonePe, Google Pay, dynamic UPI QR code, or Cards. Your ZKTeco biometric attendance PIN is issued automatically upon payment.
+              ✨ Instant checkout via PhonePe, Google Pay, dynamic UPI QR code, or Cards. Your Smart Door Keypad PIN is generated and delivered immediately via WhatsApp & Email upon payment. To exit, press the interior exit button.
             </div>
           </form>
         )}

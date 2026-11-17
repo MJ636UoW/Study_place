@@ -75,7 +75,7 @@ export default function ConductPage() {
             III. Keycard & Access Security
           </h2>
           <p>
-            Keycards, biometric PIN hashes, and brass cedar locker keys are issued strictly for the named member. Lending credentials to non-members compromises security and results in immediate access suspension.
+            Digital door keypad PINs and brass cedar locker keys are issued strictly for the named member. Lending credentials to non-members compromises security and results in immediate access suspension.
           </p>
         </section>
 

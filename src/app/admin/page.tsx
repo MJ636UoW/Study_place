@@ -27,6 +27,7 @@ import {
   Printer,
   Download,
   MessageCircle,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
@@ -39,69 +40,78 @@ import { bookingsFixture } from "@/fixtures";
 export default function AdminPage() {
   // Operational Navigation
   const [activeQueue, setActiveQueue] = useState<
-    "pending" | "holds" | "attendance" | "endings" | "exceptions" | "enquiries" | "reviews" | "audit" | "biometrics" | "settings"
+    "pending" | "holds" | "attendance" | "endings" | "exceptions" | "enquiries" | "reviews" | "audit" | "keypad" | "settings"
   >("pending");
 
-  // Biometric Hardware State (ZKTeco LX50 Dedicated)
-  const [biometricApiKey, setBiometricApiKey] = useState("ESZ-BIOM-PRO-984210");
-  const [biometricEndpoint, setBiometricEndpoint] = useState("https://study-place.onrender.com/api/biometric");
-  const [biometricDeviceId, setBiometricDeviceId] = useState("DEV-ZKTECO-LX50");
-  const [biometricDeviceModel, setBiometricDeviceModel] = useState("ZKTeco LX50 (Optical Fingerprint Scanner)");
+  // Smart Door Keypad & Access Control Hardware State (Cloud Wi-Fi & Push-to-Exit)
+  const [keypadApiKey, setKeypadApiKey] = useState("ESZ-KEYPAD-PRO-984210");
+  const [keypadEndpoint, setKeypadEndpoint] = useState("https://study-place.onrender.com/api/door-access");
+  const [keypadDeviceId, setKeypadDeviceId] = useState("DEV-WIFI-KEYPAD-01");
+  const [keypadDeviceModel, setKeypadDeviceModel] = useState("Smart Wi-Fi Digital Touch Keypad + Interior Exit Button");
   const [deviceConnected, setDeviceConnected] = useState(true);
   const [enrollStudentName, setEnrollStudentName] = useState("");
   const [enrollSeatId, setEnrollSeatId] = useState("Desk-04");
-  const [unlinkedPinToLink, setUnlinkedPinToLink] = useState(4);
+  const [enrollSlotWindow, setEnrollSlotWindow] = useState("07:00 — 11:00");
+  const [unlinkedPinToLink, setUnlinkedPinToLink] = useState(482910);
   const [targetStudentForLink, setTargetStudentForLink] = useState("");
   
-  // ZKTeco LX50 User Registry State
-  const [zkUsers, setZkUsers] = useState<Array<{
+  // Door Keypad PIN Registry State (Strictly Valid for Student's Booked Slot)
+  const [keypadUsers, setKeypadUsers] = useState<Array<{
     pin: number;
     name: string;
-    fingerIndex: number;
-    enrolled: boolean;
-    status: "synced" | "pending_approval";
+    slotWindow: string;
+    status: "active_synced" | "scheduled";
   }>>([
-    { pin: 1, name: "Arjun Kulkarni", fingerIndex: 0, enrolled: true, status: "synced" },
-    { pin: 2, name: "Priya Sharma", fingerIndex: 0, enrolled: true, status: "synced" },
-    { pin: 3, name: "Rohit Deshmukh", fingerIndex: 0, enrolled: true, status: "synced" },
-    { pin: 4, name: "Device Direct User #4", fingerIndex: 0, enrolled: true, status: "pending_approval" },
+    { pin: 839201, name: "Arjun Kulkarni", slotWindow: "07:00 — 11:00 (Today)", status: "active_synced" },
+    { pin: 492014, name: "Priya Sharma", slotWindow: "08:00 — 12:00 (Today)", status: "active_synced" },
+    { pin: 729104, name: "Rohit Deshmukh", slotWindow: "09:00 — 13:00 (Today)", status: "active_synced" },
+    { pin: 482910, name: "Device Direct Entry PIN", slotWindow: "14:00 — 18:00 (Upcoming)", status: "scheduled" },
   ]);
 
-  const [biometricLogs, setBiometricLogs] = useState<Array<{
+  const [doorAccessLogs, setDoorAccessLogs] = useState<Array<{
     id: string;
     userName: string;
     seatId: string;
-    punchType: string;
+    action: string;
     timestamp: string;
-    matchedScore: number;
+    method: string;
     terminal: string;
   }>>([
     {
       id: "log-1",
       userName: "Arjun Kulkarni",
       seatId: "seat-N01",
-      punchType: "check_in",
+      action: "Door Unlocked (Entry)",
       timestamp: "Today, 07:45 AM",
-      matchedScore: 98.4,
-      terminal: "ZKTeco LX50 USB",
+      method: "Door Keypad PIN (839201)",
+      terminal: "Exterior Keypad",
+    },
+    {
+      id: "log-exit-1",
+      userName: "Arjun Kulkarni",
+      seatId: "seat-N01",
+      action: "Door Unlocked (Exit)",
+      timestamp: "Today, 08:05 AM",
+      method: "Push-to-Exit Button",
+      terminal: "Interior Wall Button",
     },
     {
       id: "log-2",
       userName: "Priya Sharma",
       seatId: "seat-A02",
-      punchType: "check_in",
+      action: "Door Unlocked (Entry)",
       timestamp: "Today, 08:12 AM",
-      matchedScore: 99.1,
-      terminal: "ZKTeco LX50 USB",
+      method: "Door Keypad PIN (492014)",
+      terminal: "Exterior Keypad",
     },
     {
       id: "log-3",
       userName: "Rohit Deshmukh",
       seatId: "seat-S01",
-      punchType: "check_in",
+      action: "Door Unlocked (Entry)",
       timestamp: "Today, 09:01 AM",
-      matchedScore: 97.6,
-      terminal: "ZKTeco LX50 USB",
+      method: "Door Keypad PIN (729104)",
+      terminal: "Exterior Keypad",
     },
   ]);
 
@@ -384,23 +394,24 @@ export default function AdminPage() {
       notes: cashNotes,
     });
     if (res.success) {
-      showToast(`Cash payment verified & pass active! Pass: ${res.passCode}`);
+      const anyRes = res as any;
+      showToast(`Cash payment verified & pass active! Pass: ${anyRes.passCode || ""}`);
       setIsCashOpen(false);
       refreshAllState();
 
       // Open printable & downloadable PDF Receipt Modal immediately
       setReceiptModalData({
-        invoiceNumber: res.invoiceNumber || `ESZ-CASH-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`,
-        receiptRef: res.receiptRef || cashRef,
+        invoiceNumber: anyRes.invoiceNumber || `ESZ-CASH-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`,
+        receiptRef: anyRes.receiptRef || cashRef,
         studentName: targetHoldForCash?.userId || "Scholar Member",
         studentEmail: targetHoldForCash?.userId === "user-resident-2" ? "deepakjoshi2149@gmail.com" : `${targetHoldForCash?.userId || "scholar"}@elitestudyzone.in`,
-        seatId: targetHoldForCash?.seatId || res.seatId || "Workstation Desk",
+        seatId: targetHoldForCash?.seatId || anyRes.seatId || "Workstation Desk",
         planName: "Dedicated Study Sanctuary Pass (1 Month)",
-        startDate: targetHoldForCash?.startDate || res.startDate || "2026-10-25",
-        endDate: targetHoldForCash?.endDate || res.endDate || "2026-11-24",
-        amountRupees: res.amountRupees || (Number(cashAmountPaise) / 100).toFixed(2),
+        startDate: targetHoldForCash?.startDate || anyRes.startDate || "2026-10-25",
+        endDate: targetHoldForCash?.endDate || anyRes.endDate || "2026-11-24",
+        amountRupees: anyRes.amountRupees || (Number(cashAmountPaise) / 100).toFixed(2),
         settledAt: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" }),
-        passCode: res.passCode || targetHoldForCash?.passCode || "PASS-2610-E73F10",
+        passCode: anyRes.passCode || targetHoldForCash?.passCode || "PASS-2610-E73F10",
         staffName: "Staff Curator (Front Concierge Desk)",
       });
       setIsReceiptModalOpen(true);
@@ -588,7 +599,7 @@ export default function AdminPage() {
           { id: "pending", label: "Pending Intake", count: pendingRequests.length },
           { id: "holds", label: "Expiring Holds", count: expiringHolds.length },
           { id: "attendance", label: "Seat & Attendance", count: reservedSeats.length },
-          { id: "biometrics", label: "ZKTeco LX50 Biometrics", count: zkUsers.length },
+          { id: "keypad", label: "Smart Keypad & Door Access", count: keypadUsers.length },
           { id: "endings", label: "Upcoming Expirations", count: upcomingEndings.length },
           { id: "exceptions", label: "Payment Exceptions", count: exceptions.totalExceptionsCount },
           { id: "enquiries", label: "Inbound Enquiries", count: enquiries.filter((e) => e.status === "new").length },
@@ -760,21 +771,21 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* QUEUE: ZKTECO LX50 BIOMETRIC HARDWARE & ATTENDANCE INTEGRATION */}
-      {activeQueue === "biometrics" && (
+      {/* QUEUE: SMART WI-FI KEYPAD & DOOR ACCESS HARDWARE INTEGRATION */}
+      {activeQueue === "keypad" && (
         <div className="p-6 border border-forest-200 bg-white rounded-md shadow-md space-y-6">
           {/* Header & Connection Switch */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-forest-100 gap-4">
             <div>
               <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-emerald-100 text-emerald-800 text-[11px] font-mono rounded font-bold uppercase mb-1">
                 <span className={`w-2 h-2 rounded-full ${deviceConnected ? "bg-emerald-600 animate-pulse" : "bg-rose-500"}`} />
-                <span>{deviceConnected ? "ZKTeco LX50 USB Active & Connected" : "Device Disconnected"}</span>
+                <span>{deviceConnected ? "Smart Cloud Keypad + Exit Button Active & Online" : "Device Disconnected"}</span>
               </div>
               <h2 className="font-sans font-extrabold text-2xl text-charcoal-900">
-                ZKTeco LX50 Biometric Device Management
+                Door Access Control (Keypad Entry + Push-to-Exit)
               </h2>
               <p className="text-xs text-charcoal-600 font-sans">
-                Official ZKTeco USB integration for student fingerprint enrollment and real-time attendance tracking.
+                Real-time door lock management. Outer door unlocks via student PIN (valid strictly during booked slot); interior unlocks via push button.
               </p>
             </div>
 
@@ -784,17 +795,17 @@ export default function AdminPage() {
                 size="sm"
                 onClick={() => {
                   setDeviceConnected(!deviceConnected);
-                  showToast(deviceConnected ? "ZKTeco LX50 disconnected." : "ZKTeco LX50 connected over USB!");
+                  showToast(deviceConnected ? "Access Controller disconnected." : "Smart Door Keypad connected over Wi-Fi!");
                 }}
               >
-                {deviceConnected ? "Disconnect Device" : "Connect Device"}
+                {deviceConnected ? "Disconnect Controller" : "Connect Controller"}
               </Button>
               <Button
                 variant="primary"
                 size="sm"
-                onClick={() => showToast("ZKTeco LX50 Synced: 4 fingerprints verified, 142 logs synchronized.")}
+                onClick={() => showToast("Door Keypad Synced: 4 active slot PINs verified, lock relay operational.")}
               >
-                Sync with LX50 Now
+                Sync Device PINs
               </Button>
             </div>
           </div>
@@ -802,39 +813,39 @@ export default function AdminPage() {
           {/* Device Configuration & Telemetry Bar */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono">
             <div>
-              <span className="text-[10px] text-slate-500 uppercase font-bold">Hardware Model</span>
-              <div className="font-bold text-slate-900 text-sm mt-0.5">ZKTeco LX50</div>
-              <div className="text-[11px] text-slate-600">Optical Sensor (500 DPI)</div>
+              <span className="text-[10px] text-slate-500 uppercase font-bold">Hardware Setup</span>
+              <div className="font-bold text-slate-900 text-sm mt-0.5">Wi-Fi Smart Touch Keypad</div>
+              <div className="text-[11px] text-slate-600">Outer Entry • IP68 Waterproof</div>
             </div>
             <div>
-              <span className="text-[10px] text-slate-500 uppercase font-bold">Communication Mode</span>
-              <div className="font-bold text-forest-700 text-sm mt-0.5">USB Client / COM Port</div>
-              <div className="text-[11px] text-slate-600">Standalone ZKEMKeeper Bridge</div>
+              <span className="text-[10px] text-slate-500 uppercase font-bold">Exit Mechanism</span>
+              <div className="font-bold text-forest-700 text-sm mt-0.5">Interior Push-to-Exit Button</div>
+              <div className="text-[11px] text-slate-600">Stainless Steel NO/COM Relay</div>
             </div>
             <div>
-              <span className="text-[10px] text-slate-500 uppercase font-bold">Device Capacity</span>
-              <div className="font-bold text-slate-900 text-sm mt-0.5">{zkUsers.length} / 500 Templates</div>
-              <div className="text-[11px] text-emerald-600 font-bold">496 Slots Available</div>
+              <span className="text-[10px] text-slate-500 uppercase font-bold">Lock Hardware</span>
+              <div className="font-bold text-slate-900 text-sm mt-0.5">600 lbs Electromagnetic Lock</div>
+              <div className="text-[11px] text-emerald-600 font-bold">Relay Status: Secured (Energized)</div>
             </div>
             <div>
-              <span className="text-[10px] text-slate-500 uppercase font-bold">Attendance Buffer</span>
-              <div className="font-bold text-slate-900 text-sm mt-0.5">142 / 50,000 Records</div>
-              <div className="text-[11px] text-slate-600">Duplicate Prevention: Active</div>
+              <span className="text-[10px] text-slate-500 uppercase font-bold">Active Time-Slot PINs</span>
+              <div className="font-bold text-slate-900 text-sm mt-0.5">{keypadUsers.length} Valid Passcodes</div>
+              <div className="text-[11px] text-slate-600">Auto-Expire on Slot End: Active</div>
             </div>
           </div>
 
-          {/* Action 1: Enroll Website Student onto LX50 */}
+          {/* Action 1: Manually Issue / Sync Door PIN for a Student */}
           <div className="p-4 border border-forest-200 bg-forest-50/60 rounded-md space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-sans font-bold text-sm text-forest-950">
-                1. Enroll Website Student on ZKTeco LX50
+                1. Issue & Push Time-Bound Door PIN to Keypad
               </h3>
               <span className="text-[10px] font-mono uppercase bg-forest-200 text-forest-900 px-2 py-0.5 rounded font-bold">
-                Online-to-Device Sync
+                Cloud-to-Door Sync
               </span>
             </div>
             <p className="text-xs text-forest-900 font-sans">
-              Enter the student&apos;s name to assign a unique numeric device PIN and send the fingerprint capture command to the LX50.
+              Enter student name and booked time slot to generate a random 6-digit PIN and dispatch it to the entrance keypad via Wi-Fi.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <input
@@ -846,69 +857,68 @@ export default function AdminPage() {
               />
               <input
                 type="text"
-                placeholder="Assigned Desk"
-                value={enrollSeatId}
-                onChange={(e) => setEnrollSeatId(e.target.value)}
-                className="w-36 px-3 py-2 text-xs border border-charcoal-300 rounded font-mono bg-white"
+                placeholder="Time Slot (e.g. 10:00 — 14:00)"
+                value={enrollSlotWindow}
+                onChange={(e) => setEnrollSlotWindow(e.target.value)}
+                className="w-48 px-3 py-2 text-xs border border-charcoal-300 rounded font-mono bg-white"
               />
               <Button
                 variant="primary"
                 size="md"
                 onClick={() => {
                   if (!enrollStudentName) return showToast("Please enter a student name.");
-                  const nextPin = Math.max(...zkUsers.map((u) => u.pin), 0) + 1;
+                  const randomPin = Math.floor(100000 + Math.random() * 900000);
                   const newUser = {
-                    pin: nextPin,
+                    pin: randomPin,
                     name: enrollStudentName,
-                    fingerIndex: 0,
-                    enrolled: true,
-                    status: "synced" as const,
+                    slotWindow: enrollSlotWindow || "07:00 — 11:00 (Today)",
+                    status: "active_synced" as const,
                   };
-                  setZkUsers([newUser, ...zkUsers]);
-                  setBiometricLogs([
+                  setKeypadUsers([newUser, ...keypadUsers]);
+                  setDoorAccessLogs([
                     {
                       id: `punch-${Date.now()}`,
                       userName: enrollStudentName,
                       seatId: enrollSeatId,
-                      punchType: "check_in",
+                      action: "Door Unlocked (Entry)",
                       timestamp: "Just now",
-                      matchedScore: 99.8,
-                      terminal: "ZKTeco LX50 USB",
+                      method: `Door Keypad PIN (${randomPin})`,
+                      terminal: "Exterior Keypad",
                     },
-                    ...biometricLogs,
+                    ...doorAccessLogs,
                   ]);
                   setEnrollStudentName("");
-                  showToast(`Student '${newUser.name}' assigned PIN #${nextPin} and enrolled on LX50!`);
+                  showToast(`Student '${newUser.name}' generated PIN #${randomPin} valid for ${newUser.slotWindow}!`);
                 }}
               >
-                Enroll on Device
+                Push PIN to Keypad
               </Button>
             </div>
           </div>
 
-          {/* Action 2: Link Directly Enrolled LX50 Users (Require Admin Approval) */}
+          {/* Action 2: Link Temporary / Direct Guest PINs */}
           <div className="p-4 border border-amber-300 bg-amber-50/70 rounded-md space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-sans font-bold text-sm text-amber-950">
-                2. Link Unassociated Device Users (Admin Approval Required)
+                2. Link Unassigned Keypad Passcode to Student
               </h3>
               <span className="text-[10px] font-mono uppercase bg-amber-200 text-amber-900 px-2 py-0.5 rounded font-bold">
-                Device-to-Website Mapping
+                Guest Passcode Assignment
               </span>
             </div>
             <p className="text-xs text-amber-900 font-sans">
-              When a user enrolls their thumb directly at the LX50 screen without a website profile, link their PIN here to associate with a student account.
+              Assign an existing keypad passcode to a registered student profile or extend valid slot duration.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 items-center">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-bold text-amber-900">Unlinked Device PIN:</span>
+                <span className="text-xs font-mono font-bold text-amber-900">Unassigned PIN:</span>
                 <select
                   value={unlinkedPinToLink}
                   onChange={(e) => setUnlinkedPinToLink(Number(e.target.value))}
                   className="px-3 py-2 text-xs font-mono border border-amber-300 rounded bg-white"
                 >
-                  {zkUsers
-                    .filter((u) => u.status === "pending_approval")
+                  {keypadUsers
+                    .filter((u) => u.status === "scheduled")
                     .map((u) => (
                       <option key={u.pin} value={u.pin}>
                         PIN #{u.pin} ({u.name})
@@ -919,7 +929,7 @@ export default function AdminPage() {
 
               <input
                 type="text"
-                placeholder="Link to Website Student Name"
+                placeholder="Assign to Student Name"
                 value={targetStudentForLink}
                 onChange={(e) => setTargetStudentForLink(e.target.value)}
                 className="flex-1 px-3 py-2 text-xs border border-amber-300 rounded font-sans bg-white"
@@ -929,66 +939,66 @@ export default function AdminPage() {
                 variant="secondary"
                 size="md"
                 onClick={() => {
-                  if (!targetStudentForLink) return showToast("Enter a student name to approve and link.");
-                  setZkUsers(
-                    zkUsers.map((u) => (u.pin === unlinkedPinToLink ? { ...u, name: targetStudentForLink, status: "synced" } : u))
+                  if (!targetStudentForLink) return showToast("Enter a student name to link PIN.");
+                  setKeypadUsers(
+                    keypadUsers.map((u) => (u.pin === unlinkedPinToLink ? { ...u, name: targetStudentForLink, status: "active_synced" } : u))
                   );
-                  showToast(`PIN #${unlinkedPinToLink} officially linked to ${targetStudentForLink}!`);
+                  showToast(`PIN #${unlinkedPinToLink} successfully assigned to ${targetStudentForLink}!`);
                   setTargetStudentForLink("");
                 }}
               >
-                Approve & Link Account
+                Assign & Activate PIN
               </Button>
             </div>
           </div>
 
-          {/* Table: Enrolled Device User Registry */}
+          {/* Table: Active Door Keypad PINs Registry */}
           <div className="space-y-2">
             <h3 className="font-sans font-bold text-sm text-charcoal-900">
-              Registered ZKTeco LX50 Fingerprint Users ({zkUsers.length})
+              Active & Scheduled Door Keypad PINs ({keypadUsers.length})
             </h3>
             <div className="border border-charcoal-200 rounded overflow-hidden">
               <table className="w-full text-left text-xs font-mono">
                 <thead className="bg-slate-900 text-white font-bold uppercase text-[10px]">
                   <tr>
-                    <th className="p-3">Device PIN</th>
-                    <th className="p-3">Name on Device</th>
-                    <th className="p-3">Fingerprint Status</th>
-                    <th className="p-3">Sync Status</th>
+                    <th className="p-3">Door Keypad PIN</th>
+                    <th className="p-3">Student Name</th>
+                    <th className="p-3">Valid Time Slot Window</th>
+                    <th className="p-3">Device Status</th>
                     <th className="p-3 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-charcoal-200 bg-white">
-                  {zkUsers.map((u) => (
+                  {keypadUsers.map((u) => (
                     <tr key={u.pin} className="hover:bg-slate-50">
                       <td className="p-3 font-bold text-forest-700">#{u.pin}</td>
                       <td className="p-3 font-sans font-bold text-charcoal-900">{u.name}</td>
-                      <td className="p-3">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                          Primary Finger (Index 0) Enrolled
+                      <td className="p-3 text-charcoal-700">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          {u.slotWindow}
                         </span>
                       </td>
                       <td className="p-3">
                         <span
                           className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                            u.status === "synced"
+                            u.status === "active_synced"
                               ? "bg-forest-100 text-forest-900"
                               : "bg-amber-100 text-amber-900 animate-pulse"
                           }`}
                         >
-                          {u.status === "synced" ? "Synced with Website" : "Pending Admin Approval"}
+                          {u.status === "active_synced" ? "Active on Keypad" : "Scheduled Slot"}
                         </span>
                       </td>
                       <td className="p-3 text-right">
                         <button
                           type="button"
                           onClick={() => {
-                            setZkUsers(zkUsers.filter((item) => item.pin !== u.pin));
-                            showToast(`Unlinked and removed PIN #${u.pin} from LX50 registry.`);
+                            setKeypadUsers(keypadUsers.filter((item) => item.pin !== u.pin));
+                            showToast(`Revoked PIN #${u.pin} from door lock keypad.`);
                           }}
                           className="text-rose-600 hover:underline font-bold text-[11px]"
                         >
-                          Unlink
+                          Revoke PIN
                         </button>
                       </td>
                     </tr>
@@ -998,14 +1008,14 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* Table: Verified Biometric Attendance Ledger */}
+          {/* Table: Real-Time Door Access Activity Ledger (Entry + Push-to-Exit) */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <h3 className="font-sans font-bold text-sm text-charcoal-900">
-                Live Fingerprint Attendance Ledger (Duplicate Filter Active)
+                Live Door Access & Exit Activity Ledger
               </h3>
               <span className="text-[11px] font-mono text-slate-500">
-                Punches recorded from physical ZKTeco LX50 sensor
+                Outer keypad PIN entries & interior push-to-exit unlocks
               </span>
             </div>
             <div className="border border-charcoal-200 rounded overflow-hidden">
@@ -1014,23 +1024,25 @@ export default function AdminPage() {
                   <tr>
                     <th className="p-3">Student Name</th>
                     <th className="p-3">Assigned Desk</th>
-                    <th className="p-3">Punch Type</th>
-                    <th className="p-3">Sensor Match</th>
-                    <th className="p-3">Device Terminal</th>
+                    <th className="p-3">Door Action</th>
+                    <th className="p-3">Access Method</th>
+                    <th className="p-3">Hardware Terminal</th>
                     <th className="p-3 text-right">Timestamp</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-charcoal-200 bg-white">
-                  {biometricLogs.map((log) => (
+                  {doorAccessLogs.map((log) => (
                     <tr key={log.id} className="hover:bg-forest-50/50">
                       <td className="p-3 font-bold font-sans text-charcoal-900">{log.userName}</td>
                       <td className="p-3 text-forest-700 font-bold">{log.seatId}</td>
                       <td className="p-3">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 uppercase">
-                          {log.punchType}
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                          log.action.includes("Exit") ? "bg-blue-100 text-blue-900" : "bg-emerald-100 text-emerald-800"
+                        }`}>
+                          {log.action}
                         </span>
                       </td>
-                      <td className="p-3 text-charcoal-600">{log.matchedScore}% Verified</td>
+                      <td className="p-3 text-charcoal-600">{log.method}</td>
                       <td className="p-3 text-charcoal-600">{log.terminal}</td>
                       <td className="p-3 text-right text-charcoal-500">{log.timestamp}</td>
                     </tr>
@@ -1886,7 +1898,7 @@ export default function AdminPage() {
                 <span className="text-forest-700">GUEST: {targetHoldForCash.userId}</span>
               </div>
               <div className="text-forest-800 text-[10px]">
-                Dates: {targetHoldForCash.startDate} → {targetHoldForCash.endDate} • Biometric PIN: {targetHoldForCash.passCode}
+                Dates: {targetHoldForCash.startDate} → {targetHoldForCash.endDate} • Door Keypad PIN: {targetHoldForCash.passCode}
               </div>
             </div>
           )}
@@ -1929,8 +1941,8 @@ export default function AdminPage() {
         isOpen={isReceiptModalOpen}
         onClose={() => setIsReceiptModalOpen(false)}
         title="Official Tax Invoice & Cash Payment Receipt"
-        description="Desk counter payment verification with active ZKTeco LX50 Biometric Access Pass."
-        maxWidth="2xl"
+        description="Desk counter payment verification with active Smart Keypad Door Access Pass & Exit Controls."
+        maxWidth="xl"
       >
         {receiptModalData && (
           <div className="space-y-6 text-charcoal-900 font-sans">
@@ -1948,7 +1960,7 @@ export default function AdminPage() {
                     </span>
                   </div>
                   <p className="text-[10px] text-charcoal-500 font-mono uppercase tracking-widest mt-0.5">
-                    Self-Study Space & Focus Hub • 24/7 Biometric Access
+                    Self-Study Space & Focus Hub • 24/7 Smart Keypad Access
                   </p>
                   <p className="text-xs text-charcoal-600 mt-1">
                     Amrut Nagar, Ghatkopar West, Mumbai, Maharashtra 400086
@@ -2015,8 +2027,8 @@ export default function AdminPage() {
                     </tr>
                     <tr>
                       <td className="p-3">
-                        <div className="font-medium text-charcoal-800">ZKTeco LX50 Biometric Access Enrollment</div>
-                        <div className="text-[11px] text-charcoal-500">Optical Fingerprint & Door PIN Sync</div>
+                        <div className="font-medium text-charcoal-800">Smart Keypad Door Access Pass & Exit Controls</div>
+                        <div className="text-[11px] text-charcoal-500">Outer Door PIN & Interior Push-to-Exit Sync</div>
                       </td>
                       <td className="p-3 text-center text-charcoal-600">Included</td>
                       <td className="p-3 text-right font-bold text-emerald-700">₹0.00</td>
@@ -2035,15 +2047,15 @@ export default function AdminPage() {
                 </table>
               </div>
 
-              {/* Biometric Pass Code Box */}
+              {/* Door Pass Code Box */}
               <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-1.5 text-emerald-900 font-bold text-xs uppercase font-mono">
                     <CheckCircle2 className="w-4 h-4 text-emerald-700" />
-                    <span>ZKTeco LX50 Door Biometric Pass Active</span>
+                    <span>Smart Door Keypad Access PIN Active</span>
                   </div>
                   <p className="text-[11px] text-emerald-800 mt-0.5">
-                    Enter this PIN on the center door keypad or scan your enrolled fingerprint for instant access.
+                    Enter this PIN on the outer door keypad during your slot window. Press the interior exit button when leaving.
                   </p>
                 </div>
                 <div className="px-3 py-1.5 bg-white border border-emerald-400 rounded-md font-mono font-bold text-emerald-900 text-sm tracking-wider shadow-sm">
@@ -2256,7 +2268,7 @@ export default function AdminPage() {
               <div>Active Financial Value: <span className="font-bold">₹{restrictionPreview.totalActiveValueRupees}</span></div>
             </div>
             <p className="text-[11px] leading-relaxed">
-              Enforcing this action immediately revokes active biometric keys and cancels upcoming holds server-side.
+              Enforcing this action immediately revokes active door keypad PINs and cancels upcoming holds server-side.
             </p>
           </div>
 

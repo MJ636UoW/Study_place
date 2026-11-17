@@ -24,7 +24,7 @@ export const Footer: React.FC = () => {
               “Your dreams deserve a space. Your success starts here! Every page you read, every hour you dedicate and every effort you make brings you one step closer to your dreams.”
             </p>
             <p className="text-xs text-charcoal-500 font-sans leading-relaxed max-w-md">
-              Amrut Nagar, Ghatkopar West, Mumbai • Equipped with Biometric Fingerprint Access, High-Speed Wi-Fi, and Ergonomic Study Workstations.
+              Amrut Nagar, Ghatkopar West, Mumbai • Equipped with Smart Keypad Access & Push-to-Exit, High-Speed Wi-Fi, and Ergonomic Study Workstations.
             </p>
           </div>
 
@@ -123,7 +123,7 @@ export const Footer: React.FC = () => {
         <div className="flex items-center gap-6">
           <span>Amrut Nagar, Ghatkopar West, Mumbai</span>
           <span className="hidden sm:inline-block">•</span>
-          <span>Biometric Access: 24/7 Active</span>
+          <span>Smart Keypad Access: 24/7 Active</span>
         </div>
       </div>
     </footer>

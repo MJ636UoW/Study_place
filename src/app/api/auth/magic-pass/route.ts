@@ -29,20 +29,20 @@ export async function POST(req: NextRequest) {
     // Try sending email if mailer configured
     const html = `
       <div style="font-family: sans-serif; padding: 20px; max-width: 500px; border: 1px solid #e2e8f0; border-radius: 8px;">
-        <h2 style="color: #0f172a; margin-top: 0;">Elite Study Zone - Hourly Biometric Pass</h2>
+        <h2 style="color: #0f172a; margin-top: 0;">Elite Study Zone - Hourly Door Keypad Pass</h2>
         <p>Your temporary access pass has been generated successfully.</p>
         <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 16px; text-align: center; margin: 20px 0;">
-          <div style="font-size: 13px; color: #1e40af; font-weight: 600; text-transform: uppercase;">ZKTeco Gate PIN</div>
-          <div style="font-size: 32px; font-weight: 800; letter-spacing: 4px; color: #1e3a8a; margin: 8px 0;">${pin}</div>
+          <div style="font-size: 13px; color: #1e40af; font-weight: 600; text-transform: uppercase;">Door Keypad Access PIN</div>
+          <div style="font-size: 32px; font-weight: 800; letter-spacing: 4px; color: #1e3a8a; margin: 8px 0;">#${pin}</div>
           <div style="font-size: 12px; color: #64748b;">Valid for ${durationHours} hour(s)</div>
         </div>
-        <p style="font-size: 13px; color: #475569;">Enter this 6-digit PIN on the biometric reader at the main door to unlock access.</p>
+        <p style="font-size: 13px; color: #475569;">Enter this 6-digit PIN on the digital door keypad outside to unlock. To exit, press the interior exit button next to the door.</p>
       </div>
     `;
 
     sendEmail({
       to: cleanEmail,
-      subject: `Your Biometric Pass PIN: #${pin} - Elite Study Zone`,
+      subject: `Your Door Access PIN: #${pin} - Elite Study Zone`,
       html,
     }).catch(() => {});
 
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
       pin,
       hoursAllocated: durationHours,
       expiresAt: expiresAt.toISOString(),
-      message: `Pass generated! Use PIN #${pin} on the door biometric reader.`,
+      message: `Pass generated! Use PIN #${pin} on the digital door access keypad.`,
     });
 
     setAuthCookie(res, token);

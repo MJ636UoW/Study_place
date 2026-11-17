@@ -125,7 +125,7 @@ export async function sendWhatsAppBookingPass(params: {
 `🏛️ *ELITE STUDY ZONE - Access Confirmation*
 Hello *${name || "Scholar"}*, your workstation reservation is confirmed!
 
-🔑 *Door Biometric PIN:* *#${passCode}*
+🔑 *Door Access PIN:* *#${passCode}*
 💺 *Allocation:* ${seatOrPass}
 ⏱️ *Active Time Slot / Dates:* ${slotOrDates}
 ${amountRupees ? `💳 *Amount Paid:* ₹${amountRupees}\n` : ""}\
@@ -133,8 +133,9 @@ ${amountRupees ? `💳 *Amount Paid:* ₹${amountRupees}\n` : ""}\
 🔒 *Wi-Fi Password:* FocusQuiet2026
 📍 *Location:* Amrut Nagar, Ghatkopar West, Mumbai
 
-👉 *How to Enter:*
-Type *#${passCode}* on the numeric keypad of the *ZKTeco LX50* biometric unit at the main door to unlock access.
+👉 *How to Enter & Exit:*
+• Entry: Type *#${passCode}* on the digital door keypad outside to unlock.
+• Exit: Press the interior push-to-exit button next to the door.
 
 For assistance, reply to this message or visit the Curatorial Desk. Have a productive study session!`;
 

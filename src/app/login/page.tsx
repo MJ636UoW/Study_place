@@ -359,7 +359,7 @@ function LoginContent() {
     window.location.href = targetEndpoint;
   };
 
-  // 4. Hourly Magic Pass (for Hourly Library Visitors: generates Biometric Gate Door PIN in MongoDB)
+  // 4. Hourly Magic Pass (for Hourly Library Visitors: generates Smart Door Keypad PIN in MongoDB)
   const handleHourlyMagicPass = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
@@ -480,7 +480,7 @@ function LoginContent() {
           </h1>
           <p className="text-xs text-charcoal-600 font-sans max-w-sm mx-auto leading-relaxed">
             {activeTab === "register"
-              ? "Register to receive your ZKTeco Door PIN on WhatsApp and Email."
+              ? "Register to receive your Door Keypad PIN on WhatsApp and Email."
               : activeTab === "magic_pass"
               ? "Book by the hour (₹49/hr) with custom time slots and instant door keypad PIN."
               : activeTab === "code_login"
@@ -713,7 +713,7 @@ function LoginContent() {
                   className="w-full px-3.5 py-2.5 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-sans"
                 />
                 <p className="text-[10px] text-charcoal-500 mt-1">
-                  Your ZKTeco Door PIN and access pass will be sent to both your WhatsApp and Email.
+                  Your Door Keypad PIN and access pass will be sent to both your WhatsApp and Email.
                 </p>
               </div>
 
@@ -767,12 +767,12 @@ function LoginContent() {
                 <div className="p-5 bg-emerald-50 border-2 border-emerald-400 rounded-xl space-y-4 text-center shadow-sm">
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-200/80 text-emerald-900 text-[10px] font-mono font-bold rounded-full uppercase tracking-wider">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
-                    <span>ZKTeco LX50 Pass Active</span>
+                    <span>Smart Keypad Pass Active</span>
                   </div>
 
                   <div>
                     <div className="text-[10px] font-mono uppercase text-emerald-800 font-bold tracking-wider mb-1">
-                      Your Biometric Door PIN
+                      Your Door Access PIN
                     </div>
                     <div className="flex items-center justify-center gap-3">
                       <div className="font-mono text-4xl sm:text-5xl font-extrabold text-emerald-950 tracking-widest py-1 bg-white px-5 rounded-lg border border-emerald-200 shadow-inner">
@@ -797,7 +797,7 @@ function LoginContent() {
                   )}
 
                   <p className="text-xs text-emerald-900 leading-relaxed font-sans">
-                    Type <strong>#{hourlyPassPin}</strong> on the numeric keypad of the <strong>ZKTeco LX50</strong> unit at the door to unlock.
+                    Type <strong>#{hourlyPassPin}</strong> on the numeric keypad at the door to unlock. To exit, simply press the interior push button.
                   </p>
 
                   {/* 2 Clear Options: Return to Login with Code OR Proceed to Dashboard */}

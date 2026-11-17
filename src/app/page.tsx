@@ -95,8 +95,8 @@ export default function HomePage() {
                   <div className="text-[10px] uppercase tracking-wider text-charcoal-500">Hourly Flexi-Pass</div>
                 </div>
                 <div>
-                  <div className="font-sans text-base sm:text-lg text-forest-700 font-bold">Biometric API</div>
-                  <div className="text-[10px] uppercase tracking-wider text-charcoal-500">Fingerprint Access</div>
+                  <div className="font-sans text-base sm:text-lg text-forest-700 font-bold">Smart Keypad</div>
+                  <div className="text-[10px] uppercase tracking-wider text-charcoal-500">Door PIN & Exit Button</div>
                 </div>
                 <div>
                   <div className="font-sans text-base sm:text-lg text-forest-700 font-bold">Ghatkopar West</div>
@@ -249,7 +249,7 @@ export default function HomePage() {
                   DREAM BIG. STAY FOCUSED. ACHIEVE MORE.
                 </p>
                 <p>
-                  Located in Amrut Nagar, Ghatkopar West, Mumbai. A dedicated haven equipped with biometric gate scanning, dual high-speed fiber links, ergonomic high-back chairs, and air-conditioned silence.
+                  Located in Amrut Nagar, Ghatkopar West, Mumbai. A dedicated haven equipped with smart keypad door access and push-to-exit, dual high-speed fiber links, ergonomic high-back chairs, and air-conditioned silence.
                 </p>
               </div>
             </div>

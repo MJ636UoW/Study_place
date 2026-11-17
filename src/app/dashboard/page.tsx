@@ -1,6 +1,6 @@
 "use client";
 
-function FingerprintIcon({ className }: { className?: string }) {
+function KeypadIcon({ className }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -11,15 +11,8 @@ function FingerprintIcon({ className }: { className?: string }) {
       strokeLinejoin="round"
       className={className}
     >
-      <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4" />
-      <path d="M14 13.12c0 2.38 0 6.38-1 8.88" />
-      <path d="M17.29 21.02c.12-.6.43-2.3.5-3.02" />
-      <path d="M2 12a10 10 0 0 1 18-6" />
-      <path d="M2 16h.01" />
-      <path d="M21.8 16c.2-2 .131-5.354 0-6" />
-      <path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2" />
-      <path d="M8.65 22c.21-.66.45-1.32.57-2" />
-      <path d="M9 6.8a6 6 0 0 1 9 5.2v2" />
+      <rect width="18" height="18" x="3" y="3" rx="2" />
+      <path d="M7 7h.01M12 7h.01M17 7h.01M7 12h.01M12 12h.01M17 12h.01M7 17h.01M12 17h.01M17 17h.01" />
     </svg>
   );
 }
@@ -144,8 +137,8 @@ export default function DashboardPage() {
       seatId: "Permanent Desk 04",
       type: "check_in",
       timestamp: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-      terminal: "ZKTeco LX50 USB",
-      matchedScore: 99.4,
+      terminal: "Smart Keypad Controller",
+      matchedScore: 100,
     },
     {
       id: "punch-prev",
@@ -154,8 +147,8 @@ export default function DashboardPage() {
       seatId: "Permanent Desk 04",
       type: "check_out",
       timestamp: new Date(Date.now() - 18 * 3600 * 1000).toISOString(),
-      terminal: "ZKTeco LX50 USB",
-      matchedScore: 98.9,
+      terminal: "Push-to-Exit Button",
+      matchedScore: 100,
     },
   ]);
 
@@ -455,13 +448,13 @@ export default function DashboardPage() {
       <div className="p-6 sm:p-8 border border-forest-900/30 bg-forest-50/40 grid grid-cols-1 md:grid-cols-3 gap-6 items-center shadow-editorial">
         <div className="space-y-1">
           <span className="text-[10px] uppercase font-mono tracking-widest text-forest-800 font-semibold">
-            Biometric & Keycard Access
+            Smart Keypad Access & Exit Button
           </span>
           <div className="font-serif text-2xl text-charcoal-900">
-            Entrance Key: #PASS-2610-STRL04
+            Entrance PIN: #PASS-2610-STRL04
           </div>
           <p className="text-xs text-charcoal-600 font-sans">
-            Active 24 Hours / 7 Days • Central Studio North Gallery Entrance
+            Active 24 Hours / 7 Days • Central Studio North Gallery Entrance • Exit via Push Button
           </p>
         </div>
 
@@ -768,22 +761,22 @@ export default function DashboardPage() {
       )}
 
       
-      {/* Tab Content 3: Biometric Attendance History */}
+      {/* Tab Content 3: Smart Keypad Attendance History */}
       {activeTab === "attendance" && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-ivory-200 gap-2">
             <div>
               <h2 className="font-serif text-2xl sm:text-3xl text-charcoal-900">
-                Biometric Terminal Attendance History
+                Door Keypad Attendance & Entry History
               </h2>
               <p className="text-xs text-charcoal-600 font-sans mt-1">
-                Hardware-verified punches recorded at Elite Study Zone ZKTeco LX50 Biometric Gate.
+                Verified door keypad PIN unlocks and push-to-exit records for Elite Study Zone.
               </p>
             </div>
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-[10px] font-mono uppercase text-emerald-800 font-bold rounded">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Biometric Hardware Active</span>
+                <span>Door Keypad Active</span>
               </span>
             </div>
           </div>
@@ -791,19 +784,19 @@ export default function DashboardPage() {
           <div className="p-4 bg-slate-900 text-white rounded-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-forest-600/30 border border-forest-500/40 flex items-center justify-center">
-                <FingerprintIcon className="w-5 h-5 text-emerald-400" />
+                <KeypadIcon className="w-5 h-5 text-emerald-400" />
               </div>
               <div>
                 <div className="text-xs font-mono font-bold uppercase text-emerald-400">
-                  Terminal: ZKTeco LX50 USB (#DEV-ZKTECO-LX50)
+                  Terminal: Smart Door Keypad (#KEYPAD-CTRL-01)
                 </div>
                 <div className="text-[11px] text-slate-300">
-                  Elite Study Zone, Amrut Nagar, Ghatkopar West • Optical 500 DPI Fingerprint Verification
+                  Elite Study Zone, Amrut Nagar, Ghatkopar West • Keypad Entry & Push-to-Exit Button
                 </div>
               </div>
             </div>
             <div className="text-left md:text-right font-mono text-[11px] text-slate-400">
-              Anti-Passback & 60s Duplicate Filter: <span className="text-emerald-400 font-bold">Active</span>
+              Anti-Passback & Time-Slot Validation: <span className="text-emerald-400 font-bold">Active</span>
             </div>
           </div>
 
@@ -818,7 +811,7 @@ export default function DashboardPage() {
 
             {attendanceLogs.length === 0 ? (
               <div className="p-8 text-center text-xs font-mono text-charcoal-500">
-                No punch records registered for this account yet.
+                No entry records registered for this account yet.
               </div>
             ) : (
               attendanceLogs.map((log) => (
@@ -839,12 +832,12 @@ export default function DashboardPage() {
                     {log.type === "check_in" ? (
                       <>
                         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span className="text-emerald-900 font-bold">Gate Check-In</span>
+                        <span className="text-emerald-900 font-bold">Keypad Entry</span>
                       </>
                     ) : (
                       <>
                         <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                        <span className="text-amber-900 font-bold">Gate Check-Out</span>
+                        <span className="text-amber-900 font-bold">Button Exit</span>
                       </>
                     )}
                   </div>
@@ -852,7 +845,7 @@ export default function DashboardPage() {
                     {log.seatId || "Flexi-Desk"}
                   </div>
                   <div className="col-span-2 font-mono text-[10px] text-charcoal-600">
-                    Fingerprint ({log.matchedScore}%)
+                    PIN Verified
                   </div>
                   <div className="col-span-2 text-right">
                     <span className="px-2 py-0.5 bg-emerald-100 border border-emerald-300 text-emerald-800 text-[10px] font-mono uppercase font-bold rounded">
@@ -931,17 +924,17 @@ export default function DashboardPage() {
 
             <div className="p-6 bg-white border border-ivory-300 rounded-xl shadow-editorial space-y-2">
               <span className="text-[10px] font-mono uppercase tracking-widest text-charcoal-500 font-bold block">
-                Biometric Hardware Access
+                Smart Door Keypad Access
               </span>
               <div className="font-mono text-xl text-charcoal-900 font-bold flex items-center gap-2">
-                <FingerprintIcon className="w-5 h-5 text-emerald-600" />
-                <span>Device PIN #001</span>
+                <KeypadIcon className="w-5 h-5 text-emerald-600" />
+                <span>Door Access PIN #001</span>
               </div>
               <p className="text-xs text-charcoal-600 font-sans">
-                Optical Fingerprint Enrolled on ZKTeco LX50 Hardware Terminal at center reception.
+                Type your PIN on the exterior digital keypad to unlock the door. Press the interior push button to exit.
               </p>
               <div className="text-[11px] font-mono text-charcoal-500 pt-1">
-                Turnstile Code: #PASS-2610-STRL04
+                Pass Code: #PASS-2610-STRL04
               </div>
             </div>
           </div>

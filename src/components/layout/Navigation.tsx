@@ -111,7 +111,7 @@ export const Navigation: React.FC = () => {
           <span>YOUR FOCUS. YOUR FUTURE. YOUR SUCCESS.</span>
         </span>
         <span className="hidden md:inline-block text-forest-200">
-          Amrut Nagar, Ghatkopar West, Mumbai • Open 07:00 — 23:00 (24/7 Biometric Entry)
+          Amrut Nagar, Ghatkopar West, Mumbai • Open 07:00 — 23:00 (24/7 Digital Keypad Entry)
         </span>
       </div>
 
@@ -227,7 +227,7 @@ export const Navigation: React.FC = () => {
                     className="flex items-center gap-2.5 px-3 py-2 text-xs font-sans text-charcoal-800 hover:bg-forest-50 hover:text-forest-900 rounded-lg transition-colors"
                   >
                     <ShieldCheck className="w-4 h-4 text-emerald-700" />
-                    <span>Biometric Gate Pass & Attendance</span>
+                    <span>Door Keypad Pass & Entry Log</span>
                   </Link>
 
                   <div className="border-t border-slate-100 my-1"></div>

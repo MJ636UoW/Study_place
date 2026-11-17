@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import nodemailer, { type Transporter } from "nodemailer";
 import { isMongoAvailable } from "@/lib/hybridDb";
 import { AdminSettings } from "@/models/AdminSettings";
 
@@ -8,7 +8,7 @@ interface SendEmailParams {
   html: string;
 }
 
-async function getTransporter(): Promise<{ transporter: nodemailer.Transporter | null; senderEmail: string }> {
+async function getTransporter(): Promise<{ transporter: Transporter | null; senderEmail: string }> {
   // 1. Check environment variables
   const host = process.env.SMTP_HOST;
   const port = parseInt(process.env.SMTP_PORT || "587", 10);
@@ -128,7 +128,7 @@ export async function sendVerificationEmail(email: string, name: string, token: 
             <p>If you did not create this account, you can safely ignore this email.</p>
           </div>
           <div class="footer">
-            Elite Study Zone &bull; Amrut Nagar, Ghatkopar West, Mumbai &bull; 24/7 Biometric Access
+            Elite Study Zone &bull; Amrut Nagar, Ghatkopar West, Mumbai &bull; 24/7 Smart Keypad Access
           </div>
         </div>
       </body>

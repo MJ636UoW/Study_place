@@ -171,7 +171,7 @@ export class PaymentService {
       bookingRequestId: input.bookingRequestId,
       allocationId: `alloc_${input.bookingRequestId}`,
       passCode: `PASS-2026-PIN${pin}`,
-      message: "Payment captured successfully! Biometric door access code active.",
+      message: "Payment captured successfully! Door keypad access PIN active.",
     };
   }
 

@@ -38,7 +38,7 @@ let deviceConfig: BiometricDeviceConfig = {
   apiKey: "ESZ-BIOM-PRO-984210",
   endpointUrl: "https://cloud.realtimebiometrics.com/api/v2",
   deviceId: "DEV-GHATKOPAR-01",
-  deviceModel: "eSSL SilkBio-101TC (Multi-Biometric Fingerprint + QR)",
+  deviceModel: "Smart Wi-Fi Digital Touch Keypad + Exit Button Access Controller",
   status: "connected",
   lastPingAt: new Date().toISOString(),
 };

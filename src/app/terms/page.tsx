@@ -57,7 +57,7 @@ export default function TermsPage() {
             3. Keycard Transfer Prohibitions
           </h2>
           <p>
-            Keycards, biometric PIN credentials, and brass cedar locker keys are issued strictly to the registered fellow and may not be lent or transferred to non-members without prior concierge registration.
+            Digital door keypad PIN credentials and brass cedar locker keys are issued strictly to the registered fellow and may not be lent or transferred to non-members without prior concierge registration.
           </p>
         </section>
 

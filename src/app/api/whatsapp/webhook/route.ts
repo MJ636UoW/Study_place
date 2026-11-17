@@ -74,20 +74,18 @@ export async function POST(req: NextRequest) {
 • Speed: 300 Mbps Ultra-low latency fiber.
 
 Enjoy seamless studying!`;
-    } else if (lower.includes("door") || lower.includes("pin") || lower.includes("code") || lower.includes("keypad") || lower.includes("unlock") || lower.includes("zkteco")) {
+    } else if (lower.includes("door") || lower.includes("pin") || lower.includes("code") || lower.includes("keypad") || lower.includes("unlock") || lower.includes("exit")) {
       botReply = 
-`🔑 *How to Unlock the Door (ZKTeco LX50):*
-1. Locate the optical keypad reader at the center entrance.
-2. Type your assigned *6-digit PIN* on the keypad.
-3. The LED indicator will turn green and the electromagnetic lock will release.
-4. If you have enrolled your fingerprint with the concierge, simply place your index finger on the optical sensor.
+`🔑 *How to Enter and Exit the Door:*
+• *To Enter:* Type your assigned *6-digit PIN* on the digital keypad outside. The indicator turns green and the electromagnetic door lock releases.
+• *To Exit:* Simply press the push-to-exit button mounted on the interior wall next to the door.
 
-Need to look up your active PIN? Log in at: https://study-place.onrender.com/login`;
+Need to check your active PIN? Log in at: https://study-place.onrender.com/login`;
     } else if (lower.includes("time") || lower.includes("timing") || lower.includes("hours") || lower.includes("open") || lower.includes("close")) {
       botReply = 
 `⏱️ *Elite Study Zone Timings:*
 • Standard Hours: *07:00 AM – 11:00 PM* (Open 7 Days a Week)
-• Dedicated Resident Members: *24/7 Unlimited Biometric Keycard Access*
+• Dedicated Resident Members: *24/7 Unlimited Keypad Pass Access*
 • Silent Zone: Sub-38 dBA acoustic compliance maintained throughout.`;
     } else if (lower.includes("price") || lower.includes("rate") || lower.includes("fee") || lower.includes("cost") || lower.includes("hourly") || lower.includes("plan")) {
       botReply = 

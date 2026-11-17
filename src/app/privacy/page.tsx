@@ -50,7 +50,7 @@ export default function PrivacyPage() {
             II. Information We Collect Solely for Physical Access
           </h2>
           <ul className="list-disc pl-5 space-y-1.5 text-xs text-charcoal-700">
-            <li><strong>Biometric & Keycard Identity:</strong> Mathematical hash templates strictly for building ingress; raw biometric imagery is never stored on external cloud infrastructure.</li>
+            <li><strong>Access Credentials & Security:</strong> Time-bound digital door keypad PINs and entry logs strictly for building ingress during authorized booking windows.</li>
             <li><strong>Intake & Reservation Details:</strong> Name, academic or institutional affiliation, payment confirmation, and designated workstation choice.</li>
             <li><strong>Acoustic Environmental Telemetry:</strong> Microphones in public galleries measure aggregated decibel levels (&lt; 38 dBA) to maintain quietude; no audio waveforms or speech content are ever recorded or transcribed.</li>
           </ul>

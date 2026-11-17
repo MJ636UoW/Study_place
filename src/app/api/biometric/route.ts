@@ -22,14 +22,14 @@ export interface ZkPunchRecord {
 
 // In-Memory operational store synced with Supabase
 const lx50Config = {
-  deviceId: "DEV-ZKTECO-LX50",
-  model: "ZKTeco LX50 (Optical Fingerprint & USB Client)",
-  firmwareVersion: "Ver 6.60 (Build 2024)",
-  connectionType: "USB Client (Active COM Bridge)",
+  deviceId: "DEV-WIFI-KEYPAD-01",
+  model: "Smart Wi-Fi Digital Touch Keypad + Interior Exit Button",
+  firmwareVersion: "Ver 2.4 (Cloud Wi-Fi Bridge)",
+  connectionType: "Wi-Fi Cloud REST API (Tuya/TTLock)",
   status: "connected" as "connected" | "disconnected",
   lastSyncAt: new Date().toISOString(),
-  totalUserCapacity: 500,
-  totalLogCapacity: 50000,
+  totalUserCapacity: 1000,
+  totalLogCapacity: 100000,
   enrolledFingerprints: 4,
   storedLogsCount: 142,
 };

@@ -467,7 +467,7 @@ export const DeskToRoomScroll: React.FC = () => {
               Workstation 04 Ready
             </span>
             <span className="text-xs text-charcoal-700 font-sans">
-              Oak Workstation • North Pier • 24/7 Biometric Access
+              Oak Workstation • North Pier • 24/7 Smart Keypad Access
             </span>
           </div>
 

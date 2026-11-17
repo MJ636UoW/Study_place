@@ -96,7 +96,7 @@ export const plansFixture: PlanTier[] = [
     tagline: "Pay-as-you-go hourly workspace for quick revision, exams, and sprint study.",
     features: [
       "Ergonomic dedicated workstation with power socket",
-      "Biometric fingerprint / QR gate access",
+      "Smart digital door keypad & push-to-exit access",
       "High-speed fiber Wi-Fi (Gigabit link)",
       "Complimentary purified drinking water & tea",
     ],
@@ -114,7 +114,7 @@ export const plansFixture: PlanTier[] = [
     tagline: "One full day of deep focus in an air-conditioned, distraction-free environment.",
     features: [
       "Dedicated ergonomic workstation for the full day",
-      "Biometric fingerprint access enabled for the day",
+      "Smart digital door keypad access enabled for the day",
       "High-speed wired & Wi-Fi internet access",
       "Unlimited chai, filter coffee & purified water",
       "Phone booth access (up to 30 min/day)",
@@ -130,11 +130,11 @@ export const plansFixture: PlanTier[] = [
     cadence: "per month",
     price: 2299,
     currency: "INR",
-    tagline: "Your permanent desk, personal locker, and 24/7 biometric fingerprint access — every day.",
+    tagline: "Your permanent desk, personal locker, and 24/7 smart keypad door access — every day.",
     highlighted: true,
     features: [
       "Permanent assigned desk in the Main Study Hall",
-      "Biometric fingerprint scanner authorization for seamless 24/7 entry",
+      "Smart digital keypad PIN authorization for seamless 24/7 entry",
       "Private steel locker with combination lock",
       "High-speed dual-band fiber optic Wi-Fi",
       "Unlimited chai, filter coffee & pantry access",
@@ -154,7 +154,7 @@ export const plansFixture: PlanTier[] = [
     tagline: "Three full months of dedicated study space for competitive exam preparation.",
     features: [
       "Permanent desk across all quiet study zones",
-      "Biometric fingerprint access synced with attendance logs",
+      "Smart keypad door PIN access synced with attendance logs",
       "Private storage locker & textbook archival shelf",
       "Guest passes for collaborators (8 passes/quarter)",
       "Dedicated coordinator direct WhatsApp line",

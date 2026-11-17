@@ -85,7 +85,7 @@ export async function createUser(userData: {
       const newUser = await User.create({
         name: userData.name.trim(),
         email: cleanEmail,
-        passwordHash,
+        passwordHash: passwordHash || undefined,
         phone: userData.phone || "",
         role: "student",
         emailVerified: userData.emailVerified || false,

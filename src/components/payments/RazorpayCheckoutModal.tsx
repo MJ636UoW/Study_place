@@ -260,7 +260,7 @@ export function RazorpayCheckoutModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Elite Study Zone • Payment Settlement"
-      description="Instant Indian payment settlement with automatic ZKTeco biometric door pass issuance."
+      description="Instant Indian payment settlement with automatic door keypad PIN issuance."
       maxWidth="md"
       footer={
         <div className="flex items-center justify-between w-full pt-2">
@@ -287,7 +287,7 @@ export function RazorpayCheckoutModal({
       }
     >
       <div className="space-y-4 text-left text-xs font-sans">
-        {/* STEP 4: SUCCESS CONFIRMATION & BIOMETRIC PIN */}
+        {/* STEP 4: SUCCESS CONFIRMATION & DOOR KEYPAD PIN */}
         {flowStep === "success" && successInfo && (
           <div className="p-6 border-2 border-emerald-500 bg-gradient-to-b from-emerald-50 to-emerald-100/50 text-emerald-950 rounded-2xl space-y-4 shadow-xl text-center animate-fade-in">
             <div className="w-14 h-14 rounded-full bg-emerald-500 text-white flex items-center justify-center mx-auto shadow-md">
@@ -302,7 +302,7 @@ export function RazorpayCheckoutModal({
                 Desk Reserved Successfully!
               </h3>
               <p className="text-xs text-emerald-800 mt-0.5">
-                Your workstation reservation is confirmed. Your ZKTeco biometric door gate code is active.
+                Your workstation reservation is confirmed. Your door keypad access PIN is active.
               </p>
             </div>
 
@@ -321,7 +321,7 @@ export function RazorpayCheckoutModal({
                 <span className="text-charcoal-700 text-[11px] truncate max-w-[200px]">{successInfo.paymentId}</span>
               </div>
               <div className="flex justify-between items-center pt-1">
-                <span className="text-charcoal-800 font-sans font-bold">Door Biometric PIN:</span>
+                <span className="text-charcoal-800 font-sans font-bold">Door Access Keypad PIN:</span>
                 <div className="flex items-center gap-2">
                   <span className="font-extrabold text-lg text-emerald-900 bg-emerald-100 px-3 py-1 rounded-lg border border-emerald-300 tracking-wider shadow-inner">
                     {successInfo.passCode}
@@ -339,7 +339,7 @@ export function RazorpayCheckoutModal({
             </div>
 
             <div className="p-2.5 bg-emerald-50 rounded-lg border border-emerald-200 text-[11px] text-emerald-900 font-sans leading-relaxed">
-              🔑 Type this PIN on the <strong>ZKTeco LX50</strong> biometric attendance keypad at the Ghatkopar West center door to unlock entry.
+              🔑 Enter this PIN on the digital access keypad at the center entrance door to unlock. When exiting, press the interior exit button next to the door.
             </div>
           </div>
         )}
@@ -353,7 +353,7 @@ export function RazorpayCheckoutModal({
                 Authorizing Indian Payment Settlement...
               </div>
               <p className="text-xs text-charcoal-500 mt-1">
-                Verifying bank transaction with provider and generating your ZKTeco biometric gate passcode.
+                Verifying bank transaction with provider and generating your door keypad passcode.
               </p>
             </div>
           </div>
@@ -422,7 +422,7 @@ export function RazorpayCheckoutModal({
                 className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono"
               />
               <span className="text-[10px] text-charcoal-500 block">
-                Once approved in PhonePe, click the green button below to immediately unlock your ZKTeco gate pass.
+                Once approved in PhonePe, click the green button below to immediately unlock your door keypad PIN.
               </span>
             </div>
           </div>
@@ -679,7 +679,7 @@ export function RazorpayCheckoutModal({
             <span>256-Bit Bank Encryption</span>
           </span>
           <span>•</span>
-          <span>Instant Biometric Key Issuance</span>
+          <span>Instant Keypad PIN Issuance</span>
           <span>•</span>
           <span>Zero Convenience Fee</span>
         </div>
