@@ -28,7 +28,7 @@ export interface RazorpayCheckoutProps {
   amountPaise: number;
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (paymentId: string) => void;
+  onSuccess: (paymentId: string, passCode?: string) => void;
 }
 
 export function RazorpayCheckoutModal({
@@ -234,7 +234,7 @@ export function RazorpayCheckoutModal({
         passCode,
       });
       setFlowStep("success");
-      onSuccess(paymentId);
+      onSuccess(paymentId, passCode);
     } catch (err: unknown) {
       setFlowStep("awaiting_payment");
       setErrorMessage(err instanceof Error ? err.message : "Could not verify payment yet. Please check your transaction.");

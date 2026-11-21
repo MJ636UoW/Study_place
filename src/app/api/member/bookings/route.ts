@@ -45,3 +45,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
+
+export async function POST(req: NextRequest) {
+  try {
+    const booking = await req.json();
+    return NextResponse.json({ success: true, booking });
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "Internal server error";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}

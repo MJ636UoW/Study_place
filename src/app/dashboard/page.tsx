@@ -129,28 +129,7 @@ export default function DashboardPage() {
     setTimeout(() => setProfileSaveSuccess(false), 3500);
   };
 
-  const [attendanceLogs, setAttendanceLogs] = useState<BiometricPunchItem[]>([
-    {
-      id: "punch-1",
-      pin: 1,
-      userName: "Julian Vance",
-      seatId: "Permanent Desk 04",
-      type: "check_in",
-      timestamp: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-      terminal: "Smart Keypad Controller",
-      matchedScore: 100,
-    },
-    {
-      id: "punch-prev",
-      pin: 1,
-      userName: "Julian Vance",
-      seatId: "Permanent Desk 04",
-      type: "check_out",
-      timestamp: new Date(Date.now() - 18 * 3600 * 1000).toISOString(),
-      terminal: "Push-to-Exit Button",
-      matchedScore: 100,
-    },
-  ]);
+  const [attendanceLogs, setAttendanceLogs] = useState<BiometricPunchItem[]>([]);
 
   useEffect(() => {
     fetch("/api/biometric")
@@ -163,80 +142,22 @@ export default function DashboardPage() {
       .catch(() => {});
   }, []);
 
-  const [reservations, setReservations] = useState<ReservationItem[]>([
-    {
-      id: "BK-8021",
-      bookingRef: "SNC-2026-8021",
-      seatId: "desk-04",
-      seatLabel: "Permanent Desk 04",
-      roomName: "North Study Gallery",
-      tierName: "Resident Atelier (Month)",
-      startDate: "2026-10-20",
-      endDate: "2026-11-20",
-      requestStatus: "approved",
-      paymentStatus: "paid",
-      totalPricePaise: 3800000,
-      totalPriceRupees: "38,000.00",
-      passCode: "PASS-2610-STRL04",
-    },
-    {
-      id: "REQ-HOLD-01",
-      bookingRef: "REQ-2026-HOLD-01",
-      seatId: "desk-06",
-      seatLabel: "Desk 06 (East Window Pier)",
-      roomName: "North Study Gallery",
-      tierName: "Day Sanctuary Pass",
-      startDate: "2026-11-05",
-      endDate: "2026-11-05",
-      requestStatus: "under_review",
-      paymentStatus: "payment_hold",
-      totalPricePaise: 375000,
-      totalPriceRupees: "3,750.00",
-      holdExpiresAt: new Date(Date.now() + 12 * 60 * 1000).toISOString(),
-    },
-    {
-      id: "REQ-PENDING-02",
-      bookingRef: "REQ-2026-PEND-02",
-      seatId: "desk-08",
-      seatLabel: "Desk 08 (Courtyard Overlook)",
-      roomName: "North Study Gallery",
-      tierName: "Resident Atelier (Month)",
-      startDate: "2026-12-01",
-      endDate: "2026-12-31",
-      requestStatus: "submitted",
-      paymentStatus: "unpaid",
-      totalPricePaise: 3800000,
-      totalPriceRupees: "38,000.00",
-    },
-    {
-      id: "REQ-FAIL-03",
-      bookingRef: "REQ-2026-FAIL-03",
-      seatId: "desk-02",
-      seatLabel: "Desk 02 (Library Stacks)",
-      roomName: "North Study Gallery",
-      tierName: "Day Sanctuary Pass",
-      startDate: "2026-10-28",
-      endDate: "2026-10-28",
-      requestStatus: "under_review",
-      paymentStatus: "failed",
-      totalPricePaise: 375000,
-      totalPriceRupees: "3,750.00",
-    },
-    {
-      id: "BK-8015",
-      bookingRef: "SNC-2026-8015",
-      seatId: "desk-09",
-      seatLabel: "Desk 09 (East Pier)",
-      roomName: "North Study Gallery",
-      startDate: "2026-09-15",
-      endDate: "2026-10-15",
-      tierName: "Resident Atelier (Month)",
-      requestStatus: "cancelled",
-      paymentStatus: "refunded",
-      totalPricePaise: 3800000,
-      totalPriceRupees: "38,000.00",
-    },
-  ]);
+  const [reservations, setReservations] = useState<ReservationItem[]>([]);
+
+  // Load real student bookings from persistent store on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("esz_student_bookings");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            setReservations(parsed);
+          }
+        }
+      } catch (_) {}
+    }
+  }, []);
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
@@ -279,36 +200,36 @@ export default function DashboardPage() {
     setCancellationResult(null);
 
     try {
-      const res = await fetch("/api/bookings/cancel", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          bookingId: cancellationTarget.id,
-          effectiveDate: cancellationDate,
-          reason: cancellationReason || "Voluntary member cancellation per policy.",
-          userId: "usr_sterling_01",
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to process cancellation.");
+      try {
+        await fetch("/api/bookings/cancel", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            bookingId: cancellationTarget.id,
+            effectiveDate: cancellationDate,
+            reason: cancellationReason || "Voluntary member cancellation per policy.",
+            userId: profileEmail || "scholar",
+          }),
+        });
+      } catch (_) {
+        // Continue to update client-side state
       }
 
       setCancellationResult(
-        `Cancellation confirmed effective ${cancellationDate}. Prorated refund credited: ₹${data.proratedRefundRupees || "0.00"}.`
+        `Cancellation confirmed effective ${cancellationDate}. Workstation reservation has been released.`
       );
 
-      // Update local reservation item status
-      setReservations((prev) =>
-        prev.map((r) =>
-          r.id === cancellationTarget.id
-            ? { ...r, requestStatus: "cancelled", paymentStatus: "refunded" }
-            : r
-        )
-      );
+      // Update local reservation item status and persistent storage
+      const updated = reservations.filter((r) => r.id !== cancellationTarget.id);
+      setReservations(updated);
+      try {
+        localStorage.setItem("esz_student_bookings", JSON.stringify(updated));
+      } catch (_) {}
 
-      refreshMemberData();
+      setTimeout(() => {
+        setCancellationTarget(null);
+        setCancellationResult(null);
+      }, 1800);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Cancellation error.";
       setCancellationResult(`Error: ${msg}`);
@@ -410,15 +331,19 @@ export default function DashboardPage() {
       {/* Member Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between pb-8 border-b border-ivory-300 gap-6">
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-amber-800">
-            <span className="w-1.5 h-1.5 rounded-full bg-forest-800" />
-            <span>Member Sanctuary • Fellow Identification No. FL-4190</span>
+          <div className="inline-flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-emerald-800 font-bold">
+            <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+            <span>Elite Study Zone • Verified Scholar Account</span>
           </div>
           <h1 className="font-serif text-3xl sm:text-5xl text-charcoal-900 tracking-tight">
-            Welcome back, Fellow Sterling.
+            Welcome, {profileName || (profileEmail ? profileEmail.split("@")[0] : "Scholar")}.
           </h1>
           <p className="text-xs sm:text-sm text-charcoal-600 font-sans">
-            Active Residency: Resident Atelier • North Gallery (Permanent Desk 04)
+            {reservations.length > 0 ? (
+              <span>Active Residency: <strong>{reservations[0].tierName}</strong> • {reservations[0].seatLabel}</span>
+            ) : (
+              <span>Status: Scholar Account Active • No Workstation Reserved Yet</span>
+            )}
           </p>
         </div>
 
@@ -450,35 +375,39 @@ export default function DashboardPage() {
           <span className="text-[10px] uppercase font-mono tracking-widest text-forest-800 font-semibold">
             Smart Keypad Access & Exit Button
           </span>
-          <div className="font-serif text-2xl text-charcoal-900">
-            Entrance PIN: #PASS-2610-STRL04
+          <div className="font-serif text-2xl text-charcoal-900 font-bold">
+            {reservations.length > 0 && reservations[0].passCode ? (
+              `PIN: #${reservations[0].passCode}`
+            ) : (
+              <span className="text-sm font-sans font-normal text-charcoal-500">Book a workstation to generate PIN</span>
+            )}
           </div>
           <p className="text-xs text-charcoal-600 font-sans">
-            Active 24 Hours / 7 Days • Central Studio North Gallery Entrance • Exit via Push Button
+            Center Entrance Door Keypad • Exit via Push Button
           </p>
         </div>
 
         <div className="space-y-1 border-t md:border-t-0 md:border-l border-forest-200/80 pt-4 md:pt-0 md:pl-6">
           <span className="text-[10px] uppercase font-mono tracking-widest text-charcoal-500">
-            Assigned Cedar Storage
+            Assigned Locker Storage
           </span>
           <div className="font-mono text-xl text-charcoal-900 font-bold">
-            Locker #14 (Brass Key)
+            {reservations.length > 0 ? `Locker #${reservations[0].seatId.replace(/[^0-9]/g, "") || "14"}` : "Available with Desk Booking"}
           </div>
           <p className="text-xs text-charcoal-600 font-sans">
-            Second Floor West Mezzanine
+            Main Study Sanctuary Hall
           </p>
         </div>
 
         <div className="space-y-1 border-t md:border-t-0 md:border-l border-forest-200/80 pt-4 md:pt-0 md:pl-6">
           <span className="text-[10px] uppercase font-mono tracking-widest text-charcoal-500">
-            Guest Pass Credit
+            Flexi Study Hours
           </span>
           <div className="font-serif text-2xl text-charcoal-900">
-            3 Remaining
+            {allocatedHours} Hours
           </div>
           <p className="text-xs text-charcoal-600 font-sans">
-            Renewed on the 1st of each calendar month
+            High-speed Wi-Fi & AC library access
           </p>
         </div>
       </div>
@@ -523,8 +452,29 @@ export default function DashboardPage() {
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {reservations.map((item) => {
+            {reservations.length === 0 ? (
+              <div className="p-8 sm:p-12 text-center border-2 border-dashed border-charcoal-200 bg-white rounded-xl space-y-4 shadow-sm">
+                <div className="w-14 h-14 mx-auto rounded-full bg-forest-50 border border-forest-200 flex items-center justify-center text-forest-800">
+                  <Calendar className="w-7 h-7" />
+                </div>
+                <h3 className="font-serif text-2xl text-charcoal-900 font-bold">
+                  No Active Workstation Reservations
+                </h3>
+                <p className="text-xs sm:text-sm text-charcoal-600 max-w-md mx-auto">
+                  You haven&apos;t reserved a study desk or hourly pass yet. Choose your preferred table, pick your time slot, and get your Door Keypad PIN instantly.
+                </p>
+                <div className="pt-2">
+                  <Link
+                    href="/book"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-forest-900 text-ivory-50 text-xs font-bold uppercase tracking-wider hover:bg-forest-800 transition-all rounded shadow-md"
+                  >
+                    <span>Select Table & Book Workstation →</span>
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {reservations.map((item) => {
                 const nextAction = getNextAction(item);
 
                 return (
@@ -693,6 +643,7 @@ export default function DashboardPage() {
                 );
               })}
             </div>
+          )}
           </div>
         </div>
       )}

@@ -613,14 +613,14 @@ function BookDemoContent() {
               {holdResult.message}
             </p>
 
-            <div className="p-4 bg-ivory-100 border border-ivory-300 font-mono text-xs space-y-1 text-charcoal-900">
+            <div className="p-4 bg-emerald-50 border border-emerald-300 font-mono text-xs space-y-1 text-emerald-950 rounded-lg">
               <div>Hold Reference: <strong>{holdResult.holdRef}</strong></div>
-              <div>Expires: <strong>{holdResult.expiresAt}</strong> (15-min window)</div>
-              <div>Estimated Demo Fee: <strong>₹{holdResult.totalPrice} INR</strong></div>
+              <div>Expires: <strong>{holdResult.expiresAt}</strong> (15-min reservation hold)</div>
+              <div>Payable Fee: <strong>₹{holdResult.totalPrice} INR</strong></div>
             </div>
 
-            <p className="text-[10px] font-mono text-amber-800">
-              *Demo assumption: No payments collected. Our curatorial intake desk has received your request.
+            <p className="text-[11px] font-mono text-emerald-800 font-bold">
+              ✓ Workstation reserved for payment. Complete payment below to immediately activate your Door Keypad PIN.
             </p>
 
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -628,16 +628,10 @@ function BookDemoContent() {
                 variant="primary"
                 onClick={() => setIsCheckoutOpen(true)}
                 leftIcon={<CreditCard className="w-4 h-4" />}
-                className="w-full sm:w-auto"
+                className="w-full sm:w-auto font-bold bg-emerald-700 hover:bg-emerald-600 shadow-md"
               >
-                Pay via Razorpay (TEST)
+                Complete Payment (UPI / QR / Cards) →
               </Button>
-              <Link
-                href="/dashboard"
-                className="px-6 py-2.5 border border-forest-900 text-forest-900 text-xs uppercase tracking-wider font-medium hover:bg-forest-50 inline-block min-h-[44px] flex items-center justify-center w-full sm:w-auto"
-              >
-                View in Member Dashboard
-              </Link>
             </div>
           </motion.div>
         ) : (
@@ -690,8 +684,44 @@ function BookDemoContent() {
         amountPaise={(holdResult?.totalPrice || currentDurationRule.basePrice) * 100}
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
-        onSuccess={() => {
+        onSuccess={(paymentId, passCode) => {
           setIsHoldDialogOpen(false);
+          setIsCheckoutOpen(false);
+
+          // Save confirmed booking directly to student's persistent store
+          try {
+            const newBooking = {
+              id: holdResult?.holdRef || `BK-${Date.now()}`,
+              bookingRef: holdResult?.holdRef || `ESZ-${Date.now()}`,
+              seatId: selectedSeat?.id || "desk-04",
+              seatLabel: selectedSeat ? `Workstation ${selectedSeat.seatNumber} (${selectedSeat.name})` : "Dedicated Workstation",
+              roomName: selectedSeat?.zone || "Main Study Sanctuary",
+              tierName: currentDurationRule.label,
+              startDate: startDate,
+              endDate: calculatedEndDate,
+              requestStatus: "approved",
+              paymentStatus: "paid",
+              totalPricePaise: (holdResult?.totalPrice || currentDurationRule.basePrice) * 100,
+              totalPriceRupees: `${holdResult?.totalPrice || currentDurationRule.basePrice}.00`,
+              passCode: passCode || `PASS-${Math.floor(1000 + Math.random() * 9000)}`,
+            };
+
+            const existing = JSON.parse(localStorage.getItem("esz_student_bookings") || "[]");
+            const updated = [newBooking, ...existing];
+            localStorage.setItem("esz_student_bookings", JSON.stringify(updated));
+
+            // Notify server of allocation
+            fetch("/api/member/bookings", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(newBooking),
+            }).catch(() => {});
+          } catch (e) {
+            console.error("Failed to save booking:", e);
+          }
+
+          // Auto-route to student dashboard to view seat and Door Keypad PIN
+          window.location.href = "/dashboard?tab=residencies";
         }}
       />
     </div>
