@@ -5,13 +5,38 @@ import { signJwtToken, setAuthCookie } from "@/lib/auth";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { email, name, avatarUrl } = body;
+    const { credential } = body;
 
-    if (!email) {
-      return NextResponse.json({ error: "Email is required." }, { status: 400 });
+    if (!credential || typeof credential !== "string") {
+      return NextResponse.json(
+        { error: "Google ID credential token is required. Please sign in via Google." },
+        { status: 400 }
+      );
     }
 
-    const cleanEmail = email.trim().toLowerCase();
+    // Decode Google ID Token (JWT standard 3-part)
+    const parts = credential.split(".");
+    if (parts.length !== 3) {
+      return NextResponse.json(
+        { error: "Invalid Google credential token format." },
+        { status: 400 }
+      );
+    }
+
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = Buffer.from(base64, "base64").toString("utf-8");
+    const payload = JSON.parse(jsonPayload);
+
+    if (!payload || !payload.email) {
+      return NextResponse.json(
+        { error: "Google credential did not provide a valid email." },
+        { status: 400 }
+      );
+    }
+
+    const cleanEmail = payload.email.trim().toLowerCase();
+    const name = payload.name || cleanEmail.split("@")[0];
     let user = await findUserByEmail(cleanEmail);
 
     if (!user) {

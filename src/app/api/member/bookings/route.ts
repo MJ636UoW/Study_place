@@ -24,8 +24,8 @@ export async function GET(req: NextRequest) {
         userId: a.userId,
         seatId: a.seatId,
         endDate: a.endDate,
-        userName: "Fellow Sterling",
-        userEmail: "sterling@oxford-fellows.net",
+        userName: "Active Scholar",
+        userEmail: userId.includes("@") ? userId : "scholar@elitestudyzone.in",
       }))
     );
 
@@ -37,7 +37,6 @@ export async function GET(req: NextRequest) {
       userId,
       allocations: engineAllocs,
       requests: engineReqs,
-      fixtureBookings: bookingsFixture,
       notifications,
     });
   } catch (error: unknown) {

@@ -218,14 +218,14 @@ export class RazorpayClient {
     return {
       id: paymentId,
       entity: "payment",
-      amount: 3800000,
+      amount: 229900,
       currency: "INR",
       status: "captured",
       order_id: `order_sim_${paymentId}`,
       method: "card",
       captured: true,
-      email: "resident.fellow@sanctuary-study.com",
-      contact: "+919876543210",
+      email: "scholar@elitestudyzone.in",
+      contact: "+919875359327",
       created_at: Math.floor(Date.now() / 1000),
     };
   }
@@ -264,7 +264,7 @@ export class RazorpayClient {
     return {
       id: `rfnd_test_${Date.now()}`,
       entity: "refund",
-      amount: options.amountPaise || 3800000,
+      amount: options.amountPaise || 229900,
       currency: "INR",
       payment_id: options.paymentId,
       status: "processing" as const,

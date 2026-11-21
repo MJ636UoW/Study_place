@@ -179,7 +179,8 @@ export default function DashboardPage() {
   // Fetch live notifications and bookings from API
   const refreshMemberData = async () => {
     try {
-      const res = await fetch("/api/member/bookings?userId=usr_sterling_01");
+      const emailParam = profileEmail ? encodeURIComponent(profileEmail) : "student";
+      const res = await fetch(`/api/member/bookings?userId=${emailParam}`);
       const data = await res.json();
       if (data.success && data.notifications) {
         setNotifications(data.notifications);

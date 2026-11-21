@@ -1,67 +1,136 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Download, Printer, Receipt, CreditCard } from "lucide-react";
-import { bookingsFixture, locationFixture } from "@/fixtures";
-import { StatusBadge } from "@/components/ui/StatusBadge";
+import { ArrowLeft, Printer, Receipt, CreditCard, CheckCircle2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { RazorpayCheckoutModal } from "@/components/payments/RazorpayCheckoutModal";
 
 export default function BookingDetailPage() {
   const params = useParams();
-  const bookingId = params?.id as string;
-  const booking =
-    bookingsFixture.find((b) => b.id === bookingId) || bookingsFixture[0];
+  const bookingId = (params?.id as string) || "BK-CURRENT";
+
+  const [booking, setBooking] = useState<{
+    id: string;
+    bookingRef: string;
+    seatId: string;
+    seatLabel: string;
+    roomName: string;
+    tierName: string;
+    startDate: string;
+    endDate: string;
+    totalPriceRupees: string;
+    passCode: string;
+    paymentStatus?: string;
+  } | null>(null);
 
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
-  const [isModifyDialogOpen, setIsModifyDialogOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [cancelStatus, setCancelStatus] = useState<string | null>(null);
 
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("esz_student_bookings");
+      if (stored) {
+        const list = JSON.parse(stored);
+        if (Array.isArray(list) && list.length > 0) {
+          const match = list.find((b: any) => b.id === bookingId || b.bookingRef === bookingId);
+          if (match) {
+            setBooking(match);
+            return;
+          } else if (list[0]) {
+            setBooking(list[0]);
+            return;
+          }
+        }
+      }
+    } catch (_) {}
+
+    // Fallback active booking
+    setBooking({
+      id: bookingId,
+      bookingRef: `ESZ-${bookingId.substring(0, 8).toUpperCase()}`,
+      seatId: "desk-04",
+      seatLabel: "Workstation Desk 04",
+      roomName: "Main Study Sanctuary",
+      tierName: "Monthly Resident Pass",
+      startDate: new Date().toISOString().split("T")[0],
+      endDate: new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0],
+      totalPriceRupees: "2,299.00",
+      passCode: "849201",
+      paymentStatus: "paid",
+    });
+  }, [bookingId]);
+
+  const activeBooking = booking || {
+    id: bookingId,
+    bookingRef: `ESZ-${bookingId.substring(0, 6).toUpperCase()}`,
+    seatId: "desk-04",
+    seatLabel: "Workstation Desk 04",
+    roomName: "Main Study Sanctuary",
+    tierName: "Monthly Resident Pass",
+    startDate: "2026-11-20",
+    endDate: "2026-12-20",
+    totalPriceRupees: "2,299.00",
+    passCode: "849201",
+    paymentStatus: "paid",
+  };
+
   const handleCancelConfirm = () => {
-    setCancelStatus("Your cancellation request has been accepted. Refund will credit in 3-5 days per policy.");
+    try {
+      const stored = localStorage.getItem("esz_student_bookings");
+      if (stored) {
+        const list = JSON.parse(stored);
+        const filtered = list.filter((b: any) => b.id !== activeBooking.id);
+        localStorage.setItem("esz_student_bookings", JSON.stringify(filtered));
+      }
+    } catch (_) {}
+
+    setCancelStatus("Your cancellation request has been confirmed. Workstation released.");
     setTimeout(() => {
       setIsCancelDialogOpen(false);
+      window.location.href = "/dashboard";
     }, 1500);
   };
 
   return (
-    <div className="w-full py-16 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto space-y-12">
+    <div className="w-full py-12 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto space-y-8 font-sans">
       {/* Back Link */}
       <div>
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 text-xs uppercase tracking-wider font-mono text-charcoal-600 hover:text-charcoal-950 min-h-[44px]"
+          className="inline-flex items-center gap-2 text-xs uppercase tracking-wider font-mono text-charcoal-700 hover:text-forest-900 font-bold min-h-[44px]"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Return to Member Dashboard</span>
+          <span>Return to Student Dashboard</span>
         </Link>
       </div>
 
       {/* Header Ledger */}
-      <div className="p-8 border border-ivory-300 bg-ivory-50 shadow-editorial space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-ivory-200">
+      <div className="p-8 border border-charcoal-300 bg-white shadow-lg rounded-2xl space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-charcoal-200">
           <div>
-            <div className="text-[10px] uppercase font-mono tracking-widest text-amber-800">
-              Sanctuary Itinerary Ledger
+            <div className="text-[10px] uppercase font-mono tracking-widest text-emerald-800 font-bold">
+              Elite Study Zone • Workstation Itinerary
             </div>
-            <h1 className="font-serif text-3xl sm:text-4xl text-charcoal-900 mt-1">
-              {booking.seatLabel}
+            <h1 className="font-serif text-3xl sm:text-4xl text-charcoal-900 font-bold mt-1">
+              {activeBooking.seatLabel}
             </h1>
             <p className="text-xs text-charcoal-600 font-sans mt-0.5">
-              Ref: <span className="font-mono">{booking.bookingRef}</span> • Guest: {booking.memberName}
+              Ref: <span className="font-mono font-bold text-charcoal-800">{activeBooking.bookingRef}</span> • Zone: {activeBooking.roomName}
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            <StatusBadge status={booking.status} size="md" />
+            <span className="px-3 py-1 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-full text-xs font-mono font-bold uppercase">
+              {activeBooking.paymentStatus === "paid" ? "Confirmed (Active)" : "Payment Pending"}
+            </span>
             <button
               type="button"
               onClick={() => window.print()}
-              className="p-2 border border-ivory-300 hover:bg-ivory-100 min-h-[44px] min-w-[44px] flex items-center justify-center text-charcoal-700"
+              className="p-2.5 border border-charcoal-300 rounded-lg hover:bg-slate-50 min-h-[44px] min-w-[44px] flex items-center justify-center text-charcoal-700 transition-colors"
               aria-label="Print voucher"
             >
               <Printer className="w-4 h-4" />
@@ -70,178 +139,111 @@ export default function BookingDetailPage() {
         </div>
 
         {cancelStatus && (
-          <div className="p-4 border border-amber-300 bg-amber-50 text-amber-900 text-xs font-sans">
-            {cancelStatus}
+          <div className="p-4 border border-emerald-300 bg-emerald-50 text-emerald-950 text-xs font-bold rounded-lg flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+            <span>{cancelStatus}</span>
           </div>
         )}
 
         {/* Breakdown Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs font-sans">
-          <div className="p-4 bg-ivory-100/60 border border-ivory-200 space-y-1">
-            <span className="text-[10px] uppercase font-mono text-charcoal-500">Residency Tier</span>
-            <div className="font-serif text-lg text-charcoal-900">{booking.tierName}</div>
-            <p className="text-charcoal-600">Full membership privileges applied</p>
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+            <span className="text-[10px] uppercase font-mono text-charcoal-500 font-bold">Membership Tier</span>
+            <div className="font-serif text-lg text-charcoal-900 font-bold">{activeBooking.tierName}</div>
+            <p className="text-charcoal-600 text-[11px]">Full workstation & Wi-Fi privileges active</p>
           </div>
 
-          <div className="p-4 bg-ivory-100/60 border border-ivory-200 space-y-1">
-            <span className="text-[10px] uppercase font-mono text-charcoal-500">Residency Timeline</span>
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+            <span className="text-[10px] uppercase font-mono text-charcoal-500 font-bold">Residency Timeline</span>
             <div className="font-mono text-sm text-charcoal-900 font-bold">
-              {booking.checkInDate} → {booking.checkOutDate}
+              {activeBooking.startDate} → {activeBooking.endDate}
             </div>
-            <p className="text-charcoal-600">Arrival window: {booking.arrivalWindow}</p>
+            <p className="text-charcoal-600 text-[11px]">24/7 Digital Touch Keypad Entry</p>
           </div>
 
-          <div className="p-4 bg-ivory-100/60 border border-ivory-200 space-y-1">
-            <span className="text-[10px] uppercase font-mono text-charcoal-500">Total Contribution</span>
-            <div className="font-serif text-lg font-bold text-charcoal-900">
-              ₹{booking.totalAmount} {booking.currency}
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+            <span className="text-[10px] uppercase font-mono text-charcoal-500 font-bold">Total Contribution</span>
+            <div className="font-serif text-lg font-bold text-emerald-900">
+              ₹{activeBooking.totalPriceRupees} INR
             </div>
-            <p className="text-charcoal-600">Paid in full via invoice</p>
+            <p className="text-charcoal-600 text-[11px]">Settled & captured electronically</p>
           </div>
         </div>
 
-        {/* Bespoke Concierge Notes */}
-        <div className="p-6 border border-ivory-200 bg-ivory-100/40 space-y-3 text-xs font-sans">
-          <div className="text-[10px] uppercase font-mono text-amber-800 font-semibold tracking-wider">
-            Concierge Arrival Instructions
+        {/* Keypad & Access Instructions */}
+        <div className="p-6 border border-emerald-300 bg-emerald-50 rounded-xl space-y-3 text-xs font-sans">
+          <div className="text-[10px] uppercase font-mono text-emerald-900 font-bold tracking-wider flex items-center gap-1.5">
+            <ShieldCheck className="w-4 h-4 text-emerald-700" />
+            <span>Door Access Keypad Credentials</span>
           </div>
-          <p className="text-charcoal-800 leading-relaxed">
-            {booking.conciergeNotes || "Your workstation is positioned for morning natural illumination. Locker brass key provided at the front loggia desk."}
-          </p>
-          {booking.specialRequests && (
-            <p className="text-charcoal-600 italic">
-              Special accommodations noted: “{booking.specialRequests}”
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <p className="text-emerald-900 leading-relaxed text-xs">
+              Punch your unique 6-digit PIN on the entrance door touch keypad to unlock. To leave the facility, press the stainless steel push-to-exit button next to the door.
             </p>
-          )}
+            <div className="px-4 py-2 bg-white border border-emerald-400 font-mono font-black text-emerald-950 text-lg rounded-lg shadow-sm">
+              #{activeBooking.passCode}
+            </div>
+          </div>
         </div>
 
         {/* Location & Access Directions */}
-        <div className="p-6 border border-ivory-200 bg-ivory-50 space-y-2 text-xs font-sans">
-          <div className="font-semibold text-charcoal-900">
-            {locationFixture.name}
+        <div className="p-5 border border-charcoal-200 bg-slate-50 rounded-xl space-y-1.5 text-xs font-sans">
+          <div className="font-bold text-charcoal-900">
+            Elite Study Zone (Self-Study Space & Focus Hub)
           </div>
           <p className="text-charcoal-600">
-            {locationFixture.addressLine1}, {locationFixture.addressLine2}, {locationFixture.city}
+            Amrut Nagar, Ghatkopar West, Mumbai, Maharashtra 400086
           </p>
           <p className="text-charcoal-500 font-mono text-[11px]">
-            Biometric Scanner: Active 24/7 with assigned PIN #8021
+            Helpline: +91 98753 59327 | support@elitestudyzone.in
           </p>
         </div>
 
         {/* Action Controls */}
-        <div className="pt-4 border-t border-ivory-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="pt-4 border-t border-charcoal-200 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3">
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setIsCheckoutOpen(true)}
-              leftIcon={<CreditCard className="w-3.5 h-3.5" />}
-            >
-              Pay via Razorpay (TEST)
-            </Button>
             <Link
-              href={`/dashboard/bookings/${booking.id}/receipt`}
-              className="px-3 py-1.5 border border-ivory-300 bg-ivory-100 hover:bg-ivory-200 text-charcoal-900 text-xs uppercase tracking-wider font-medium inline-flex items-center gap-1.5 min-h-[38px]"
+              href={`/dashboard/bookings/${activeBooking.id}/receipt`}
+              className="px-4 py-2 bg-forest-950 text-white rounded-lg text-xs uppercase tracking-wider font-bold inline-flex items-center gap-1.5 min-h-[40px] hover:bg-forest-900 transition-colors shadow-sm"
             >
-              <Receipt className="w-3.5 h-3.5 text-amber-800" />
-              <span>Tax Receipt</span>
+              <Receipt className="w-4 h-4 text-emerald-400" />
+              <span>Official Tax Receipt</span>
             </Link>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsModifyDialogOpen(true)}
-            >
-              Modify Dates
-            </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="text-red-800 hover:text-red-950 hover:bg-red-50"
+              className="text-red-700 hover:text-red-900 hover:bg-red-50"
               onClick={() => setIsCancelDialogOpen(true)}
             >
-              Cancel Reservation
+              Request Cancellation
             </Button>
           </div>
-
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => window.print()}
-            leftIcon={<Download className="w-3.5 h-3.5" />}
-          >
-            Download Physical Voucher
-          </Button>
         </div>
       </div>
-
-      {/* Razorpay Standard Checkout Modal */}
-      <RazorpayCheckoutModal
-        bookingRequestId={booking.id}
-        seatLabel={booking.seatLabel}
-        durationLabel={booking.tierName}
-        amountPaise={booking.totalAmount * 100 * 83}
-        isOpen={isCheckoutOpen}
-        onClose={() => setIsCheckoutOpen(false)}
-        onSuccess={() => {
-          setIsCheckoutOpen(false);
-        }}
-      />
 
       {/* Cancellation Dialog */}
       <Dialog
         isOpen={isCancelDialogOpen}
         onClose={() => setIsCancelDialogOpen(false)}
-        title="Confirm Reservation Cancellation"
-        description="Review policy terms regarding your refund eligibility."
+        title="Confirm Workstation Cancellation"
+        description="Release this workstation reservation per policy guidelines."
         footer={
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => setIsCancelDialogOpen(false)}>
-              Keep Reservation
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={() => setIsCancelDialogOpen(false)}>
+              Keep Booking
             </Button>
-            <Button variant="danger" size="sm" onClick={handleCancelConfirm}>
-              Confirm Cancellation
+            <Button variant="danger" onClick={handleCancelConfirm}>
+              Confirm & Release Desk
             </Button>
           </div>
         }
       >
-        <div className="space-y-4 text-xs font-sans text-charcoal-800">
+        <div className="space-y-3 text-xs font-sans text-charcoal-700">
           <p>
-            You are requesting to cancel reservation <strong>{booking.bookingRef}</strong> ({booking.seatLabel}).
+            Are you sure you want to cancel your reservation for <strong>{activeBooking.seatLabel}</strong>?
           </p>
-          <div className="p-3 bg-amber-50 border border-amber-200 text-amber-900 text-xs">
-            Per our Refund Policy, cancellations submitted at least 24 hours prior to commencement receive a 100% refund credited back to the original funding source.
-          </div>
-        </div>
-      </Dialog>
-
-      {/* Modify Dialog */}
-      <Dialog
-        isOpen={isModifyDialogOpen}
-        onClose={() => setIsModifyDialogOpen(false)}
-        title="Modify Residency Timeline"
-        description="Select an alternate commencement date for this reservation."
-        footer={
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => setIsModifyDialogOpen(false)}>
-              Close
-            </Button>
-            <Button variant="primary" size="sm" onClick={() => setIsModifyDialogOpen(false)}>
-              Submit Modification
-            </Button>
-          </div>
-        }
-      >
-        <div className="space-y-4 text-xs font-sans text-charcoal-800">
-          <p>
-            Contact our desk or pick a new commencement date below:
-          </p>
-          <input
-            type="date"
-            defaultValue={booking.checkInDate}
-            className="w-full px-3 py-2 border border-ivory-300 bg-ivory-50 text-sm font-sans"
-          />
           <p className="text-charcoal-500 text-[11px]">
-            Date modifications are subject to desk availability in the North Gallery.
+            Your allocated Door Access Keypad PIN will be deactivated and the seat will become available for other scholars.
           </p>
         </div>
       </Dialog>

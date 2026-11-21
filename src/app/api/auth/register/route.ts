@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { findUserByEmail, createUser } from "@/lib/hybridDb";
 import { sendVerificationEmail } from "@/lib/mailer";
 import { sendWhatsAppWelcome } from "@/lib/whatsapp";
+import { signJwtToken, setAuthCookie } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,6 +17,7 @@ export async function POST(req: NextRequest) {
     }
 
     const cleanEmail = email.trim().toLowerCase();
+    const cleanName = name.trim();
     const existing = await findUserByEmail(cleanEmail);
 
     if (existing && existing.emailVerified) {
@@ -26,23 +28,23 @@ export async function POST(req: NextRequest) {
     }
 
     const { user, token } = await createUser({
-      name,
+      name: cleanName,
       email: cleanEmail,
       password,
       phone,
-      emailVerified: false,
+      emailVerified: true,
     });
 
     const forwardedHost = req.headers.get("x-forwarded-host") || req.headers.get("host");
     const forwardedProto = req.headers.get("x-forwarded-proto") || "https";
-    let origin = "https://study-place.onrender.com";
+    let origin = "https://elitestudyzone.in";
     if (forwardedHost && !forwardedHost.includes("localhost:10000")) {
       origin = `${forwardedProto}://${forwardedHost}`;
     }
 
     const confirmUrl = `${origin}/api/auth/verify?token=${encodeURIComponent(token)}&email=${encodeURIComponent(cleanEmail)}`;
 
-    sendVerificationEmail(cleanEmail, name, token, origin).catch((e) =>
+    sendVerificationEmail(cleanEmail, cleanName, token, origin).catch((e) =>
       console.warn("sendVerificationEmail error:", e)
     );
 
@@ -50,17 +52,36 @@ export async function POST(req: NextRequest) {
     if (phone) {
       sendWhatsAppWelcome({
         phone,
-        name,
+        name: cleanName,
         email: cleanEmail,
         initialPassCode: user?.biometricPin,
       }).catch((e) => console.warn("[WhatsApp] Welcome dispatch error:", e));
     }
 
-    return NextResponse.json({
-      success: true,
-      message: `Account created for ${cleanEmail}! Please confirm your email to sign in.`,
-      confirmUrl,
+    const jwtToken = signJwtToken({
+      userId: user?._id ? user._id.toString() : "user_" + Buffer.from(cleanEmail).toString("hex"),
+      email: cleanEmail,
+      name: cleanName,
+      role: "student",
     });
+
+    const res = NextResponse.json({
+      success: true,
+      message: `Account created successfully! Welcome to Elite Study Zone, ${cleanName}.`,
+      confirmUrl,
+      user: {
+        name: cleanName,
+        email: cleanEmail,
+        phone,
+      },
+    });
+
+    setAuthCookie(res, jwtToken);
+    res.cookies.set("esz_student_session", "active", { path: "/", maxAge: 604800, sameSite: "lax" });
+    res.cookies.set("esz_student_email", encodeURIComponent(cleanEmail), { path: "/", maxAge: 604800, sameSite: "lax" });
+    res.cookies.set("esz_student_name", encodeURIComponent(cleanName), { path: "/", maxAge: 604800, sameSite: "lax" });
+
+    return res;
   } catch (error: any) {
     console.error("Register Error:", error);
     return NextResponse.json(

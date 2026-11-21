@@ -294,16 +294,17 @@ export class BookingEngine {
     }
 
     // 2. Fetch server-owned pricing (1 INR = 100 Paise)
-    // Default server plan fee table
+    // Default server plan fee table in standard INR Paise
     const planPricingMap: Record<string, number> = {
-      day: 450000,       // ₹4,500
-      week: 1900000,     // ₹19,000
-      month: 3800000,    // ₹38,000
-      quarter: 9500000,  // ₹95,000
-      year: 34000000,    // ₹340,000
+      hour: 4900,        // ₹49
+      day: 24900,        // ₹249
+      week: 129900,      // ₹1,299
+      month: 229900,     // ₹2,299
+      quarter: 549900,   // ₹5,499
+      year: 1799900,     // ₹17,999
     };
 
-    const serverPricePaise = planPricingMap[input.planId] || 3800000;
+    const serverPricePaise = planPricingMap[input.planId] || 229900;
     const requestNumber = `REQ-${new Date().getFullYear()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
     const requestId = `req-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
 

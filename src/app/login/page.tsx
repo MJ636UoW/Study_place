@@ -77,11 +77,6 @@ function LoginContent() {
   const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
   const [registeredConfirmUrl, setRegisteredConfirmUrl] = useState<string | null>(null);
 
-  // Google Modal State & Dynamic Account Memory
-  const [showGoogleModal, setShowGoogleModal] = useState(false);
-  const [googleEmailInput, setGoogleEmailInput] = useState("");
-  const [savedGoogleAccount, setSavedGoogleAccount] = useState<{ email: string; name: string } | null>(null);
-
   // Hourly Magic Pass State
   const [hourlyPassPin, setHourlyPassPin] = useState<string | null>(null);
   const [copiedPin, setCopiedPin] = useState(false);
@@ -100,17 +95,6 @@ function LoginContent() {
       setStatusMessage({ type: "success", text: "Email confirmed successfully! Welcome to Elite Study Zone." });
     }
 
-    // Load any saved Google Account used previously on THIS browser only
-    try {
-      const savedEmail = localStorage.getItem("esz_recent_google_email");
-      const savedName = localStorage.getItem("esz_recent_google_name");
-      if (savedEmail && savedEmail.includes("@")) {
-        setSavedGoogleAccount({
-          email: savedEmail,
-          name: savedName || savedEmail.split("@")[0],
-        });
-      }
-    } catch (_) {}
   }, [searchParams]);
 
   // Google One-Tap / GIS Auto-Detection (Active only when a real client ID is configured)
@@ -131,22 +115,7 @@ function LoginContent() {
             client_id: rawClientId,
             callback: (res: { credential?: string }) => {
               if (res?.credential) {
-                try {
-                  const base64Url = res.credential.split(".")[1];
-                  const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-                  const jsonPayload = decodeURIComponent(
-                    atob(base64)
-                      .split("")
-                      .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-                      .join("")
-                  );
-                  const payload = JSON.parse(jsonPayload);
-                  if (payload?.email) {
-                    handleExecuteGoogleLogin(payload.email, payload.name);
-                  }
-                } catch (e) {
-                  console.warn("Credential parse fallback:", e);
-                }
+                handleVerifyGoogleCredential(res.credential);
               }
             },
             auto_select: false,
@@ -160,78 +129,15 @@ function LoginContent() {
     return () => clearTimeout(timer);
   }, []);
 
-  // 1. One-Click Google Sign-In
-  const handleGoogleSignInClick = () => {
-    // If the scholar already typed or pasted an email into the input, sign in directly!
-    if (email && email.includes("@")) {
-      handleExecuteGoogleLogin(email);
-      return;
-    }
-    // Clean input without any hardcoded credentials
-    setGoogleEmailInput("");
-    setShowGoogleModal(true);
-  };
-
-  const handlePasteFromClipboard = async () => {
-    try {
-      if (typeof navigator !== "undefined" && navigator.clipboard) {
-        const text = await navigator.clipboard.readText();
-        const trimmed = (text || "").trim();
-        if (trimmed) {
-          setGoogleEmailInput(trimmed);
-          if (trimmed.includes("@")) {
-            handleExecuteGoogleLogin(trimmed);
-          }
-        }
-      }
-    } catch (_) {
-      // Clipboard access blocked by browser permission
-    }
-  };
-
-  const handleForgetSavedAccount = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    try {
-      localStorage.removeItem("esz_recent_google_email");
-      localStorage.removeItem("esz_recent_google_name");
-    } catch (_) {}
-    setSavedGoogleAccount(null);
-  };
-
-  const handleExecuteGoogleLogin = async (targetEmail: string, explicitName?: string) => {
-    const cleanEmail = (targetEmail || "").trim().toLowerCase();
-    if (!cleanEmail || !cleanEmail.includes("@")) {
-      setStatusMessage({ type: "error", text: "Please enter a valid Google email address." });
-      return;
-    }
-
+  const handleVerifyGoogleCredential = async (credential: string) => {
     setIsLoading(true);
     setStatusMessage(null);
-    setShowGoogleModal(false);
 
     try {
-      // Derive clean capitalized scholar name (e.g. "alex.miller" -> "Alex Miller")
-      const derivedName =
-        explicitName ||
-        cleanEmail
-          .split("@")[0]
-          .replace(/[._-]/g, " ")
-          .replace(/\b\w/g, (c) => c.toUpperCase());
-
-      // Save to this browser's local memory for 1-click return
-      try {
-        localStorage.setItem("esz_recent_google_email", cleanEmail);
-        localStorage.setItem("esz_recent_google_name", derivedName);
-        setSavedGoogleAccount({ email: cleanEmail, name: derivedName });
-      } catch (_) {}
-
       const res = await fetch("/api/auth/google", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: cleanEmail,
-          name: derivedName,
-        }),
+        body: JSON.stringify({ credential }),
       });
 
       const data = await res.json();
@@ -239,20 +145,30 @@ function LoginContent() {
         throw new Error(data.error || "Failed to sign in with Google.");
       }
 
-      const scholarName = data.user?.name || derivedName || "Scholar";
-      document.cookie = `esz_student_session=active_google; path=/; max-age=604800; SameSite=Lax`;
-      document.cookie = `esz_student_email=${encodeURIComponent(cleanEmail)}; path=/; max-age=604800; SameSite=Lax`;
-      document.cookie = `esz_student_name=${encodeURIComponent(scholarName)}; path=/; max-age=604800; SameSite=Lax`;
-
-      setStatusMessage({ type: "success", text: "Google Sign In verified! Redirecting to student dashboard..." });
+      const scholarName = data.user?.name || "Scholar";
+      setStatusMessage({ type: "success", text: `Welcome, ${scholarName}! Entering dashboard...` });
       const next = searchParams.get("next") || "/dashboard";
       window.location.href = next;
     } catch (err: unknown) {
       setIsLoading(false);
       setStatusMessage({
         type: "error",
-        text: err instanceof Error ? err.message : "Failed to connect to Google.",
+        text: err instanceof Error ? err.message : "Failed to verify Google account.",
       });
+    }
+  };
+
+  const handleGoogleSignInClick = () => {
+    const rawClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    const g = (window as unknown as { google?: { accounts?: { id?: { prompt: Function } } } })?.google;
+    if (rawClientId && !rawClientId.includes("sample") && !rawClientId.includes("placeholder") && g?.accounts?.id) {
+      g.accounts.id.prompt();
+    } else {
+      setStatusMessage({
+        type: "info",
+        text: "Please sign in securely below with your email & password, or switch to Register to create a new student account.",
+      });
+      setActiveTab("login");
     }
   };
 
@@ -332,9 +248,11 @@ function LoginContent() {
 
       setStatusMessage({
         type: "success",
-        text: `Account registered! A confirmation message was dispatched for ${email}. You can confirm via your email or click the instant button below.`,
+        text: `Welcome to Elite Study Zone, ${fullName}! Your student account is active. Entering dashboard...`,
       });
-      setActiveTab("login");
+      setTimeout(() => {
+        window.location.href = searchParams.get("next") || "/dashboard";
+      }, 1000);
     } catch (err: unknown) {
       setIsLoading(false);
       setStatusMessage({
@@ -1031,128 +949,6 @@ function LoginContent() {
         </div>
       </div>
 
-      {/* Google Account Selector Dialog */}
-      {showGoogleModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-charcoal-200 space-y-4">
-            <div className="flex items-center justify-between border-b border-charcoal-100 pb-3">
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                </svg>
-                <span className="font-bold text-sm text-charcoal-900">Sign in with Google</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowGoogleModal(false)}
-                className="text-charcoal-400 hover:text-charcoal-700 text-sm font-bold p-1 rounded hover:bg-slate-100"
-              >
-                ✕
-              </button>
-            </div>
-
-            <p className="text-xs text-charcoal-600 leading-relaxed">
-              Sign in with your Google Account to automatically access your student portal and workstation passes:
-            </p>
-
-            {/* If THIS browser has previously logged in with a Google account, offer it as a quick chip */}
-            {savedGoogleAccount && (
-              <div className="space-y-1.5 pb-2 border-b border-charcoal-100">
-                <div className="text-[10px] font-mono uppercase tracking-wider text-charcoal-500">
-                  Recent on this browser
-                </div>
-                <div className="flex items-center gap-2 p-2.5 rounded-xl border border-charcoal-200 hover:border-forest-600 bg-slate-50 transition-all">
-                  <button
-                    type="button"
-                    onClick={() => handleExecuteGoogleLogin(savedGoogleAccount.email, savedGoogleAccount.name)}
-                    className="flex-1 flex items-center gap-2.5 text-left group"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-forest-700 text-white font-bold flex items-center justify-center text-xs flex-shrink-0">
-                      {savedGoogleAccount.name.slice(0, 2).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-bold text-charcoal-900 group-hover:text-forest-700 truncate">
-                        {savedGoogleAccount.name}
-                      </div>
-                      <div className="text-[11px] text-charcoal-500 truncate">{savedGoogleAccount.email}</div>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-charcoal-400 group-hover:text-forest-700 flex-shrink-0" />
-                  </button>
-                  <button
-                    type="button"
-                    title="Remove from this browser"
-                    onClick={handleForgetSavedAccount}
-                    className="text-charcoal-400 hover:text-rose-600 text-xs p-1"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Direct Paste / Type Google Email Form */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (googleEmailInput.trim()) {
-                  handleExecuteGoogleLogin(googleEmailInput.trim());
-                }
-              }}
-              className="space-y-3"
-            >
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-[11px] font-semibold text-charcoal-700">
-                    Paste or enter Google email:
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handlePasteFromClipboard}
-                    className="text-[10px] font-semibold text-forest-700 hover:text-forest-800 flex items-center gap-1 hover:underline"
-                  >
-                    <Clipboard className="w-3 h-3" />
-                    <span>Paste Clipboard</span>
-                  </button>
-                </div>
-                <input
-                  type="email"
-                  autoFocus
-                  placeholder="your.email@gmail.com"
-                  value={googleEmailInput}
-                  onChange={(e) => setGoogleEmailInput(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-sans"
-                />
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={handlePasteFromClipboard}
-                  className="px-3 py-2.5 text-xs bg-slate-100 hover:bg-slate-200 text-charcoal-700 font-semibold rounded-lg transition-colors flex items-center gap-1"
-                >
-                  <Clipboard className="w-3.5 h-3.5 text-charcoal-600" />
-                  <span>Paste</span>
-                </button>
-                <button
-                  type="submit"
-                  disabled={!googleEmailInput || !googleEmailInput.includes("@")}
-                  className="flex-1 py-2.5 bg-forest-700 hover:bg-forest-600 text-white text-xs font-bold rounded-lg transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5 shadow-sm"
-                >
-                  <span>Continue to Dashboard</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </form>
-
-            <div className="text-[10px] text-center text-charcoal-500 font-sans pt-1">
-              Supports any personal @gmail.com or Google Workspace address.
-            </div>
-          </div>
-        </div>
-      )}
       <Script src="https://accounts.google.com/gsi/client" strategy="lazyOnload" />
     </div>
   );
