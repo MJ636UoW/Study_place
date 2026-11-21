@@ -34,11 +34,35 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { RazorpayCheckoutModal } from "@/components/payments/RazorpayCheckoutModal";
 import { motion } from "motion/react";
 
+function getDynamicHourlySlots(hours: number): { slot: string; label: string }[] {
+  const startHours = [7, 9, 11, 13, 15, 17, 18].filter((start) => start + hours <= 24);
+  return startHours.map((start) => {
+    const end = start + hours;
+    const formatH = (h: number) => {
+      const pad = (n: number) => n.toString().padStart(2, "0");
+      return `${pad(h)}:00`;
+    };
+    let tag = "Focus Block";
+    if (start < 9) tag = "Early Morning";
+    else if (start < 12) tag = "Morning Focus";
+    else if (start < 15) tag = "Mid-Day Sprint";
+    else if (start < 18) tag = "Afternoon Block";
+    else if (start < 21) tag = "Evening Scholar";
+    else tag = "Night Owl";
+
+    const slotStr = `${formatH(start)} — ${formatH(end)}`;
+    return {
+      slot: `${slotStr} (${tag})`,
+      label: `${slotStr} (${tag} • ${hours} hr${hours > 1 ? "s" : ""})`,
+    };
+  });
+}
+
 function BookDemoContent() {
   // 1. Duration, Hours & Date selection
   const [duration, setDuration] = useState<DurationType>("hour");
   const [hourlyCount, setHourlyCount] = useState<number>(3); // Default 3 hours
-  const [hourlyTimeSlot, setHourlyTimeSlot] = useState<string>("09:00 - 12:00");
+  const [hourlyTimeSlot, setHourlyTimeSlot] = useState<string>("09:00 — 12:00 (Morning Focus)");
   const [startDate, setStartDate] = useState<string>(() => formatDate(new Date()));
   const [viewMode, setViewMode] = useState<"map" | "list">("map");
 
@@ -150,10 +174,18 @@ function BookDemoContent() {
     return availabilities.find((a) => a.seat.id === selectedSeat.id) || null;
   }, [selectedSeat, availabilities]);
 
-  // Current duration rule
+  // Current duration rule (dynamically scales for hourly selections)
   const currentDurationRule = useMemo(() => {
-    return DURATION_RULES.find((r) => r.id === duration) || DURATION_RULES[2];
-  }, [duration]);
+    const base = DURATION_RULES.find((r) => r.id === duration) || DURATION_RULES[2];
+    if (duration === "hour") {
+      return {
+        ...base,
+        basePrice: 49 * hourlyCount,
+        sublabel: `${hourlyCount} Hour${hourlyCount > 1 ? "s" : ""} (${hourlyTimeSlot})`,
+      };
+    }
+    return base;
+  }, [duration, hourlyCount, hourlyTimeSlot]);
 
   // Total available count
   const availableCount = useMemo(() => {
@@ -189,37 +221,11 @@ function BookDemoContent() {
   return (
     <div className="w-full py-12 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-10">
       {/* =========================================================================
-          EXPLICIT DEMO PROTOTYPE NOTICE BANNER
-          ========================================================================= */}
-      <div className="p-4 sm:p-5 border-2 border-amber-600 bg-amber-50 text-amber-950 shadow-editorial">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <div className="p-1.5 bg-amber-600 text-ivory-50 flex-shrink-0 mt-0.5">
-              <AlertTriangle className="w-4 h-4" />
-            </div>
-            <div className="space-y-0.5">
-              <div className="text-[11px] uppercase font-mono tracking-widest font-bold text-amber-900">
-                Explicit Demo Prototype • Simulated Reservation Engine
-              </div>
-              <p className="text-xs font-sans text-amber-900 leading-relaxed">
-                Prices, dates, and seat availability are <strong>simulated demo assumptions</strong>. No payment is taken, no binding contract is created, and real bookings are not placed until confirmed by the Curatorial Desk.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="text-[10px] font-mono uppercase px-2.5 py-1 bg-amber-200/80 border border-amber-400 font-semibold">
-              Replaceable Fixture Adapter
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* =========================================================================
           HEADER: THE STEP FLOW
           ========================================================================= */}
       <div className="max-w-3xl space-y-3">
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-ivory-100 border border-ivory-300 text-[11px] font-mono uppercase tracking-widest text-amber-800">
-          <span>Sanctuary Desk Intake</span>
+          <span>Elite Study Zone Intake</span>
           <span>•</span>
           <span>Step Sequence I — IV</span>
         </div>
@@ -227,7 +233,7 @@ function BookDemoContent() {
           Reserve Your Workstation
         </h1>
         <p className="font-serif italic text-base sm:text-lg text-charcoal-700 leading-relaxed">
-          Select membership duration → choose start date → inspect available seats → select seat → review request.
+          Select membership duration → choose start date → inspect available seats → select seat → confirm & pay.
         </p>
       </div>
 
@@ -258,6 +264,7 @@ function BookDemoContent() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
             {DURATION_RULES.map((rule) => {
               const isSelected = duration === rule.id;
+              const displayPrice = rule.id === "hour" ? 49 * hourlyCount : rule.basePrice;
               return (
                 <button
                   key={rule.id}
@@ -274,11 +281,11 @@ function BookDemoContent() {
                       {rule.label}
                     </div>
                     <div className="text-[10px] text-charcoal-500 font-mono mt-0.5">
-                      {rule.sublabel}
+                      {rule.id === "hour" ? `${hourlyCount} Hours Selected` : rule.sublabel}
                     </div>
                   </div>
                   <div className="pt-2 text-xs font-mono font-bold text-forest-700">
-                    ₹{rule.basePrice} <span className="font-normal text-[10px] text-charcoal-500">INR</span>
+                    ₹{displayPrice} <span className="font-normal text-[10px] text-charcoal-500">INR</span>
                   </div>
                 </button>
               );
@@ -297,10 +304,16 @@ function BookDemoContent() {
                     <button
                       key={h}
                       type="button"
-                      onClick={() => setHourlyCount(h)}
-                      className={`px-3 py-1.5 text-xs font-mono font-bold rounded ${
+                      onClick={() => {
+                        setHourlyCount(h);
+                        const slots = getDynamicHourlySlots(h);
+                        if (slots.length > 0) {
+                          setHourlyTimeSlot(slots[0].slot);
+                        }
+                      }}
+                      className={`px-3 py-1.5 text-xs font-mono font-bold rounded transition-all ${
                         hourlyCount === h
-                          ? "bg-forest-700 text-white"
+                          ? "bg-forest-700 text-white shadow-sm ring-1 ring-forest-800"
                           : "bg-white text-charcoal-800 border border-forest-300 hover:bg-forest-100"
                       }`}
                     >
@@ -310,26 +323,22 @@ function BookDemoContent() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-forest-200 text-xs font-mono">
-                {[
-                  "07:00 - 10:00 (Early Morning)",
-                  "09:00 - 12:00 (Morning Focus)",
-                  "12:00 - 15:00 (Mid-day Sprint)",
-                  "15:00 - 18:00 (Afternoon Block)",
-                  "18:00 - 21:00 (Evening Scholar)",
-                  "20:00 - 23:00 (Night Owl)",
-                ].map((slot) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 pt-2 border-t border-forest-200 text-xs font-mono">
+                {getDynamicHourlySlots(hourlyCount).map((s) => (
                   <button
-                    key={slot}
+                    key={s.slot}
                     type="button"
-                    onClick={() => setHourlyTimeSlot(slot)}
-                    className={`p-2 text-left border rounded text-[11px] ${
-                      hourlyTimeSlot === slot
-                        ? "border-forest-700 bg-white font-bold text-forest-900 shadow-sm"
+                    onClick={() => setHourlyTimeSlot(s.slot)}
+                    className={`p-2.5 text-left border rounded transition-all ${
+                      hourlyTimeSlot === s.slot
+                        ? "border-forest-700 bg-white font-bold text-forest-900 shadow-sm ring-1 ring-forest-600"
                         : "border-forest-200 bg-forest-50/60 text-charcoal-700 hover:bg-white"
                     }`}
                   >
-                    {slot}
+                    <div className="font-bold text-xs">{s.slot}</div>
+                    <div className="text-[10px] text-forest-700 font-bold mt-0.5">
+                      ₹{hourlyCount * 49} total ({hourlyCount} hrs @ ₹49/hr)
+                    </div>
                   </button>
                 ))}
               </div>

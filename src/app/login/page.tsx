@@ -246,13 +246,19 @@ function LoginContent() {
         setRegisteredConfirmUrl(cleanUrl);
       }
 
+      if (data.doorPin) {
+        try {
+          localStorage.setItem("esz_student_pin", data.doorPin);
+        } catch (_) {}
+      }
+
       setStatusMessage({
         type: "success",
-        text: `Welcome to Elite Study Zone, ${fullName}! Your student account is active. Entering dashboard...`,
+        text: `Welcome to Elite Study Zone, ${fullName}! Your 6-digit door PIN is #${data.doorPin || "Active"}. Entering dashboard...`,
       });
       setTimeout(() => {
         window.location.href = searchParams.get("next") || "/dashboard";
-      }, 1000);
+      }, 1200);
     } catch (err: unknown) {
       setIsLoading(false);
       setStatusMessage({

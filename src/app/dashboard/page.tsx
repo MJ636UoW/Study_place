@@ -86,6 +86,7 @@ export default function DashboardPage() {
   const [profileName, setProfileName] = useState("Scholar");
   const [profileEmail, setProfileEmail] = useState("");
   const [profilePhone, setProfilePhone] = useState("+91 98765 43210");
+  const [profilePin, setProfilePin] = useState("849201");
   const [studyGoal, setStudyGoal] = useState("Competitive Examinations & Self-Study Research");
   const [allocatedShift, setAllocatedShift] = useState("Morning Focus Shift (08:00 — 14:00)");
   const [allocatedHours, setAllocatedHours] = useState(48);
@@ -109,12 +110,21 @@ export default function DashboardPage() {
             setProfileEmail(data.user.email || "");
             if (data.user.phone) setProfilePhone(data.user.phone);
             if (data.user.allottedHours) setAllocatedHours(data.user.allottedHours);
+            if (data.user.doorPin || data.user.biometricPin) {
+              setProfilePin(data.user.doorPin || data.user.biometricPin);
+            }
           } else {
             const cookies = document.cookie;
             const emailMatch = cookies.match(/esz_student_email=([^;]+)/);
             const nameMatch = cookies.match(/esz_student_name=([^;]+)/);
+            const pinMatch = cookies.match(/esz_student_pin=([^;]+)/);
             if (emailMatch) setProfileEmail(decodeURIComponent(emailMatch[1]));
             if (nameMatch) setProfileName(decodeURIComponent(nameMatch[1]));
+            if (pinMatch) setProfilePin(decodeURIComponent(pinMatch[1]));
+            try {
+              const localPin = localStorage.getItem("esz_student_pin");
+              if (localPin) setProfilePin(localPin);
+            } catch (_) {}
           }
         })
         .catch(() => {});
@@ -376,15 +386,14 @@ export default function DashboardPage() {
           <span className="text-[10px] uppercase font-mono tracking-widest text-forest-800 font-semibold">
             Smart Keypad Access & Exit Button
           </span>
-          <div className="font-serif text-2xl text-charcoal-900 font-bold">
-            {reservations.length > 0 && reservations[0].passCode ? (
-              `PIN: #${reservations[0].passCode}`
-            ) : (
-              <span className="text-sm font-sans font-normal text-charcoal-500">Book a workstation to generate PIN</span>
-            )}
+          <div className="font-mono text-2xl text-forest-900 font-bold flex items-center gap-2">
+            <span>PIN: #{(reservations.length > 0 && reservations[0].passCode) || profilePin || "849201"}</span>
+            <span className="text-[10px] font-sans font-bold uppercase px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded border border-emerald-300">
+              Active PIN
+            </span>
           </div>
           <p className="text-xs text-charcoal-600 font-sans">
-            Center Entrance Door Keypad • Exit via Push Button
+            Punch #{ (reservations.length > 0 && reservations[0].passCode) || profilePin || "849201" } on exterior door keypad • Exit via push button
           </p>
         </div>
 

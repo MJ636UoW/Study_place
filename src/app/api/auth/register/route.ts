@@ -48,13 +48,21 @@ export async function POST(req: NextRequest) {
       console.warn("sendVerificationEmail error:", e)
     );
 
+    const doorPin = user?.biometricPin || String(Math.floor(100000 + Math.random() * 900000));
+
     // Also dispatch welcome & credentials via WhatsApp
+    let whatsappLink: string | null = null;
     if (phone) {
+      const cleanPhone = phone.replace(/\D/g, "");
+      const formattedPhone = cleanPhone.length === 10 ? "91" + cleanPhone : cleanPhone;
+      const waMsg = `*ELITE STUDY ZONE • DOOR ACCESS PASS*\n\nHello ${cleanName},\nWelcome to Elite Study Zone (Ghatkopar West).\n\nYour 6-Digit Door Keypad Access PIN is: *#${doorPin}*\n\nEnter this PIN on the digital door keypad to unlock. To exit the study hall, press the push-to-exit button next to the door.\n\nPortal: https://elitestudyzone.in`;
+      whatsappLink = `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodeURIComponent(waMsg)}`;
+
       sendWhatsAppWelcome({
         phone,
         name: cleanName,
         email: cleanEmail,
-        initialPassCode: user?.biometricPin,
+        initialPassCode: doorPin,
       }).catch((e) => console.warn("[WhatsApp] Welcome dispatch error:", e));
     }
 
@@ -67,12 +75,16 @@ export async function POST(req: NextRequest) {
 
     const res = NextResponse.json({
       success: true,
-      message: `Account created successfully! Welcome to Elite Study Zone, ${cleanName}.`,
+      message: `Account created successfully! Welcome to Elite Study Zone, ${cleanName}. Your door access PIN is #${doorPin}.`,
       confirmUrl,
+      passCode: doorPin,
+      doorPin,
+      whatsappLink,
       user: {
         name: cleanName,
         email: cleanEmail,
         phone,
+        doorPin,
       },
     });
 
@@ -80,6 +92,7 @@ export async function POST(req: NextRequest) {
     res.cookies.set("esz_student_session", "active", { path: "/", maxAge: 604800, sameSite: "lax" });
     res.cookies.set("esz_student_email", encodeURIComponent(cleanEmail), { path: "/", maxAge: 604800, sameSite: "lax" });
     res.cookies.set("esz_student_name", encodeURIComponent(cleanName), { path: "/", maxAge: 604800, sameSite: "lax" });
+    res.cookies.set("esz_student_pin", doorPin, { path: "/", maxAge: 604800, sameSite: "lax" });
 
     return res;
   } catch (error: any) {

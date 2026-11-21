@@ -77,7 +77,7 @@ export async function createUser(userData: {
   const cleanEmail = userData.email.trim().toLowerCase();
   const verificationToken = crypto.randomBytes(32).toString("hex");
   const passwordHash = userData.password ? await hashPassword(userData.password) : null;
-  const pin = String(Math.floor(100 + Math.random() * 900));
+  const pin = String(Math.floor(100000 + Math.random() * 900000));
 
   const mongoOk = await isMongoAvailable();
   if (mongoOk) {
