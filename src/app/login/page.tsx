@@ -76,6 +76,8 @@ function LoginContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
   const [registeredConfirmUrl, setRegisteredConfirmUrl] = useState<string | null>(null);
+  const [registeredWhatsAppLink, setRegisteredWhatsAppLink] = useState<string | null>(null);
+  const [registeredDoorPin, setRegisteredDoorPin] = useState<string | null>(null);
 
   // Hourly Magic Pass State
   const [hourlyPassPin, setHourlyPassPin] = useState<string | null>(null);
@@ -250,15 +252,23 @@ function LoginContent() {
         try {
           localStorage.setItem("esz_student_pin", data.doorPin);
         } catch (_) {}
+        setRegisteredDoorPin(data.doorPin);
+      }
+
+      if (data.whatsappLink) {
+        setRegisteredWhatsAppLink(data.whatsappLink);
       }
 
       setStatusMessage({
         type: "success",
-        text: `Welcome to Elite Study Zone, ${fullName}! Your 6-digit door PIN is #${data.doorPin || "Active"}. Entering dashboard...`,
+        text: `Welcome to Elite Study Zone, ${fullName}! Your door PIN is #${data.doorPin || "Generated"}. Tap the WhatsApp button below to receive your pass, or enter your dashboard.`,
       });
-      setTimeout(() => {
-        window.location.href = searchParams.get("next") || "/dashboard";
-      }, 1200);
+
+      if (!data.whatsappLink) {
+        setTimeout(() => {
+          window.location.href = searchParams.get("next") || "/dashboard";
+        }, 1500);
+      }
     } catch (err: unknown) {
       setIsLoading(false);
       setStatusMessage({
@@ -539,7 +549,43 @@ function LoginContent() {
                   <p className="leading-snug">{statusMessage.text}</p>
                 </div>
               </div>
-              {registeredConfirmUrl && (
+
+              {registeredDoorPin && (
+                <div className="p-3 bg-white border border-emerald-400 rounded-lg text-center space-y-1 shadow-sm mt-1">
+                  <div className="text-[10px] font-mono uppercase text-emerald-800 font-bold tracking-wider">
+                    Your Door Keypad Access PIN
+                  </div>
+                  <div className="text-2xl font-mono font-extrabold text-emerald-950">
+                    #{registeredDoorPin}
+                  </div>
+                  <div className="text-[10px] text-charcoal-600 font-sans">
+                    Punch #{registeredDoorPin} on entrance door keypad. Exit via push button.
+                  </div>
+                </div>
+              )}
+
+              {registeredWhatsAppLink && (
+                <div className="pt-1 flex flex-col gap-2">
+                  <a
+                    href={registeredWhatsAppLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow-md transition-all"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    <span>Send Door PIN & Pass to My WhatsApp →</span>
+                  </a>
+
+                  <Link
+                    href="/dashboard"
+                    className="inline-flex items-center justify-center gap-2 w-full py-2 px-4 bg-forest-800 hover:bg-forest-700 text-white font-bold text-xs rounded-lg transition-all"
+                  >
+                    <span>Proceed to Student Dashboard →</span>
+                  </Link>
+                </div>
+              )}
+
+              {registeredConfirmUrl && !registeredWhatsAppLink && (
                 <div className="pt-1">
                   <button
                     type="button"
