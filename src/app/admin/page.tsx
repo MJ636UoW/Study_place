@@ -40,7 +40,7 @@ import { bookingsFixture } from "@/fixtures";
 export default function AdminPage() {
   // Operational Navigation
   const [activeQueue, setActiveQueue] = useState<
-    "pending" | "holds" | "attendance" | "endings" | "exceptions" | "enquiries" | "reviews" | "audit" | "keypad" | "settings"
+    "pending" | "holds" | "attendance" | "endings" | "exceptions" | "enquiries" | "reviews" | "audit" | "keypad" | "content" | "settings"
   >("pending");
 
   // Smart Door Keypad & Access Control Hardware State (Cloud Wi-Fi & Push-to-Exit)
@@ -203,29 +203,60 @@ export default function AdminPage() {
   const [googleClientIdInput, setGoogleClientIdInput] = useState("");
   const [whatsappPhoneIdInput, setWhatsappPhoneIdInput] = useState("");
   const [whatsappTokenInput, setWhatsappTokenInput] = useState("");
-  const [whatsappNumberInput, setWhatsappNumberInput] = useState("+91 98753 59327");
+  const [whatsappNumberInput, setWhatsappNumberInput] = useState("+91 93246 89280");
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [settingsFeedback, setSettingsFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // CMS Content & Media Management State
+  const [heroHeadlineInput, setHeroHeadlineInput] = useState("Your Space for Focus, Productivity & Success.");
+  const [heroTaglineInput, setHeroTaglineInput] = useState("Welcome to Elite Study Zone");
+  const [heroWelcomeTextInput, setHeroWelcomeTextInput] = useState("A peaceful, fully air-conditioned, distraction-free sanctuary designed for serious aspirants, students, and professionals in Ghatkopar West, Mumbai.");
+  const [topBannerTextInput, setTopBannerTextInput] = useState("📍 Amrut Nagar, Ghatkopar West • 24/7 Smart Keypad Access • Flexible Passes from ₹49/hr");
+  const [heroImageUrlInput, setHeroImageUrlInput] = useState("/desk-render-01.jpg");
+  const [galleryImagesInput, setGalleryImagesInput] = useState("/desk-render-01.jpg, /reading-room-wide.jpg, /individual-stacks.jpg");
+  const [hourlyRateInput, setHourlyRateInput] = useState(49);
+  const [dayPassRateInput, setDayPassRateInput] = useState(249);
+  const [weeklyRateInput, setWeeklyRateInput] = useState(799);
+  const [monthlyRateInput, setMonthlyRateInput] = useState(2499);
+  const [oneTimeRegFeeInput, setOneTimeRegFeeInput] = useState(200);
+  const [wifiSsidInput, setWifiSsidInput] = useState("EliteStudy_5G");
+  const [wifiPasswordInput, setWifiPasswordInput] = useState("FocusQuiet2026");
+  const [centerAddressInput, setCenterAddressInput] = useState("Amrut Nagar, Near Shreyas Cinema, LBS Marg, Ghatkopar West, Mumbai 400086");
 
   useEffect(() => {
     fetch("/api/admin/settings")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (d?.settings) {
-          if (d.settings.adminEmail) setAdminEmailInput(d.settings.adminEmail);
-          if (d.settings.upiId) setUpiIdInput(d.settings.upiId);
-          if (d.settings.accountHolder) setAccountHolderInput(d.settings.accountHolder);
-          if (d.settings.accountNumber) setAccountNumberInput(d.settings.accountNumber);
-          if (d.settings.ifscCode) setIfscCodeInput(d.settings.ifscCode);
-          if (d.settings.qrCodeUrl) setQrCodeUrlInput(d.settings.qrCodeUrl);
-          if (d.settings.centerPhone) setCenterPhoneInput(d.settings.centerPhone);
-          if (d.settings.razorpayKeyId) setRazorpayKeyIdInput(d.settings.razorpayKeyId);
-          if (d.settings.razorpayKeySecret) setRazorpayKeySecretInput(d.settings.razorpayKeySecret);
-          if (d.settings.gmailUser) setGmailUserInput(d.settings.gmailUser);
-          if (d.settings.gmailAppPass) setGmailAppPassInput(d.settings.gmailAppPass);
-          if (d.settings.googleClientId) setGoogleClientIdInput(d.settings.googleClientId);
-          if (d.settings.whatsappPhoneId) setWhatsappPhoneIdInput(d.settings.whatsappPhoneId);
-          if (d.settings.whatsappNumber) setWhatsappNumberInput(d.settings.whatsappNumber);
+          const s = d.settings;
+          if (s.adminEmail) setAdminEmailInput(s.adminEmail);
+          if (s.upiId) setUpiIdInput(s.upiId);
+          if (s.accountHolder) setAccountHolderInput(s.accountHolder);
+          if (s.accountNumber) setAccountNumberInput(s.accountNumber);
+          if (s.ifscCode) setIfscCodeInput(s.ifscCode);
+          if (s.qrCodeUrl) setQrCodeUrlInput(s.qrCodeUrl);
+          if (s.centerPhone) setCenterPhoneInput(s.centerPhone);
+          if (s.razorpayKeyId) setRazorpayKeyIdInput(s.razorpayKeyId);
+          if (s.razorpayKeySecret) setRazorpayKeySecretInput(s.razorpayKeySecret);
+          if (s.gmailUser) setGmailUserInput(s.gmailUser);
+          if (s.gmailAppPass) setGmailAppPassInput(s.gmailAppPass);
+          if (s.googleClientId) setGoogleClientIdInput(s.googleClientId);
+          if (s.whatsappPhoneId) setWhatsappPhoneIdInput(s.whatsappPhoneId);
+          if (s.whatsappNumber) setWhatsappNumberInput(s.whatsappNumber);
+          if (s.heroHeadline) setHeroHeadlineInput(s.heroHeadline);
+          if (s.heroTagline) setHeroTaglineInput(s.heroTagline);
+          if (s.heroWelcomeText) setHeroWelcomeTextInput(s.heroWelcomeText);
+          if (s.topBannerText) setTopBannerTextInput(s.topBannerText);
+          if (s.heroImageUrl) setHeroImageUrlInput(s.heroImageUrl);
+          if (s.galleryImages) setGalleryImagesInput(Array.isArray(s.galleryImages) ? s.galleryImages.join(", ") : s.galleryImages);
+          if (s.hourlyRate) setHourlyRateInput(s.hourlyRate);
+          if (s.dayPassRate) setDayPassRateInput(s.dayPassRate);
+          if (s.weeklyRate) setWeeklyRateInput(s.weeklyRate);
+          if (s.monthlyRate) setMonthlyRateInput(s.monthlyRate);
+          if (s.oneTimeRegistrationFee) setOneTimeRegFeeInput(s.oneTimeRegistrationFee);
+          if (s.wifiSsid) setWifiSsidInput(s.wifiSsid);
+          if (s.wifiPassword) setWifiPasswordInput(s.wifiPassword);
+          if (s.centerAddress) setCenterAddressInput(s.centerAddress);
         }
       })
       .catch(() => {});
@@ -263,6 +294,20 @@ export default function AdminPage() {
           whatsappPhoneId: whatsappPhoneIdInput,
           whatsappToken: whatsappTokenInput,
           whatsappNumber: whatsappNumberInput,
+          heroHeadline: heroHeadlineInput,
+          heroTagline: heroTaglineInput,
+          heroWelcomeText: heroWelcomeTextInput,
+          topBannerText: topBannerTextInput,
+          heroImageUrl: heroImageUrlInput,
+          galleryImages: galleryImagesInput.split(",").map((s) => s.trim()).filter(Boolean),
+          hourlyRate: Number(hourlyRateInput),
+          dayPassRate: Number(dayPassRateInput),
+          weeklyRate: Number(weeklyRateInput),
+          monthlyRate: Number(monthlyRateInput),
+          oneTimeRegistrationFee: Number(oneTimeRegFeeInput),
+          wifiSsid: wifiSsidInput,
+          wifiPassword: wifiPasswordInput,
+          centerAddress: centerAddressInput,
         }),
       });
 
@@ -605,6 +650,7 @@ export default function AdminPage() {
           { id: "enquiries", label: "Inbound Enquiries", count: enquiries.filter((e) => e.status === "new").length },
           { id: "reviews", label: "Review Moderation", count: reviews.length },
           { id: "audit", label: "Audit Ledger", count: auditLog.length },
+          { id: "content", label: "🎨 Site Content & Images CMS", count: 0 },
           { id: "settings", label: "Admin & Payment Settings", count: 0 },
         ].map((tab) => {
           const isActive = activeQueue === tab.id;
@@ -1415,7 +1461,341 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* QUEUE 10: ADMIN & PAYMENT SETTINGS */}
+      {/* QUEUE 10: SITE CONTENT, IMAGES & MEDIA CMS */}
+      {activeQueue === "content" && (
+        <div className="p-6 border border-ivory-300 bg-ivory-50 shadow-editorial space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-ivory-200 gap-2">
+            <div>
+              <h2 className="font-serif text-2xl text-charcoal-900 flex items-center gap-2">
+                <Sparkles className="w-6 h-6 text-forest-800" />
+                <span>Site Content, Images & Media Management (CMS)</span>
+              </h2>
+              <p className="text-xs text-charcoal-600 mt-0.5">
+                Edit all website headlines, welcoming messages, images, photo galleries, Wi-Fi passwords, and pricing fees in real-time.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleSaveSettings}
+              disabled={isSavingSettings}
+              className="bg-forest-700 hover:bg-forest-600 text-white font-bold gap-2 px-6 self-start sm:self-auto"
+            >
+              {isSavingSettings ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>Saving CMS…</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  <span>Save All Website Content</span>
+                </>
+              )}
+            </Button>
+          </div>
+
+          {/* Feedback Banner */}
+          {settingsFeedback && (
+            <div
+              className={`p-3.5 rounded-lg text-xs font-sans flex items-start gap-2.5 ${
+                settingsFeedback.type === "success"
+                  ? "bg-emerald-50 border border-emerald-300 text-emerald-950"
+                  : "bg-rose-50 border border-rose-300 text-rose-950"
+              }`}
+            >
+              {settingsFeedback.type === "success" ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+              ) : (
+                <ShieldAlert className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+              )}
+              <p className="leading-snug">{settingsFeedback.text}</p>
+            </div>
+          )}
+
+          <form onSubmit={handleSaveSettings} className="space-y-6 text-left">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* SECTION 1: HOMEPAGE HEADLINES & TEXT */}
+              <div className="p-5 bg-white border border-ivory-200 rounded-xl space-y-4 shadow-sm">
+                <div className="flex items-center gap-2 pb-2 border-b border-ivory-100">
+                  <FileText className="w-4 h-4 text-forest-700" />
+                  <h3 className="font-serif text-base font-bold text-charcoal-900">Homepage Headlines & Welcoming Text</h3>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                      Main Homepage Headline
+                    </label>
+                    <input
+                      type="text"
+                      value={heroHeadlineInput}
+                      onChange={(e) => setHeroHeadlineInput(e.target.value)}
+                      className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                      Welcome Tagline / Subtitle
+                    </label>
+                    <input
+                      type="text"
+                      value={heroTaglineInput}
+                      onChange={(e) => setHeroTaglineInput(e.target.value)}
+                      className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                      Welcoming Message Description
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={heroWelcomeTextInput}
+                      onChange={(e) => setHeroWelcomeTextInput(e.target.value)}
+                      className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                      Top Announcement Bar Text
+                    </label>
+                    <input
+                      type="text"
+                      value={topBannerTextInput}
+                      onChange={(e) => setTopBannerTextInput(e.target.value)}
+                      className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 2: PHOTOS & MEDIA MANAGEMENT */}
+              <div className="p-5 bg-white border border-ivory-200 rounded-xl space-y-4 shadow-sm">
+                <div className="flex items-center gap-2 pb-2 border-b border-ivory-100">
+                  <Sparkles className="w-4 h-4 text-forest-700" />
+                  <h3 className="font-serif text-base font-bold text-charcoal-900">Center Photos & Gallery Images</h3>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                      Primary Study Hall Banner Image URL
+                    </label>
+                    <input
+                      type="text"
+                      value={heroImageUrlInput}
+                      onChange={(e) => setHeroImageUrlInput(e.target.value)}
+                      placeholder="e.g. /desk-render-01.jpg or https://..."
+                      className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono"
+                    />
+                    {heroImageUrlInput && (
+                      <div className="mt-2 p-1 border border-charcoal-200 rounded bg-slate-50 w-24 h-16 overflow-hidden">
+                        <img
+                          src={heroImageUrlInput}
+                          alt="Hero Preview"
+                          className="w-full h-full object-cover rounded"
+                          onError={(e) => ((e.target as HTMLElement).style.display = "none")}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                      Study Hall Gallery Images (Comma-separated URLs)
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={galleryImagesInput}
+                      onChange={(e) => setGalleryImagesInput(e.target.value)}
+                      placeholder="/reading-room-wide.jpg, /individual-stacks.jpg"
+                      className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono"
+                    />
+                    <div className="flex gap-2 mt-2 overflow-x-auto">
+                      {galleryImagesInput
+                        .split(",")
+                        .map((s) => s.trim())
+                        .filter(Boolean)
+                        .slice(0, 4)
+                        .map((url, i) => (
+                          <div key={i} className="w-16 h-12 border border-charcoal-200 rounded overflow-hidden flex-shrink-0 bg-slate-100">
+                            <img
+                              src={url}
+                              alt={`Thumb ${i}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => ((e.target as HTMLElement).style.display = "none")}
+                            />
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 3: RATES & ONE-TIME REGISTRATION FEE */}
+              <div className="p-5 bg-white border border-ivory-200 rounded-xl space-y-4 shadow-sm">
+                <div className="flex items-center gap-2 pb-2 border-b border-ivory-100">
+                  <Banknote className="w-4 h-4 text-forest-700" />
+                  <h3 className="font-serif text-base font-bold text-charcoal-900">Pricing & One-Time Member Registration Fee</h3>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                      Hourly Flex Rate (₹/hr)
+                    </label>
+                    <input
+                      type="number"
+                      value={hourlyRateInput}
+                      onChange={(e) => setHourlyRateInput(Number(e.target.value))}
+                      className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono font-bold"
+                    />
+                    <p className="text-[10px] text-charcoal-500 mt-0.5">Always ₹0 registration fee</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                      Day Pass Rate (₹)
+                    </label>
+                    <input
+                      type="number"
+                      value={dayPassRateInput}
+                      onChange={(e) => setDayPassRateInput(Number(e.target.value))}
+                      className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono font-bold"
+                    />
+                    <p className="text-[10px] text-charcoal-500 mt-0.5">Always ₹0 registration fee</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                      Weekly Sprint Rate (₹)
+                    </label>
+                    <input
+                      type="number"
+                      value={weeklyRateInput}
+                      onChange={(e) => setWeeklyRateInput(Number(e.target.value))}
+                      className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono font-bold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                      Monthly Resident Rate (₹)
+                    </label>
+                    <input
+                      type="number"
+                      value={monthlyRateInput}
+                      onChange={(e) => setMonthlyRateInput(Number(e.target.value))}
+                      className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono font-bold"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-ivory-200">
+                  <label className="block text-xs font-bold text-forest-950 mb-1">
+                    One-Time Member Registration Fee for Weekly/Monthly (₹)
+                  </label>
+                  <input
+                    type="number"
+                    value={oneTimeRegFeeInput}
+                    onChange={(e) => setOneTimeRegFeeInput(Number(e.target.value))}
+                    className="w-full px-3 py-2 text-xs border border-emerald-400 bg-emerald-50 text-emerald-950 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono font-bold"
+                  />
+                  <p className="text-[10px] text-charcoal-600 mt-1">
+                    Charged only ONCE on the first weekly or monthly package purchase. Permanently waived on renewals.
+                  </p>
+                </div>
+              </div>
+
+              {/* SECTION 4: WI-FI & CENTER DETAILS */}
+              <div className="p-5 bg-white border border-ivory-200 rounded-xl space-y-4 shadow-sm">
+                <div className="flex items-center gap-2 pb-2 border-b border-ivory-100">
+                  <ShieldCheck className="w-4 h-4 text-forest-700" />
+                  <h3 className="font-serif text-base font-bold text-charcoal-900">Center Wi-Fi, Address & Contact</h3>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                        Wi-Fi Network SSID
+                      </label>
+                      <input
+                        type="text"
+                        value={wifiSsidInput}
+                        onChange={(e) => setWifiSsidInput(e.target.value)}
+                        className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                        Wi-Fi Password
+                      </label>
+                      <input
+                        type="text"
+                        value={wifiPasswordInput}
+                        onChange={(e) => setWifiPasswordInput(e.target.value)}
+                        className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                      Center Physical Address
+                    </label>
+                    <input
+                      type="text"
+                      value={centerAddressInput}
+                      onChange={(e) => setCenterAddressInput(e.target.value)}
+                      className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+                      Helpline / WhatsApp Contact Number
+                    </label>
+                    <input
+                      type="text"
+                      value={centerPhoneInput}
+                      onChange={(e) => setCenterPhoneInput(e.target.value)}
+                      className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-ivory-200 flex justify-end">
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={isSavingSettings}
+                className="bg-forest-700 hover:bg-forest-600 text-white font-bold gap-2 px-8 py-3 shadow-md"
+              >
+                {isSavingSettings ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Saving CMS Settings…</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Save All Website Content & Media</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* QUEUE 11: ADMIN & PAYMENT SETTINGS */}
       {activeQueue === "settings" && (
         <div className="p-6 border border-ivory-300 bg-ivory-50 shadow-editorial space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-ivory-200 gap-2">

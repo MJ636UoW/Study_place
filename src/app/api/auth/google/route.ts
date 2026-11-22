@@ -52,15 +52,29 @@ export async function POST(req: NextRequest) {
       user = created.user;
     }
 
-    const doorPin = user.biometricPin || String(Math.floor(100000 + Math.random() * 900000));
+    // Permanent single code for student access (never changes on re-login)
+    let doorPin = user.biometricPin;
+    if (!doorPin || doorPin.length !== 6 || doorPin === "001" || isNaN(Number(doorPin))) {
+      doorPin = String(Math.floor(100000 + Math.random() * 900000));
+      user.biometricPin = doorPin;
+      try {
+        if (typeof (user as any).save === "function") {
+          await (user as any).save();
+        }
+      } catch (err) {
+        console.warn("Error saving permanent PIN to user:", err);
+      }
+    }
 
-    // Dispatch welcome email with Keypad Access PIN, entry/exit guides & center details
-    sendWelcomeAccessEmail({
-      to: cleanEmail,
-      name: user.name || name || "Scholar",
-      doorPin,
-      siteUrl: "https://elitestudyzone.in",
-    }).catch((e) => console.warn("[Google Auth] sendWelcomeAccessEmail error:", e));
+    // Dispatch welcome email with Keypad Access PIN, entry/exit guides & center details on first registration
+    if (isNewUser) {
+      sendWelcomeAccessEmail({
+        to: cleanEmail,
+        name: user.name || name || "Scholar",
+        doorPin,
+        siteUrl: "https://elitestudyzone.in",
+      }).catch((e) => console.warn("[Google Auth] sendWelcomeAccessEmail error:", e));
+    }
 
     const token = signJwtToken({
       userId: user._id ? user._id.toString() : "user_" + Buffer.from(cleanEmail).toString("hex"),

@@ -20,8 +20,22 @@ let cachedSettings = {
   googleClientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
   whatsappPhoneId: process.env.WHATSAPP_PHONE_ID || "",
   whatsappToken: process.env.WHATSAPP_ACCESS_TOKEN || "",
-  whatsappNumber: process.env.WHATSAPP_NUMBER || "+91 98753 59327",
+  whatsappNumber: process.env.WHATSAPP_NUMBER || "+91 93246 89280",
   whatsappVerifyToken: process.env.WHATSAPP_VERIFY_TOKEN || "esz_whatsapp_verify_token_2026",
+  heroHeadline: "Your Space for Focus, Productivity & Success.",
+  heroTagline: "Welcome to Elite Study Zone",
+  heroWelcomeText: "A peaceful, fully air-conditioned, distraction-free sanctuary designed for serious aspirants, students, and professionals in Ghatkopar West, Mumbai.",
+  topBannerText: "📍 Amrut Nagar, Ghatkopar West • 24/7 Smart Keypad Access • Flexible Passes from ₹49/hr",
+  heroImageUrl: "/desk-render-01.jpg",
+  galleryImages: ["/desk-render-01.jpg", "/reading-room-wide.jpg", "/individual-stacks.jpg"],
+  hourlyRate: 49,
+  dayPassRate: 249,
+  weeklyRate: 799,
+  monthlyRate: 2499,
+  oneTimeRegistrationFee: 200,
+  wifiSsid: "EliteStudy_5G",
+  wifiPassword: "FocusQuiet2026",
+  centerAddress: "Amrut Nagar, Near Shreyas Cinema, LBS Marg, Ghatkopar West, Mumbai 400086",
 };
 
 export async function GET() {
@@ -49,8 +63,22 @@ export async function GET() {
           googleClientId: settings.googleClientId || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
           whatsappPhoneId: settings.whatsappPhoneId || process.env.WHATSAPP_PHONE_ID || "",
           whatsappToken: settings.whatsappToken ? "••••••••" : "",
-          whatsappNumber: settings.whatsappNumber || "+91 98753 59327",
+          whatsappNumber: settings.whatsappNumber || "+91 93246 89280",
           whatsappVerifyToken: settings.whatsappVerifyToken || "esz_whatsapp_verify_token_2026",
+          heroHeadline: settings.heroHeadline || cachedSettings.heroHeadline,
+          heroTagline: settings.heroTagline || cachedSettings.heroTagline,
+          heroWelcomeText: settings.heroWelcomeText || cachedSettings.heroWelcomeText,
+          topBannerText: settings.topBannerText || cachedSettings.topBannerText,
+          heroImageUrl: settings.heroImageUrl || cachedSettings.heroImageUrl,
+          galleryImages: settings.galleryImages || cachedSettings.galleryImages,
+          hourlyRate: settings.hourlyRate || 49,
+          dayPassRate: settings.dayPassRate || 249,
+          weeklyRate: settings.weeklyRate || 799,
+          monthlyRate: settings.monthlyRate || 2499,
+          oneTimeRegistrationFee: settings.oneTimeRegistrationFee || 200,
+          wifiSsid: settings.wifiSsid || "EliteStudy_5G",
+          wifiPassword: settings.wifiPassword || "FocusQuiet2026",
+          centerAddress: settings.centerAddress || cachedSettings.centerAddress,
         },
       });
     }
@@ -90,6 +118,20 @@ export async function POST(req: NextRequest) {
       whatsappToken,
       whatsappNumber,
       whatsappVerifyToken,
+      heroHeadline,
+      heroTagline,
+      heroWelcomeText,
+      topBannerText,
+      heroImageUrl,
+      galleryImages,
+      hourlyRate,
+      dayPassRate,
+      weeklyRate,
+      monthlyRate,
+      oneTimeRegistrationFee,
+      wifiSsid,
+      wifiPassword,
+      centerAddress,
     } = body;
 
     const mongoOk = await isMongoAvailable();
@@ -197,6 +239,92 @@ export async function POST(req: NextRequest) {
     if (whatsappVerifyToken !== undefined) {
       if (settingsDoc) settingsDoc.whatsappVerifyToken = whatsappVerifyToken.trim();
       cachedSettings.whatsappVerifyToken = whatsappVerifyToken.trim();
+    }
+
+    // CMS Content Fields
+    if (heroHeadline !== undefined) {
+      if (settingsDoc) settingsDoc.heroHeadline = heroHeadline.trim();
+      cachedSettings.heroHeadline = heroHeadline.trim();
+    }
+
+    if (heroTagline !== undefined) {
+      if (settingsDoc) settingsDoc.heroTagline = heroTagline.trim();
+      cachedSettings.heroTagline = heroTagline.trim();
+    }
+
+    if (heroWelcomeText !== undefined) {
+      if (settingsDoc) settingsDoc.heroWelcomeText = heroWelcomeText.trim();
+      cachedSettings.heroWelcomeText = heroWelcomeText.trim();
+    }
+
+    if (topBannerText !== undefined) {
+      if (settingsDoc) settingsDoc.topBannerText = topBannerText.trim();
+      cachedSettings.topBannerText = topBannerText.trim();
+    }
+
+    if (heroImageUrl !== undefined) {
+      if (settingsDoc) settingsDoc.heroImageUrl = heroImageUrl.trim();
+      cachedSettings.heroImageUrl = heroImageUrl.trim();
+    }
+
+    if (galleryImages !== undefined && Array.isArray(galleryImages)) {
+      if (settingsDoc) settingsDoc.galleryImages = galleryImages;
+      cachedSettings.galleryImages = galleryImages;
+    }
+
+    if (hourlyRate !== undefined) {
+      const val = Number(hourlyRate);
+      if (!isNaN(val) && val > 0) {
+        if (settingsDoc) settingsDoc.hourlyRate = val;
+        cachedSettings.hourlyRate = val;
+      }
+    }
+
+    if (dayPassRate !== undefined) {
+      const val = Number(dayPassRate);
+      if (!isNaN(val) && val > 0) {
+        if (settingsDoc) settingsDoc.dayPassRate = val;
+        cachedSettings.dayPassRate = val;
+      }
+    }
+
+    if (weeklyRate !== undefined) {
+      const val = Number(weeklyRate);
+      if (!isNaN(val) && val > 0) {
+        if (settingsDoc) settingsDoc.weeklyRate = val;
+        cachedSettings.weeklyRate = val;
+      }
+    }
+
+    if (monthlyRate !== undefined) {
+      const val = Number(monthlyRate);
+      if (!isNaN(val) && val > 0) {
+        if (settingsDoc) settingsDoc.monthlyRate = val;
+        cachedSettings.monthlyRate = val;
+      }
+    }
+
+    if (oneTimeRegistrationFee !== undefined) {
+      const val = Number(oneTimeRegistrationFee);
+      if (!isNaN(val) && val >= 0) {
+        if (settingsDoc) settingsDoc.oneTimeRegistrationFee = val;
+        cachedSettings.oneTimeRegistrationFee = val;
+      }
+    }
+
+    if (wifiSsid !== undefined) {
+      if (settingsDoc) settingsDoc.wifiSsid = wifiSsid.trim();
+      cachedSettings.wifiSsid = wifiSsid.trim();
+    }
+
+    if (wifiPassword !== undefined) {
+      if (settingsDoc) settingsDoc.wifiPassword = wifiPassword.trim();
+      cachedSettings.wifiPassword = wifiPassword.trim();
+    }
+
+    if (centerAddress !== undefined) {
+      if (settingsDoc) settingsDoc.centerAddress = centerAddress.trim();
+      cachedSettings.centerAddress = centerAddress.trim();
     }
 
     if (settingsDoc) {

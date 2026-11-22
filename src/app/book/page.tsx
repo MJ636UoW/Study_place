@@ -61,10 +61,26 @@ function getDynamicHourlySlots(hours: number): { slot: string; label: string }[]
 function BookDemoContent() {
   // 1. Duration, Hours & Date selection
   const [duration, setDuration] = useState<DurationType>("hour");
-  const [hourlyCount, setHourlyCount] = useState<number>(3); // Default 3 hours
-  const [hourlyTimeSlot, setHourlyTimeSlot] = useState<string>("09:00 — 12:00 (Morning Focus)");
+  const [startHour, setStartHour] = useState<number>(8); // Default 08:00 AM
+  const [hourlyCount, setHourlyCount] = useState<number>(2); // Default 2 hours
   const [startDate, setStartDate] = useState<string>(() => formatDate(new Date()));
   const [viewMode, setViewMode] = useState<"map" | "list">("map");
+  const [isReturningMember, setIsReturningMember] = useState<boolean>(false);
+
+  // Time format helper
+  const formatHourLabel = (h: number) => {
+    if (h < 12) return `${h.toString().padStart(2, "0")}:00 AM`;
+    if (h === 12) return "12:00 PM";
+    return `${(h - 12).toString().padStart(2, "0")}:00 PM`;
+  };
+
+  const endHour = Math.min(23, startHour + hourlyCount);
+  const hourlyTimeSlot = `${formatHourLabel(startHour)} — ${formatHourLabel(endHour)} (${hourlyCount} hr${hourlyCount > 1 ? "s" : ""})`;
+
+  // One-time registration fee logic: ₹0 for hourly/day; ₹200 for first-time weekly/monthly
+  const ONE_TIME_REG_FEE = 200;
+  const isRegistrationFeeApplicable = (duration === "week" || duration === "month") && !isReturningMember;
+  const registrationFee = isRegistrationFeeApplicable ? ONE_TIME_REG_FEE : 0;
 
   // 2. Data State from Replaceable Adapter
   const [availabilities, setAvailabilities] = useState<SeatAvailability[]>([]);
@@ -92,6 +108,11 @@ function BookDemoContent() {
     };
     checkMobile();
     window.addEventListener("resize", checkMobile);
+
+    if (typeof window !== "undefined") {
+      const regPaid = localStorage.getItem("esz_student_registration_fee_paid") === "true";
+      if (regPaid) setIsReturningMember(true);
+    }
 
     fetch("/api/auth/me")
       .then((r) => (r.ok ? r.json() : null))
@@ -187,6 +208,8 @@ function BookDemoContent() {
     return base;
   }, [duration, hourlyCount, hourlyTimeSlot]);
 
+  const totalPayableAmount = currentDurationRule.basePrice + registrationFee;
+
   // Total available count
   const availableCount = useMemo(() => {
     return availabilities.filter((a) => a.status === "available").length;
@@ -209,7 +232,7 @@ function BookDemoContent() {
         specialRequests: guestNotes,
       });
 
-      res.totalPrice = currentDurationRule.basePrice;
+      res.totalPrice = totalPayableAmount;
       setHoldResult(res);
       setIsSubmittingHold(false);
     } catch {
@@ -292,56 +315,147 @@ function BookDemoContent() {
             })}
           </div>
 
-          {/* Hourly Slot Selector (when duration === 'hour') */}
+          {/* Interactive Custom Time Scroller (when duration === 'hour') */}
           {duration === "hour" && (
-            <div className="p-4 bg-forest-50 border border-forest-200 rounded-md space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <span className="text-xs font-mono uppercase font-bold text-forest-900">
-                  Select Number of Study Hours (₹49/hour)
-                </span>
-                <div className="flex items-center gap-2">
-                  {[1, 2, 3, 4, 6, 8].map((h) => (
-                    <button
-                      key={h}
-                      type="button"
-                      onClick={() => {
-                        setHourlyCount(h);
-                        const slots = getDynamicHourlySlots(h);
-                        if (slots.length > 0) {
-                          setHourlyTimeSlot(slots[0].slot);
-                        }
-                      }}
-                      className={`px-3 py-1.5 text-xs font-mono font-bold rounded transition-all ${
-                        hourlyCount === h
-                          ? "bg-forest-700 text-white shadow-sm ring-1 ring-forest-800"
-                          : "bg-white text-charcoal-800 border border-forest-300 hover:bg-forest-100"
-                      }`}
-                    >
-                      {h} hr{h > 1 ? "s" : ""}
-                    </button>
-                  ))}
+            <div className="p-4 sm:p-5 bg-forest-50 border border-forest-300 rounded-xl space-y-4 shadow-sm">
+              {/* 1. Start Time Horizontal Scroller */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono uppercase font-bold text-forest-950 flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-forest-700" />
+                    <span>Choose Start Time (07:00 AM – 10:00 PM)</span>
+                  </span>
+                  <span className="text-[11px] font-mono text-forest-800 font-bold bg-white px-2 py-0.5 rounded border border-forest-200">
+                    Starts: {formatHourLabel(startHour)}
+                  </span>
+                </div>
+
+                {/* Horizontal Touch Scroller */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-thin">
+                  {[7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22].map((h) => {
+                    const isSelected = startHour === h;
+                    return (
+                      <button
+                        key={h}
+                        type="button"
+                        onClick={() => {
+                          setStartHour(h);
+                          if (h + hourlyCount > 23) {
+                            setHourlyCount(Math.max(1, 23 - h));
+                          }
+                        }}
+                        className={`px-3 py-1.5 text-xs font-mono font-bold rounded-md whitespace-nowrap transition-all flex-shrink-0 ${
+                          isSelected
+                            ? "bg-forest-800 text-white shadow-sm ring-2 ring-forest-600 scale-105"
+                            : "bg-white text-charcoal-700 border border-forest-200 hover:bg-forest-100"
+                        }`}
+                      >
+                        {formatHourLabel(h)}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 pt-2 border-t border-forest-200 text-xs font-mono">
-                {getDynamicHourlySlots(hourlyCount).map((s) => (
-                  <button
-                    key={s.slot}
-                    type="button"
-                    onClick={() => setHourlyTimeSlot(s.slot)}
-                    className={`p-2.5 text-left border rounded transition-all ${
-                      hourlyTimeSlot === s.slot
-                        ? "border-forest-700 bg-white font-bold text-forest-900 shadow-sm ring-1 ring-forest-600"
-                        : "border-forest-200 bg-forest-50/60 text-charcoal-700 hover:bg-white"
-                    }`}
-                  >
-                    <div className="font-bold text-xs">{s.slot}</div>
-                    <div className="text-[10px] text-forest-700 font-bold mt-0.5">
-                      ₹{hourlyCount * 49} total ({hourlyCount} hrs @ ₹49/hr)
-                    </div>
-                  </button>
-                ))}
+              {/* 2. Duration Selector & Scroller */}
+              <div className="space-y-2 pt-3 border-t border-forest-200">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono uppercase font-bold text-forest-950">
+                    Study Duration (₹49 per hour)
+                  </span>
+                  <span className="text-xs font-mono font-extrabold text-forest-900 bg-emerald-100 text-emerald-950 px-2.5 py-0.5 rounded">
+                    {hourlyCount} Hour{hourlyCount > 1 ? "s" : ""}
+                  </span>
+                </div>
+
+                {/* Quick Hour Buttons */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                  {[1, 2, 3, 4, 5, 6, 8, 10, 12]
+                    .filter((h) => startHour + h <= 23)
+                    .map((h) => (
+                      <button
+                        key={h}
+                        type="button"
+                        onClick={() => setHourlyCount(h)}
+                        className={`px-3 py-1 text-xs font-mono font-bold rounded transition-all ${
+                          hourlyCount === h
+                            ? "bg-forest-700 text-white shadow-sm"
+                            : "bg-white text-charcoal-800 border border-forest-200 hover:bg-forest-100"
+                        }`}
+                      >
+                        {h}h
+                      </button>
+                    ))}
+                </div>
+
+                {/* Custom Range Slider */}
+                <div className="pt-1">
+                  <input
+                    type="range"
+                    min={1}
+                    max={Math.max(1, 23 - startHour)}
+                    value={hourlyCount}
+                    onChange={(e) => setHourlyCount(Number(e.target.value))}
+                    className="w-full accent-forest-700 cursor-pointer h-2 bg-forest-200 rounded-lg"
+                  />
+                  <div className="flex justify-between text-[10px] font-mono text-charcoal-500 mt-1">
+                    <span>1 hour min</span>
+                    <span>Max {23 - startHour} hrs (until 11:00 PM closing)</span>
+                  </div>
+                </div>
               </div>
+
+              {/* 3. Live Calculated Slot & Transparent Fee Card */}
+              <div className="p-3.5 bg-white border border-forest-300 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm font-mono">
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-charcoal-500 font-bold">
+                    Custom Hourly Slot:
+                  </div>
+                  <div className="text-sm font-bold text-forest-950">
+                    {hourlyTimeSlot}
+                  </div>
+                  <div className="text-[11px] text-charcoal-600 mt-0.5">
+                    Center open until 11:00 PM &bull; Zero registration fee
+                  </div>
+                </div>
+                <div className="sm:text-right">
+                  <div className="text-[10px] uppercase tracking-wider text-charcoal-500 font-bold">
+                    Payable Amount:
+                  </div>
+                  <div className="text-xl font-extrabold text-forest-800">
+                    ₹{hourlyCount * 49} <span className="text-xs font-normal text-charcoal-600">INR</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Registration Fee Breakdown for Weekly & Monthly Packages */}
+          {(duration === "week" || duration === "month") && (
+            <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-xl space-y-2 font-mono text-xs shadow-sm">
+              <div className="flex items-center justify-between text-emerald-950 font-bold text-sm">
+                <span>{duration === "month" ? "Monthly Dedicated Desk" : "Weekly Sprint Pass"}</span>
+                <span>Base Plan: ₹{currentDurationRule.basePrice}</span>
+              </div>
+              <div className="flex items-center justify-between text-emerald-800 pt-1 border-t border-emerald-200">
+                <span>One-Time Member Registration Fee:</span>
+                <span>
+                  {isReturningMember ? (
+                    <strong className="text-emerald-700">₹0 (Waived — Returning Member Renewal)</strong>
+                  ) : (
+                    <strong>+₹{ONE_TIME_REG_FEE} (First-time members only)</strong>
+                  )}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-charcoal-900 font-bold text-sm pt-1 border-t border-emerald-300">
+                <span>Total Payable:</span>
+                <span className="text-base text-forest-800">₹{totalPayableAmount} INR</span>
+              </div>
+              <p className="text-[10px] text-charcoal-600">
+                {isReturningMember
+                  ? "✓ Returning member verified: No registration fee charged on renewals."
+                  : "ℹ️ One-time ₹200 scholar registration fee applies to your first weekly/monthly membership and is permanently waived on all future renewals."}
+              </p>
             </div>
           )}
         </div>
@@ -555,9 +669,11 @@ function BookDemoContent() {
 
           <div className="flex items-center gap-6 self-stretch md:self-auto justify-between md:justify-end">
             <div className="text-right">
-              <div className="text-[10px] uppercase font-mono text-charcoal-500">Estimated Fee</div>
+              <div className="text-[10px] uppercase font-mono text-charcoal-500">
+                {registrationFee > 0 ? "Total Fee (Incl. ₹200 Reg Fee)" : "Total Fee"}
+              </div>
               <div className="font-serif text-2xl font-bold text-charcoal-900">
-                ₹{currentDurationRule.basePrice}{" "}
+                ₹{totalPayableAmount}{" "}
                 <span className="text-xs font-mono font-normal text-charcoal-500">INR</span>
               </div>
             </div>
@@ -690,12 +806,20 @@ function BookDemoContent() {
         bookingRequestId={holdResult?.holdRef || "REQ-PENDING"}
         seatLabel={selectedSeat ? `${selectedSeat.seatNumber} (${selectedSeat.name})` : "Desk"}
         durationLabel={currentDurationRule.label}
-        amountPaise={(holdResult?.totalPrice || currentDurationRule.basePrice) * 100}
+        amountPaise={(holdResult?.totalPrice || totalPayableAmount) * 100}
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
         onSuccess={(paymentId, passCode) => {
           setIsHoldDialogOpen(false);
           setIsCheckoutOpen(false);
+
+          // Mark one-time registration fee as paid for weekly/monthly
+          if (duration === "week" || duration === "month") {
+            try {
+              localStorage.setItem("esz_student_registration_fee_paid", "true");
+              setIsReturningMember(true);
+            } catch {}
+          }
 
           // Save confirmed booking directly to student's persistent store
           try {
@@ -710,8 +834,8 @@ function BookDemoContent() {
               endDate: calculatedEndDate,
               requestStatus: "approved",
               paymentStatus: "paid",
-              totalPricePaise: (holdResult?.totalPrice || currentDurationRule.basePrice) * 100,
-              totalPriceRupees: `${holdResult?.totalPrice || currentDurationRule.basePrice}.00`,
+              totalPricePaise: (holdResult?.totalPrice || totalPayableAmount) * 100,
+              totalPriceRupees: `${holdResult?.totalPrice || totalPayableAmount}.00`,
               passCode: passCode || `PASS-${Math.floor(1000 + Math.random() * 9000)}`,
             };
 

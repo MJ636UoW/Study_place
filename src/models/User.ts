@@ -16,6 +16,8 @@ export interface IUser extends Document {
   lockerNumber: string;
   biometricPin: string;
   avatarUrl?: string;
+  hasPaidRegistrationFee?: boolean;
+  membershipTier?: "none" | "hourly" | "weekly" | "monthly";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,10 +35,12 @@ const UserSchema: Schema<IUser> = new Schema(
     authProvider: { type: String, enum: ["email", "google"], default: "email" },
     allottedHours: { type: Number, default: 48 },
     usedHours: { type: Number, default: 0 },
-    deskNumber: { type: String, default: "Desk #04" },
-    lockerNumber: { type: String, default: "Locker #14" },
-    biometricPin: { type: String, default: "001" },
+    deskNumber: { type: String, default: "" },
+    lockerNumber: { type: String, default: "" },
+    biometricPin: { type: String, default: "" },
     avatarUrl: { type: String, default: "" },
+    hasPaidRegistrationFee: { type: Boolean, default: false },
+    membershipTier: { type: String, enum: ["none", "hourly", "weekly", "monthly"], default: "none" },
   },
   {
     timestamps: true,
