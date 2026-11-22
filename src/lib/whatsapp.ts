@@ -161,7 +161,7 @@ Hello *${name}*, welcome to Mumbai's premier self-study space & focus hub.
 ${initialPassCode ? `🔑 *Your Keypad Pass PIN:* *#${initialPassCode}*\n` : ""}\
 📍 *Center Address:* Amrut Nagar, Ghatkopar West, Mumbai (400086)
 ⏱️ *Open Hours:* 07:00 AM – 11:00 PM Daily (24/7 for Dedicated Pass Members)
-🌐 *Student Portal:* https://study-place.onrender.com/login
+🌐 *Student Portal:* https://elitestudyzone.in
 
 Need a seat? Book an hourly pass or monthly workstation on our portal anytime. Welcome aboard!`;
 

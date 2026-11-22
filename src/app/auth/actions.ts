@@ -88,7 +88,7 @@ export async function signUpWithPassword(
 
   const supabase = await createClient();
   const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL || "https://study-place.onrender.com";
+    process.env.NEXT_PUBLIC_APP_URL || "https://elitestudyzone.in";
 
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -149,7 +149,7 @@ export async function signInWithOtp(
 
   const supabase = await createClient();
   const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL || "https://study-place.onrender.com";
+    process.env.NEXT_PUBLIC_APP_URL || "https://elitestudyzone.in";
 
   const { error } = await supabase.auth.signInWithOtp({
     email,
@@ -213,7 +213,7 @@ export async function requestPasswordReset(
 
   const supabase = await createClient();
   const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL || "https://study-place.onrender.com";
+    process.env.NEXT_PUBLIC_APP_URL || "https://elitestudyzone.in";
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${appUrl}/auth/reset-password`,

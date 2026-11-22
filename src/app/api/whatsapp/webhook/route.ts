@@ -80,7 +80,7 @@ Enjoy seamless studying!`;
 • *To Enter:* Type your assigned *6-digit PIN* on the digital keypad outside. The indicator turns green and the electromagnetic door lock releases.
 • *To Exit:* Simply press the push-to-exit button mounted on the interior wall next to the door.
 
-Need to check your active PIN? Log in at: https://study-place.onrender.com/login`;
+Need to check your active PIN? Log in at: https://elitestudyzone.in/login`;
     } else if (lower.includes("time") || lower.includes("timing") || lower.includes("hours") || lower.includes("open") || lower.includes("close")) {
       botReply = 
 `⏱️ *Elite Study Zone Timings:*
@@ -94,7 +94,7 @@ Need to check your active PIN? Log in at: https://study-place.onrender.com/login
 • *Day Sanctuary Pass:* ₹249 / day
 • *Monthly Resident Desk:* ₹2,499 / month (dedicated desk, 24/7 access & locker)
 
-Book instantly online: https://study-place.onrender.com/book`;
+Book instantly online: https://elitestudyzone.in/book`;
     } else if (lower.includes("address") || lower.includes("location") || lower.includes("where") || lower.includes("reach") || lower.includes("map")) {
       botReply = 
 `📍 *Center Location:*
@@ -111,7 +111,7 @@ I can help you with:
 4️⃣ *Rates & Plans* (type 'rates')
 5️⃣ *Location & Directions* (type 'location')
 
-Or visit our student portal anytime: https://study-place.onrender.com`;
+Or visit our student portal anytime: https://elitestudyzone.in`;
     } else {
       // Contextual AI Fallback
       botReply = 

@@ -8,7 +8,7 @@ function getPublicBaseUrl(req: NextRequest): string {
   if (forwardedHost && !forwardedHost.includes("localhost:10000")) {
     return `${forwardedProto}://${forwardedHost}`;
   }
-  return "https://study-place.onrender.com";
+  return "https://elitestudyzone.in";
 }
 
 export async function GET(req: NextRequest) {

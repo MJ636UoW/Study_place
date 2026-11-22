@@ -45,7 +45,7 @@ export default function AdminPage() {
 
   // Smart Door Keypad & Access Control Hardware State (Cloud Wi-Fi & Push-to-Exit)
   const [keypadApiKey, setKeypadApiKey] = useState("ESZ-KEYPAD-PRO-984210");
-  const [keypadEndpoint, setKeypadEndpoint] = useState("https://study-place.onrender.com/api/door-access");
+  const [keypadEndpoint, setKeypadEndpoint] = useState("https://elitestudyzone.in/api/door-access");
   const [keypadDeviceId, setKeypadDeviceId] = useState("DEV-WIFI-KEYPAD-01");
   const [keypadDeviceModel, setKeypadDeviceModel] = useState("Smart Wi-Fi Digital Touch Keypad + Interior Exit Button");
   const [deviceConnected, setDeviceConnected] = useState(true);
@@ -1729,7 +1729,7 @@ export default function AdminPage() {
                       />
                     </div>
                     <p className="text-[10px] text-charcoal-500 leading-relaxed">
-                      To enable native Google One-Tap popup: Go to <strong>console.cloud.google.com</strong> → APIs &amp; Services → Credentials → Create OAuth Client ID (Web Application), set Authorized JavaScript Origin to <code>https://study-place.onrender.com</code>, and paste your Web Client ID here.
+                      To enable native Google One-Tap popup: Go to <strong>console.cloud.google.com</strong> → APIs &amp; Services → Credentials → Create OAuth Client ID (Web Application), set Authorized JavaScript Origin to <code>https://elitestudyzone.in</code>, and paste your Web Client ID here.
                     </p>
                   </div>
 
@@ -1784,7 +1784,7 @@ export default function AdminPage() {
                     </div>
 
                     <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-mono text-charcoal-600 space-y-1">
-                      <div><strong>AI Bot Webhook Callback URL:</strong> <code>https://study-place.onrender.com/api/whatsapp/webhook</code></div>
+                      <div><strong>AI Bot Webhook Callback URL:</strong> <code>https://elitestudyzone.in/api/whatsapp/webhook</code></div>
                       <div><strong>Verify Token:</strong> <code>esz_whatsapp_verify_token_2026</code></div>
                       <div className="text-emerald-700">✓ Every student registration and hourly pass automatically sends door PIN and access details to both WhatsApp and Email!</div>
                     </div>
