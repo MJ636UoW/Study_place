@@ -21,6 +21,7 @@ async function getTransporter(): Promise<{ transporter: Transporter | null; send
         port,
         secure: port === 465,
         auth: { user: envUser, pass: envPass },
+        tls: { rejectUnauthorized: false },
       }),
       senderEmail: envUser,
     };
@@ -31,6 +32,7 @@ async function getTransporter(): Promise<{ transporter: Transporter | null; send
       transporter: nodemailer.createTransport({
         service: "gmail",
         auth: { user: envUser, pass: envPass },
+        tls: { rejectUnauthorized: false },
       }),
       senderEmail: envUser,
     };
@@ -87,6 +89,103 @@ export async function sendEmail({ to, subject, html }: SendEmailParams): Promise
   console.log(`Configure your Gmail + Google App Password in /admin settings to deliver directly to inboxes.`);
   console.log(`======================================================\n`);
   return { success: true };
+}
+
+export async function sendWelcomeAccessEmail(params: {
+  to: string;
+  name: string;
+  doorPin: string;
+  siteUrl?: string;
+}) {
+  const {
+    to,
+    name,
+    doorPin,
+    siteUrl = "https://elitestudyzone.in",
+  } = params;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; margin: 0; padding: 24px; color: #1e293b; }
+          .container { max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 14px; border: 1px solid #cbd5e1; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+          .header { background: #0f172a; padding: 30px 24px; text-align: center; border-bottom: 4px solid #f59e0b; }
+          .logo { color: #ffffff; font-size: 24px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; margin: 0; }
+          .tagline { color: #94a3b8; font-size: 12px; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.12em; }
+          .content { padding: 36px 30px; }
+          .welcome-title { font-size: 22px; font-weight: 700; color: #0f172a; margin-top: 0; margin-bottom: 8px; }
+          .pin-card { background: #0f172a; color: #ffffff; padding: 26px; border-radius: 12px; margin: 24px 0; text-align: center; border: 2px solid #334155; }
+          .pin-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; color: #94a3b8; font-weight: 700; margin: 0 0 8px 0; }
+          .pin-code { font-size: 38px; font-weight: 800; letter-spacing: 8px; color: #f59e0b; font-family: 'Courier New', Courier, monospace; margin: 6px 0; }
+          .steps-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; margin: 24px 0; }
+          .step-row { margin-bottom: 14px; font-size: 13px; line-height: 1.5; color: #334155; }
+          .step-badge { display: inline-block; background: #0f172a; color: #f59e0b; font-weight: bold; font-size: 11px; border-radius: 4px; padding: 2px 8px; margin-right: 8px; margin-bottom: 4px; }
+          .cta-btn { display: inline-block; background-color: #0f172a; color: #ffffff !important; padding: 14px 34px; border-radius: 8px; font-size: 14px; font-weight: 700; text-decoration: none; margin: 10px 0; }
+          .footer { background: #f8fafc; padding: 22px 28px; font-size: 11px; color: #64748b; text-align: center; border-top: 1px solid #e2e8f0; line-height: 1.6; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1 class="logo">Elite Study Zone</h1>
+            <div class="tagline">Ghatkopar West &bull; 24/7 Smart Study Sanctuary</div>
+          </div>
+          <div class="content">
+            <h2 class="welcome-title">Welcome to Elite Study Zone, ${name}!</h2>
+            <p style="font-size: 14px; color: #475569; line-height: 1.6; margin: 0 0 20px 0;">
+              Your scholar portal account is now officially activated. Below is your 24/7 smart door access pass and center details:
+            </p>
+
+            <div class="pin-card">
+              <div class="pin-label">Your 6-Digit Door Keypad Access PIN</div>
+              <div class="pin-code">#${doorPin}</div>
+              <p style="margin: 8px 0 0 0; font-size: 12px; color: #cbd5e1;">Valid for all your study sessions and bookings</p>
+            </div>
+
+            <div class="steps-box">
+              <div style="font-weight: 700; font-size: 14px; color: #0f172a; margin-bottom: 12px;">🚪 How to Enter & Exit:</div>
+              <div class="step-row">
+                <span class="step-badge">ENTRY</span>
+                <strong>Exterior Digital Keypad:</strong> Type your 6-digit PIN <strong>#${doorPin}</strong> on the digital touch keypad outside the entrance door. The LED indicator turns green and the electromagnetic door lock releases automatically.
+              </div>
+              <div class="step-row" style="margin-bottom: 0;">
+                <span class="step-badge">EXIT</span>
+                <strong>Interior Push Button:</strong> To exit the study hall, simply press the green push-to-exit button mounted on the interior wall next to the door. Zero biometric hassle or scanning needed.
+              </div>
+            </div>
+
+            <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; padding: 16px 20px; margin-bottom: 24px; font-size: 13px; color: #065f46;">
+              <div style="font-weight: 700; margin-bottom: 4px;">📶 High-Speed Study Wi-Fi:</div>
+              <div>Network: <strong>EliteStudy_5G</strong> &bull; Password: <strong>FocusQuiet2026</strong></div>
+            </div>
+
+            <div style="text-align: center; margin: 28px 0;">
+              <a href="${siteUrl}/book" class="cta-btn" target="_blank">Book Your Workstation Seat &rarr;</a>
+            </div>
+
+            <p style="font-size: 12px; color: #64748b; text-align: center; margin: 0;">
+              You can log in anytime at <a href="${siteUrl}/login" style="color: #2563eb; text-decoration: underline;">${siteUrl}/login</a> using your Google account or email.
+            </p>
+          </div>
+          <div class="footer">
+            <strong>Elite Study Zone</strong><br>
+            Amrut Nagar, Near Shreyas Cinema, LBS Marg, Ghatkopar West, Mumbai 400086<br>
+            Center Hours: 07:00 AM – 11:00 PM Daily (24/7 for Dedicated Members)<br>
+            Helpline & WhatsApp: +91 93246 89280 / +91 99878 18182 &bull; info@elitestudyzone.in
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to,
+    subject: `Welcome to Elite Study Zone - Your Door Keypad PIN is #${doorPin}`,
+    html,
+  });
 }
 
 export async function sendVerificationEmail(

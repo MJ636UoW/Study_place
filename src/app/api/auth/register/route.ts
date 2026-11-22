@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findUserByEmail, createUser } from "@/lib/hybridDb";
-import { sendVerificationEmail } from "@/lib/mailer";
+import { sendVerificationEmail, sendWelcomeAccessEmail } from "@/lib/mailer";
 import { sendWhatsAppWelcome } from "@/lib/whatsapp";
 import { signJwtToken, setAuthCookie } from "@/lib/auth";
 
@@ -48,6 +48,13 @@ export async function POST(req: NextRequest) {
     sendVerificationEmail(cleanEmail, cleanName, token, origin, doorPin).catch((e) =>
       console.warn("sendVerificationEmail error:", e)
     );
+
+    sendWelcomeAccessEmail({
+      to: cleanEmail,
+      name: cleanName,
+      doorPin,
+      siteUrl: origin,
+    }).catch((e) => console.warn("sendWelcomeAccessEmail error:", e));
 
     // Also dispatch welcome & credentials via WhatsApp
     let whatsappLink: string | null = null;

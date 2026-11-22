@@ -170,7 +170,7 @@ function LoginContent() {
 
       const scholarName = data.user?.name || "Scholar";
       setStatusMessage({ type: "success", text: `Welcome, ${scholarName}! Entering dashboard...` });
-      const next = searchParams.get("next") || "/dashboard";
+      const next = searchParams.get("redirect") || searchParams.get("next") || "/book";
       window.location.href = next;
     } catch (err: unknown) {
       setIsLoading(false);
@@ -220,7 +220,7 @@ function LoginContent() {
       document.cookie = `esz_student_name=${encodeURIComponent(scholarName)}; path=/; max-age=604800; SameSite=Lax`;
 
       setStatusMessage({ type: "success", text: "Login verified! Entering your workstation dashboard..." });
-      const next = searchParams.get("next") || "/dashboard";
+      const next = searchParams.get("redirect") || searchParams.get("next") || "/book";
       window.location.href = next;
     } catch (err: unknown) {
       setIsLoading(false);
@@ -286,7 +286,7 @@ function LoginContent() {
 
       if (!data.whatsappLink) {
         setTimeout(() => {
-          window.location.href = searchParams.get("next") || "/dashboard";
+          window.location.href = searchParams.get("redirect") || searchParams.get("next") || "/book";
         }, 1500);
       }
     } catch (err: unknown) {
@@ -393,7 +393,7 @@ function LoginContent() {
       }
 
       setStatusMessage({ type: "success", text: `Pass Verified! Entering your workstation dashboard...` });
-      const next = searchParams.get("next") || "/dashboard";
+      const next = searchParams.get("redirect") || searchParams.get("next") || "/book";
       window.location.href = next;
     } catch (err: unknown) {
       setIsLoading(false);
@@ -441,6 +441,12 @@ function LoginContent() {
               ? "Have an access code from WhatsApp or an hourly pass? Enter your code below."
               : "Sign in with Google, registered email, or access pass code."}
           </p>
+
+          {searchParams.get("redirect") === "/book" && (
+            <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-lg text-emerald-900 text-xs font-semibold max-w-sm mx-auto shadow-sm">
+              🎯 Sign in below to reserve your workstation seat and get your instant Door Keypad PIN.
+            </div>
+          )}
         </div>
 
         {/* Main Card */}

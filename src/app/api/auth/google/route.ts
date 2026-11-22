@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findUserByEmail, createUser } from "@/lib/hybridDb";
 import { signJwtToken, setAuthCookie } from "@/lib/auth";
+import { sendWelcomeAccessEmail } from "@/lib/mailer";
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,8 +39,10 @@ export async function POST(req: NextRequest) {
     const cleanEmail = payload.email.trim().toLowerCase();
     const name = payload.name || cleanEmail.split("@")[0];
     let user = await findUserByEmail(cleanEmail);
+    let isNewUser = false;
 
     if (!user) {
+      isNewUser = true;
       const created = await createUser({
         name: name || cleanEmail.split("@")[0],
         email: cleanEmail,
@@ -48,6 +51,16 @@ export async function POST(req: NextRequest) {
       });
       user = created.user;
     }
+
+    const doorPin = user.biometricPin || String(Math.floor(100000 + Math.random() * 900000));
+
+    // Dispatch welcome email with Keypad Access PIN, entry/exit guides & center details
+    sendWelcomeAccessEmail({
+      to: cleanEmail,
+      name: user.name || name || "Scholar",
+      doorPin,
+      siteUrl: "https://elitestudyzone.in",
+    }).catch((e) => console.warn("[Google Auth] sendWelcomeAccessEmail error:", e));
 
     const token = signJwtToken({
       userId: user._id ? user._id.toString() : "user_" + Buffer.from(cleanEmail).toString("hex"),
@@ -64,7 +77,8 @@ export async function POST(req: NextRequest) {
         role: user.role,
         allottedHours: user.allottedHours,
         deskNumber: user.deskNumber,
-        biometricPin: user.biometricPin,
+        biometricPin: doorPin,
+        doorPin,
       },
     });
 
@@ -72,6 +86,7 @@ export async function POST(req: NextRequest) {
     res.cookies.set("esz_student_session", "active_google", { path: "/", maxAge: 604800, sameSite: "lax" });
     res.cookies.set("esz_student_email", encodeURIComponent(cleanEmail), { path: "/", maxAge: 604800, sameSite: "lax" });
     res.cookies.set("esz_student_name", encodeURIComponent(user.name || "Scholar"), { path: "/", maxAge: 604800, sameSite: "lax" });
+    res.cookies.set("esz_student_pin", doorPin, { path: "/", maxAge: 604800, sameSite: "lax" });
     return res;
   } catch (error: any) {
     console.error("Google Auth Error:", error);

@@ -557,7 +557,7 @@ function BookDemoContent() {
             <div className="text-right">
               <div className="text-[10px] uppercase font-mono text-charcoal-500">Estimated Fee</div>
               <div className="font-serif text-2xl font-bold text-charcoal-900">
-                ₹{duration === "hour" ? currentDurationRule.basePrice * hourlyCount : currentDurationRule.basePrice}{" "}
+                ₹{currentDurationRule.basePrice}{" "}
                 <span className="text-xs font-mono font-normal text-charcoal-500">INR</span>
               </div>
             </div>
