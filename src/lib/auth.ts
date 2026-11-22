@@ -1,6 +1,5 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
 const JWT_SECRET =
@@ -52,17 +51,6 @@ export function clearAuthCookie(res: NextResponse) {
     path: "/",
     maxAge: 0,
   });
-}
-
-export async function getCurrentUserFromCookies(): Promise<TokenPayload | null> {
-  try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("auth_token")?.value;
-    if (!token) return null;
-    return verifyJwtToken(token);
-  } catch {
-    return null;
-  }
 }
 
 export function getCurrentUserFromRequest(req: NextRequest): TokenPayload | null {

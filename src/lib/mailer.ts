@@ -1,5 +1,4 @@
 import nodemailer, { type Transporter } from "nodemailer";
-import { isMongoAvailable } from "@/lib/hybridDb";
 import { AdminSettings } from "@/models/AdminSettings";
 
 interface SendEmailParams {
@@ -39,8 +38,9 @@ async function getTransporter(): Promise<{ transporter: Transporter | null; send
 
   // 2. Check AdminSettings in MongoDB Atlas
   try {
-    const mongoOk = await isMongoAvailable();
-    if (mongoOk) {
+    const { connectToDatabase } = await import("@/lib/mongodb");
+    const connected = await connectToDatabase();
+    if (connected) {
       const settings = await AdminSettings.findOne();
       const dbUser = settings?.gmailUser?.trim();
       const dbPass = settings?.gmailAppPass?.trim()?.replace(/\s+/g, "");
