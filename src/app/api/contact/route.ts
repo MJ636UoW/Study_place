@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AdminService } from "@/lib/admin/adminService";
 import { NotificationService } from "@/lib/notifications/notificationService";
+import { sendEmail } from "@/lib/mailer";
 
 export const dynamic = "force-dynamic";
 
@@ -101,21 +102,39 @@ export async function POST(req: NextRequest) {
       message: message.trim(),
     });
 
-    // 6. Durable notification queue for curatorial record
+    // 6. Send live email acknowledgment and notification via SMTP
     try {
-      NotificationService.queueNotification({
-        userId: "anonymous_inquiry",
-        type: "request_submission",
-        recipientEmail: email.trim(),
-        recipientName: name.trim(),
-        subject: `Sanctuary Concierge Dispatch Acknowledged — ${enquiry.id}`,
-        templateName: "enquiry_acknowledgment_template",
-        payload: {
-          enquiryId: enquiry.id,
-          topic: enquiry.topic,
-          messageSnippet: enquiry.message.slice(0, 100),
-        },
-      });
+      sendEmail({
+        to: email.trim(),
+        subject: `Enquiry Received: #${enquiry.id} - Elite Study Zone`,
+        html: `
+          <div style="font-family: sans-serif; padding: 24px; color: #1e293b;">
+            <h2>Hello ${name.trim()},</h2>
+            <p>Thank you for reaching out to Elite Study Zone (Ghatkopar West). We have received your inquiry regarding <strong>${topic || "Study Zone Access"}</strong>.</p>
+            <p>Our concierge team will respond shortly. If you require urgent assistance, please call us at +91 93246 89280 / +91 99878 18182.</p>
+            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+            <p style="font-size: 12px; color: #64748b;">Elite Study Zone &bull; Amrut Nagar, Near Shreyas Cinema, Ghatkopar West &bull; info@elitestudyzone.in</p>
+          </div>
+        `,
+      }).catch((e) => console.warn("[Contact Email] error:", e));
+
+      // Admin alert
+      const adminEmail = process.env.SMTP_USER || "info@elitestudyzone.in";
+      sendEmail({
+        to: adminEmail,
+        subject: `[New Website Lead] ${name.trim()} (${phone || "No phone"})`,
+        html: `
+          <div style="font-family: sans-serif; padding: 20px;">
+            <h3>New Inquiry on Elite Study Zone</h3>
+            <p><strong>Name:</strong> ${name.trim()}</p>
+            <p><strong>Email:</strong> ${email.trim()}</p>
+            <p><strong>Phone:</strong> ${phone || "N/A"}</p>
+            <p><strong>Topic:</strong> ${topic || "general"}</p>
+            <p><strong>Message:</strong></p>
+            <blockquote style="background: #f1f5f9; padding: 12px; border-left: 4px solid #0f172a;">${message.trim()}</blockquote>
+          </div>
+        `,
+      }).catch((e) => console.warn("[Contact Admin Email] error:", e));
     } catch (notifErr) {
       console.error("[Contact API] Non-fatal notification error:", notifErr);
     }

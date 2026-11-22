@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { BookingEngine } from "@/lib/booking/bookingEngine";
 import { NotificationService } from "@/lib/notifications/notificationService";
+import { sendBookingConfirmationEmail } from "@/lib/mailer";
 import { bookingsFixture } from "@/fixtures";
 
 export const dynamic = "force-dynamic";
@@ -48,6 +49,31 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const booking = await req.json();
+
+    // Extract student email from cookie or booking payload
+    const cookieEmail = req.cookies.get("esz_student_email")?.value;
+    const cookieName = req.cookies.get("esz_student_name")?.value;
+    const cookiePin = req.cookies.get("esz_student_pin")?.value;
+
+    const email = booking.email || (cookieEmail ? decodeURIComponent(cookieEmail) : null);
+    const name = booking.name || (cookieName ? decodeURIComponent(cookieName) : "Scholar");
+    const doorPin = booking.doorPin || cookiePin || "394821";
+
+    if (email && email.includes("@")) {
+      sendBookingConfirmationEmail({
+        to: email,
+        name,
+        bookingRef: booking.bookingRef || booking.id || `ESZ-${Date.now()}`,
+        seatLabel: booking.seatLabel || "Dedicated Workstation",
+        roomName: booking.roomName || "Main Study Sanctuary",
+        timeSlotOrDuration: booking.tierName || "Custom Study Session",
+        startDate: booking.startDate || new Date().toISOString().split("T")[0],
+        endDate: booking.endDate,
+        amountRupees: booking.totalPriceRupees || "294.00",
+        doorPin,
+      }).catch((e) => console.warn("[Booking Dispatch] Email dispatch error:", e));
+    }
+
     return NextResponse.json({ success: true, booking });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Internal server error";

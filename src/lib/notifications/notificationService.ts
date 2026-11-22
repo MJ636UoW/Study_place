@@ -238,8 +238,31 @@ export class NotificationService {
    * Logs RFC-compliant email payloads and marks as delivered in test/development environments.
    */
   private static async deliverEmail(record: NotificationRecord): Promise<void> {
-    // In our verified test environment, we log the complete email delivery details honestly:
     console.log(`[Notification Dispatch] -> To: ${record.recipientEmail} | Subject: "${record.subject}" | Template: ${record.templateName}`);
+    try {
+      const { sendEmail } = await import("@/lib/mailer");
+      await sendEmail({
+        to: record.recipientEmail,
+        subject: record.subject,
+        html: `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 24px; color: #1e293b;">
+            <div style="background: #0f172a; padding: 16px; border-radius: 8px; text-align: center; margin-bottom: 20px;">
+              <h2 style="color: #ffffff; margin: 0; font-size: 18px; text-transform: uppercase; letter-spacing: 0.05em;">Elite Study Zone</h2>
+            </div>
+            <h3 style="color: #0f172a;">${record.subject}</h3>
+            <p style="color: #475569; font-size: 14px; line-height: 1.6;">Dear ${record.recipientName},</p>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 16px 0;">
+              ${Object.entries(record.payload || {})
+                .map(([k, v]) => `<p style="margin: 4px 0; font-size: 13px;"><strong>${k}:</strong> ${String(v)}</p>`)
+                .join("")}
+            </div>
+            <p style="font-size: 12px; color: #64748b;">Elite Study Zone &bull; Ghatkopar West, Mumbai &bull; info@elitestudyzone.in</p>
+          </div>
+        `,
+      });
+    } catch (e) {
+      console.warn("[Notification Dispatch] Mailer dispatch skipped or failed:", e);
+    }
   }
 
   /**

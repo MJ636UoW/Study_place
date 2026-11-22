@@ -43,12 +43,11 @@ export async function POST(req: NextRequest) {
     }
 
     const confirmUrl = `${origin}/api/auth/verify?token=${encodeURIComponent(token)}&email=${encodeURIComponent(cleanEmail)}`;
+    const doorPin = user?.biometricPin || String(Math.floor(100000 + Math.random() * 900000));
 
-    sendVerificationEmail(cleanEmail, cleanName, token, origin).catch((e) =>
+    sendVerificationEmail(cleanEmail, cleanName, token, origin, doorPin).catch((e) =>
       console.warn("sendVerificationEmail error:", e)
     );
-
-    const doorPin = user?.biometricPin || String(Math.floor(100000 + Math.random() * 900000));
 
     // Also dispatch welcome & credentials via WhatsApp
     let whatsappLink: string | null = null;
