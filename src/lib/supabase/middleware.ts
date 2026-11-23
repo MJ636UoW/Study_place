@@ -67,17 +67,18 @@ export async function updateSession(request: NextRequest) {
 
   const hasStudentSession = Boolean(authToken || studentSession || hasSupabaseUser);
 
-  // 2. Protected Student Routes: /dashboard
-  if (pathname.startsWith("/dashboard")) {
+  // 2. Protected Student Routes: /dashboard and /book
+  if (pathname.startsWith("/dashboard") || pathname.startsWith("/book")) {
     if (!hasStudentSession) {
-      return NextResponse.redirect(`${baseUrl}/login?next=${encodeURIComponent(pathname)}`);
+      const fullPath = pathname + (request.nextUrl.search || "");
+      return NextResponse.redirect(`${baseUrl}/login?redirect=${encodeURIComponent(fullPath)}`);
     }
   }
 
-  // If already logged in and visiting /login, redirect to /dashboard
+  // If already logged in and visiting /login, redirect to redirect target or /dashboard
   if (pathname === "/login" && hasStudentSession) {
-    const next = request.nextUrl.searchParams.get("next") || "/dashboard";
-    const targetUrl = next.startsWith("/") ? `${baseUrl}${next}` : `${baseUrl}/dashboard`;
+    const next = request.nextUrl.searchParams.get("redirect") || request.nextUrl.searchParams.get("next") || "/book";
+    const targetUrl = next.startsWith("/") ? `${baseUrl}${next}` : `${baseUrl}/book`;
     return NextResponse.redirect(targetUrl);
   }
 

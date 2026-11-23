@@ -137,16 +137,20 @@ function BookContent() {
   const [isInspectorOpen, setIsInspectorOpen] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
 
-  // 4. Request / Hold Submission State
+  // Authentication gate state
+  const [isAuthChecking, setIsAuthChecking] = useState<boolean>(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+
+  // 4. Request / Hold Submission State (No hardcoded names, dynamic from session)
   const [isHoldDialogOpen, setIsHoldDialogOpen] = useState<boolean>(false);
   const [isSubmittingHold, setIsSubmittingHold] = useState<boolean>(false);
-  const [guestName, setGuestName] = useState<string>("Arjun Kulkarni");
-  const [guestEmail, setGuestEmail] = useState<string>("arjun.kulkarni@outlook.com");
+  const [guestName, setGuestName] = useState<string>("");
+  const [guestEmail, setGuestEmail] = useState<string>("");
   const [guestNotes, setGuestNotes] = useState<string>("");
   const [holdResult, setHoldResult] = useState<HoldResponse | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState<boolean>(false);
 
-  // Detect mobile viewport & pre-fill scholar profile
+  // Detect mobile viewport & enforce strict student authentication
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 1024);
@@ -159,21 +163,53 @@ function BookContent() {
       if (regPaid) setIsReturningMember(true);
     }
 
+    // Strict Auth Verification: Unauthenticated students are directed to login/register first
     fetch("/api/auth/me")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (d?.authenticated && d?.user) {
-          if (d.user.name) setGuestName(d.user.name);
-          if (d.user.email) setGuestEmail(d.user.email);
+          setIsAuthenticated(true);
+          setIsAuthChecking(false);
+          setGuestName(d.user.name || "");
+          setGuestEmail(d.user.email || "");
+          if (d.user.allottedHours > 0 || d.user.usedHours > 0) {
+            setIsReturningMember(true);
+          }
         } else {
+          // Check client cookies fallback
           const cookies = document.cookie;
           const emailMatch = cookies.match(/esz_student_email=([^;]+)/);
           const nameMatch = cookies.match(/esz_student_name=([^;]+)/);
-          if (nameMatch) setGuestName(decodeURIComponent(nameMatch[1]));
-          if (emailMatch) setGuestEmail(decodeURIComponent(emailMatch[1]));
+          if (emailMatch) {
+            setIsAuthenticated(true);
+            setIsAuthChecking(false);
+            setGuestEmail(decodeURIComponent(emailMatch[1]));
+            if (nameMatch) setGuestName(decodeURIComponent(nameMatch[1]));
+          } else {
+            // Unauthenticated -> redirect to login with return path
+            setIsAuthenticated(false);
+            setIsAuthChecking(false);
+            const currentPath = window.location.pathname + window.location.search;
+            window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+          }
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        const cookies = document.cookie;
+        const emailMatch = cookies.match(/esz_student_email=([^;]+)/);
+        if (emailMatch) {
+          setIsAuthenticated(true);
+          setIsAuthChecking(false);
+          setGuestEmail(decodeURIComponent(emailMatch[1]));
+          const nameMatch = cookies.match(/esz_student_name=([^;]+)/);
+          if (nameMatch) setGuestName(decodeURIComponent(nameMatch[1]));
+        } else {
+          setIsAuthenticated(false);
+          setIsAuthChecking(false);
+          const currentPath = window.location.pathname + window.location.search;
+          window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+        }
+      });
 
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
@@ -262,6 +298,46 @@ function BookContent() {
       alert("Error submitting hold request.");
     }
   };
+
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center space-y-4">
+        <div className="w-12 h-12 rounded-full border-4 border-forest-800 border-t-transparent animate-spin" />
+        <div className="space-y-1">
+          <h2 className="font-serif text-2xl font-bold text-charcoal-900">
+            Checking Scholar Authentication
+          </h2>
+          <p className="text-xs font-mono text-charcoal-600">
+            Verifying your student profile and security credentials…
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center space-y-4 max-w-md mx-auto">
+        <div className="w-14 h-14 rounded-2xl bg-forest-50 border border-forest-300 flex items-center justify-center text-forest-800">
+          <Lock className="w-7 h-7" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="font-serif text-2xl font-bold text-charcoal-900">
+            Student Login Required
+          </h2>
+          <p className="text-xs text-charcoal-700 font-sans leading-relaxed">
+            Please log in or register your student account first to book workstation seats and receive your smart door keypad PIN.
+          </p>
+        </div>
+        <Link
+          href={`/login?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname + window.location.search : "/book")}`}
+          className="w-full py-3.5 bg-forest-800 text-white font-mono text-xs uppercase tracking-widest font-bold rounded-lg hover:bg-forest-700 transition-colors shadow-md text-center block"
+        >
+          Sign In / Register Now →
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full py-10 sm:py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-10">
@@ -899,15 +975,48 @@ function BookContent() {
           </motion.div>
         ) : (
           <form onSubmit={handleConfirmHold} className="space-y-4 text-left">
-            {/* Workstation Photo & Summary */}
-            <div className="p-3 bg-ivory-50 border border-ivory-200 rounded-xl text-xs font-mono space-y-1">
-              <div>Station: <strong>{selectedSeat?.seatNumber} ({selectedSeat?.name})</strong></div>
-              <div>Plan: <strong>{tenure.toUpperCase()} &bull; {currentShift.name} ({dailyHours} hrs)</strong></div>
-              <div>Interval: {formatDisplayDate(startDate)} → {formatDisplayDate(calculatedEndDate)}</div>
-              <div>Slot: {timeSlotLabel}</div>
-              {withLocker && <div className="text-forest-800 font-bold">Locker: {selectedLocker.label} (+₹{lockerFee} INR)</div>}
-              <div className="pt-1 border-t border-ivory-200 text-sm font-bold text-forest-900">
-                Payable Fee: ₹{totalPayableAmount} INR
+            {/* Workstation Summary & Transparent Fee Breakdown */}
+            <div className="p-3.5 bg-ivory-50 border border-ivory-200 rounded-xl text-xs font-mono space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span>Station:</span>
+                <strong>{selectedSeat?.seatNumber} ({selectedSeat?.name})</strong>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Plan & Shift:</span>
+                <strong>{tenure.toUpperCase()} Plan &bull; {currentShift.name} ({dailyHours} hrs/day)</strong>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Interval:</span>
+                <span>{formatDisplayDate(startDate)} → {formatDisplayDate(calculatedEndDate)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Daily Slot:</span>
+                <span>{timeSlotLabel}</span>
+              </div>
+              <div className="flex items-center justify-between pt-1 border-t border-ivory-200 text-charcoal-700">
+                <span>Base Plan Price:</span>
+                <span>₹{basePlanPrice} INR</span>
+              </div>
+              {registrationFee > 0 ? (
+                <div className="flex items-center justify-between text-amber-900 font-bold">
+                  <span>One-Time Reg Fee:</span>
+                  <span>+₹{registrationFee} INR (First-time member)</span>
+                </div>
+              ) : tenure !== "one_visit" ? (
+                <div className="flex items-center justify-between text-emerald-800 font-semibold text-[11px]">
+                  <span>Registration Fee:</span>
+                  <span>₹0 (Waived — Member Renewal)</span>
+                </div>
+              ) : null}
+              {withLocker && (
+                <div className="flex items-center justify-between text-forest-800 font-bold">
+                  <span>Storage Locker ({selectedLocker.label}):</span>
+                  <span>+₹{lockerFee} INR</span>
+                </div>
+              )}
+              <div className="pt-2 border-t border-ivory-300 flex items-center justify-between text-sm font-extrabold text-forest-950">
+                <span>Total Payable Amount:</span>
+                <span className="text-base text-forest-900">₹{totalPayableAmount} INR</span>
               </div>
             </div>
 
@@ -915,6 +1024,7 @@ function BookContent() {
               label="Student Name"
               value={guestName}
               onChange={(e) => setGuestName(e.target.value)}
+              placeholder="Enter your full name"
               required
             />
 
@@ -923,6 +1033,7 @@ function BookContent() {
               type="email"
               value={guestEmail}
               onChange={(e) => setGuestEmail(e.target.value)}
+              placeholder="Enter your email address"
               required
             />
 
