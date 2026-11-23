@@ -27,6 +27,7 @@
 
 import { BookingEngine } from "../booking/bookingEngine.ts";
 import { plansFixture, reviewsFixture, type PlanTier, type MemberReview } from "../../fixtures/index.ts";
+import { DEFAULT_PRICING_MATRIX, type PlanPricingRow } from "../pricingMatrix.ts";
 import { NotificationService } from "../notifications/notificationService.ts";
 
 export interface AuditEvent {
@@ -111,6 +112,7 @@ const attendanceStore = new Map<string, AdminAllocationAttendance>();
 
 // Dynamic plan store for editing without altering price snapshots of existing bookings
 const dynamicPlansStore: PlanTier[] = JSON.parse(JSON.stringify(plansFixture));
+let dynamicPricingMatrixStore: PlanPricingRow[] = JSON.parse(JSON.stringify(DEFAULT_PRICING_MATRIX));
 
 const enquiriesStore: EnquiryItem[] = [
   {
@@ -511,6 +513,25 @@ export class AdminService {
 
   public static getPlans(): PlanTier[] {
     return [...dynamicPlansStore];
+  }
+
+  public static getPricingMatrix(): PlanPricingRow[] {
+    return JSON.parse(JSON.stringify(dynamicPricingMatrixStore));
+  }
+
+  public static updatePricingMatrix(matrix: PlanPricingRow[], staffId: string) {
+    dynamicPricingMatrixStore = JSON.parse(JSON.stringify(matrix));
+    this.logAuditEvent({
+      actorId: staffId,
+      staffName: "Senior Curator",
+      action: "PRICING_MATRIX_UPDATED",
+      resourceType: "plan",
+      resourceId: "pricing-matrix",
+      details: { matrix },
+      reason: "Official pricing chart updated by administrator.",
+      timestamp: new Date().toISOString(),
+    });
+    return { success: true, message: "Pricing chart successfully updated across the center!" };
   }
 
   // Physical maintenance block

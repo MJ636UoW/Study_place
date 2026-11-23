@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import clsx from "clsx";
 import { Seat, SeatAvailability } from "@/lib/bookingAdapter";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -144,6 +145,20 @@ export const AccessibleSeatList: React.FC<AccessibleSeatListProps> = ({
                     <p className="text-xs text-charcoal-600 font-sans mt-0.5">
                       {seat.zone} • {seat.viewDescription}
                     </p>
+                  </div>
+
+                  {/* Workstation Photo */}
+                  <div className="relative aspect-[16/9] w-full overflow-hidden rounded border border-ivory-300 bg-ivory-200">
+                    <Image
+                      src={seat.photoUrl || "/desk-render-01.jpg"}
+                      alt={seat.name}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 350px"
+                      className="object-cover transition-transform duration-300 hover:scale-105"
+                    />
+                    <div className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-charcoal-950/80 text-[9px] font-mono text-ivory-50 uppercase rounded">
+                      Workstation Photo
+                    </div>
                   </div>
 
                   {statusMessage && (

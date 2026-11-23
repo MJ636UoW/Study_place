@@ -36,6 +36,7 @@ import { ConfigurationBanner } from "@/components/ui/ConfigurationBanner";
 import { AdminService, AuditEvent, EnquiryItem, ModeratedReview } from "@/lib/admin/adminService";
 import { BookingEngine } from "@/lib/booking/bookingEngine";
 import { bookingsFixture } from "@/fixtures";
+import { DEFAULT_PRICING_MATRIX, type PlanPricingRow, SHIFTS } from "@/lib/pricingMatrix";
 
 export default function AdminPage() {
   // Operational Navigation
@@ -171,6 +172,37 @@ export default function AdminPage() {
   const [selectedPlanId, setSelectedPlanId] = useState("tier-resident");
   const [newPlanPriceINR, setNewPlanPriceINR] = useState(2499);
   const [newPlanName, setNewPlanName] = useState("");
+
+  const [pricingMatrix, setPricingMatrix] = useState<PlanPricingRow[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("esz_admin_pricing_matrix");
+        if (saved) return JSON.parse(saved);
+      } catch {}
+    }
+    return JSON.parse(JSON.stringify(DEFAULT_PRICING_MATRIX));
+  });
+
+  const handlePricingCellChange = (
+    shiftId: string,
+    tenure: "one_visit" | "week" | "month" | "weekend",
+    val: number
+  ) => {
+    setPricingMatrix((prev) =>
+      prev.map((row) => (row.shiftId === shiftId ? { ...row, [tenure]: val } : row))
+    );
+  };
+
+  const handleSavePricingMatrix = (e: React.FormEvent) => {
+    e.preventDefault();
+    AdminService.updatePricingMatrix(pricingMatrix, staffId);
+    try {
+      localStorage.setItem("esz_admin_pricing_matrix", JSON.stringify(pricingMatrix));
+    } catch {}
+    showToast("Pricing chart successfully updated and published across center!");
+    setIsPlanOpen(false);
+    refreshAllState();
+  };
 
   const [maintSeat, setMaintSeat] = useState("seat-A02");
   const [maintStart, setMaintStart] = useState("2026-11-01");
@@ -2485,58 +2517,87 @@ export default function AdminPage() {
         )}
       </Dialog>
 
-      {/* 3. Edit Membership Plans Dialog */}
+      {/* 3. Edit Membership Plans Dialog (Official Pricing Chart Matrix) */}
       <Dialog
         isOpen={isPlanOpen}
         onClose={() => setIsPlanOpen(false)}
-        title="Edit Membership Tier Rates"
-        description="Update plan rates for future bookings. Prior booking price snapshots remain strictly preserved."
-        maxWidth="lg"
+        title="01. Edit Plans — Official Pricing Chart Matrix"
+        description="Update plan rates according to the center pricing chart. Edits reflect across all student booking calculations immediately."
+        maxWidth="xl"
       >
-        <form onSubmit={handlePlanSubmit} className="space-y-4 text-xs font-sans text-left">
-          <div className="p-3 bg-forest-50 border border-forest-300 text-forest-950 font-mono text-[11px]">
-            Immutability Covenant: Modifying rates here will never alter price snapshots of existing submissions or confirmed memberships.
+        <form onSubmit={handleSavePricingMatrix} className="space-y-4 text-xs font-sans text-left">
+          <div className="p-3 bg-forest-50 border border-forest-300 text-forest-950 font-mono text-[11px] rounded-lg">
+            Immutability Covenant: Modifying rates here will update rates for all new student bookings while preserving historical booking snapshots.
           </div>
-          <div>
-            <label htmlFor="plan-tier-select" className="block uppercase font-mono text-[10px] tracking-wider text-charcoal-700 mb-1">
-              Select Plan Tier
-            </label>
-            <select
-              id="plan-tier-select"
-              value={selectedPlanId}
-              onChange={(e) => {
-                setSelectedPlanId(e.target.value);
-                const p = plans.find((pl) => pl.id === e.target.value);
-                if (p) {
-                  setNewPlanPriceINR(p.price);
-                  setNewPlanName(p.name);
-                }
-              }}
-              className="w-full px-3 py-2 border border-ivory-300 bg-ivory-50 text-xs font-mono"
-            >
-              {plans.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} (₹{p.price} / {p.cadence})
-                </option>
-              ))}
-            </select>
+
+          <div className="overflow-x-auto border border-ivory-300 rounded-xl bg-white shadow-sm">
+            <table className="w-full text-left border-collapse text-xs font-sans">
+              <thead>
+                <tr className="bg-ivory-100 text-charcoal-800 font-mono uppercase tracking-wider text-[11px] border-b border-ivory-300">
+                  <th className="p-3 font-bold">Access per day</th>
+                  <th className="p-3 text-center font-bold">Hours</th>
+                  <th className="p-3 font-bold bg-amber-50">One visit (INR)</th>
+                  <th className="p-3 font-bold">7 days (INR)</th>
+                  <th className="p-3 font-bold bg-forest-50">30 days (INR)</th>
+                  <th className="p-3 font-bold">Weekend (8 days/mo)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-ivory-200">
+                {pricingMatrix.map((row) => (
+                  <tr key={row.shiftId} className="hover:bg-ivory-50/50">
+                    <td className="p-3 font-serif font-bold text-sm text-charcoal-900">
+                      {row.shiftName}
+                    </td>
+                    <td className="p-3 text-center font-mono font-bold text-forest-800">
+                      {row.hours} hrs
+                    </td>
+                    <td className="p-2 bg-amber-50/30">
+                      <input
+                        type="number"
+                        value={row.one_visit}
+                        onChange={(e) => handlePricingCellChange(row.shiftId, "one_visit", Number(e.target.value))}
+                        className="w-24 px-2 py-1.5 border border-ivory-300 rounded font-mono text-xs focus:ring-1 focus:ring-forest-700 bg-white"
+                        required
+                      />
+                    </td>
+                    <td className="p-2">
+                      <input
+                        type="number"
+                        value={row.week}
+                        onChange={(e) => handlePricingCellChange(row.shiftId, "week", Number(e.target.value))}
+                        className="w-24 px-2 py-1.5 border border-ivory-300 rounded font-mono text-xs focus:ring-1 focus:ring-forest-700 bg-white"
+                        required
+                      />
+                    </td>
+                    <td className="p-2 bg-forest-50/30">
+                      <input
+                        type="number"
+                        value={row.month}
+                        onChange={(e) => handlePricingCellChange(row.shiftId, "month", Number(e.target.value))}
+                        className="w-24 px-2 py-1.5 border border-ivory-300 rounded font-mono text-xs font-bold text-forest-900 focus:ring-1 focus:ring-forest-700 bg-white"
+                        required
+                      />
+                    </td>
+                    <td className="p-2">
+                      <input
+                        type="number"
+                        value={row.weekend}
+                        onChange={(e) => handlePricingCellChange(row.shiftId, "weekend", Number(e.target.value))}
+                        className="w-24 px-2 py-1.5 border border-ivory-300 rounded font-mono text-xs focus:ring-1 focus:ring-forest-700 bg-white"
+                        required
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <Input
-            label="Tier Display Title"
-            value={newPlanName}
-            onChange={(e) => setNewPlanName(e.target.value)}
-            placeholder="e.g. Monthly Resident (Revised Rate)"
-          />
-          <Input
-            label="New Rate (INR ₹)"
-            type="number"
-            value={newPlanPriceINR}
-            onChange={(e) => setNewPlanPriceINR(Number(e.target.value))}
-            required
-          />
+
           <div className="pt-2 flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setIsPlanOpen(false)}>Cancel</Button>
-            <Button variant="primary" type="submit">Save Plan Rates</Button>
+            <Button variant="primary" type="submit" className="bg-forest-800 hover:bg-forest-700 font-bold">
+              Save Pricing Chart
+            </Button>
           </div>
         </form>
       </Dialog>

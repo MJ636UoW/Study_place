@@ -1,9 +1,10 @@
 /**
  * Sanctuary Date & Duration Engine
  * Strict calendar rules with month-end and leap-year handling.
+ * Customized for Elite Study Zone's 4 Official Plans.
  */
 
-export type DurationType = "hour" | "day" | "week" | "month" | "quarter" | "year";
+export type DurationType = "hour" | "week" | "month" | "weekend" | "day" | "quarter" | "year";
 
 export interface DurationRule {
   id: DurationType;
@@ -16,48 +17,33 @@ export interface DurationRule {
 export const DURATION_RULES: DurationRule[] = [
   {
     id: "hour",
-    label: "Hourly Slot",
-    sublabel: "Custom Hours (Flexi-Pass)",
-    description: "Quick focused revision & study sprint. Pay-as-you-go hourly allocation.",
-    basePrice: 49,
-  },
-  {
-    id: "day",
-    label: "Day Pass",
-    sublabel: "1 Day (07:00 — 23:00)",
-    description: "Single-session deep focus. Full day access to desk, Wi-Fi, and refreshments.",
-    basePrice: 249,
+    label: "Hourly Plan",
+    sublabel: "One Visit / Hourly Pass",
+    description: "Quick focused revision & study sprint. Select preferred hours & custom time slot. Zero registration fee.",
+    basePrice: 99,
   },
   {
     id: "week",
-    label: "Weekly Sprint",
+    label: "Weekly Plan",
     sublabel: "7 Consecutive Days",
-    description: "Seven continuous days of dedicated desk access with high-speed internet & door keypad pass.",
-    basePrice: 1299,
+    description: "Seven continuous days of dedicated desk access with high-speed internet & smart keypad pass.",
+    basePrice: 549,
   },
   {
     id: "month",
-    label: "Monthly Resident",
-    sublabel: "1 Calendar Month",
-    description: "Full calendar month with 24/7 smart keypad door access and personal locker.",
-    basePrice: 2299,
+    label: "Monthly Plan",
+    sublabel: "30 Calendar Days",
+    description: "Full calendar month of dedicated desk access, smart keypad door PIN access, and optional locker.",
+    basePrice: 1349,
   },
   {
-    id: "quarter",
-    label: "Quarterly Fellow",
-    sublabel: "3 Calendar Months",
-    description: "Three calendar months with all-zone access, locker and smart keypad priority access.",
-    basePrice: 5499,
-  },
-  {
-    id: "year",
-    label: "Annual Residency",
-    sublabel: "1 Full Year (Leap Year Aware)",
-    description: "365/366 days of continuous tenure with private storage locker and 24/7 smart keypad door pass.",
-    basePrice: 17999,
+    id: "weekend",
+    label: "Weekend Plan",
+    sublabel: "8 Days of Month (Sat & Sun)",
+    description: "8 dedicated weekend days (4 consecutive Saturdays & Sundays) tailored for working professionals and aspirants.",
+    basePrice: 699,
   },
 ];
-
 
 /**
  * Check if a given year is a leap year.
@@ -75,12 +61,10 @@ export function getDaysInMonth(year: number, monthIndex0: number): number {
 
 /**
  * Calculate the exact end date based on documented calendar rules:
- * - Day: Same day as start date (ends 22:00).
+ * - Hour / Day: Same day as start date.
  * - Week: Exactly 7 days (startDate + 6 days inclusive).
- * - Month: Exact calendar month with month-end clipping.
- *   e.g., Jan 31 -> Feb 28 (or Feb 29 in leap year); Mar 31 -> Apr 30.
- * - Quarter: Exactly 3 calendar months with month-end clipping.
- * - Year: Exact calendar year (same day/month next year, or Feb 28 if starting Feb 29).
+ * - Month: Exactly 30 calendar days or month-end clipping.
+ * - Weekend: 4 consecutive weekends (8 weekend days = 28 calendar days inclusive).
  */
 export function calculateEndDate(startDateStr: string, duration: DurationType): string {
   const parts = startDateStr.split("-").map(Number);
@@ -102,6 +86,13 @@ export function calculateEndDate(startDateStr: string, duration: DurationType): 
     return formatDate(end);
   }
 
+  if (duration === "weekend") {
+    // 4 full weekends (8 weekend days total = 28 days inclusive)
+    const end = new Date(start);
+    end.setDate(end.getDate() + 27);
+    return formatDate(end);
+  }
+
   if (duration === "month") {
     const targetMonth0 = start.getMonth() + 1;
     const targetYear = start.getFullYear() + Math.floor(targetMonth0 / 12);
@@ -111,7 +102,6 @@ export function calculateEndDate(startDateStr: string, duration: DurationType): 
     const targetDay = Math.min(day, maxDaysInTarget);
 
     const end = new Date(targetYear, normalizedMonth0, targetDay);
-    // 1 calendar month duration ends the day before the same numerical day next month
     end.setDate(end.getDate() - 1);
     return formatDate(end);
   }
@@ -136,7 +126,7 @@ export function calculateEndDate(startDateStr: string, duration: DurationType): 
     let targetDay = day;
 
     if (start.getMonth() === 1 && day === 29 && !isTargetLeap) {
-      targetDay = 28; // Feb 29 rolls to Feb 28 non-leap
+      targetDay = 28;
     }
 
     const end = new Date(targetYear, targetMonth0, targetDay);

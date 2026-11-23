@@ -63,21 +63,19 @@ export const SeatInspector: React.FC<SeatInspectorProps> = ({
         />
       </div>
 
-      {/* Photo when available */}
-      {seat.photoUrl && (
-        <div className="relative aspect-[16/9] w-full overflow-hidden border border-ivory-300 bg-ivory-200">
-          <Image
-            src={seat.photoUrl}
-            alt={seat.name}
-            fill
-            sizes="(max-width: 768px) 100vw, 400px"
-            className="object-cover"
-          />
-          <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-charcoal-950/80 text-[10px] font-mono text-ivory-50 uppercase">
-            Actual Workstation Image
-          </div>
+      {/* Workstation Photo */}
+      <div className="relative aspect-[16/9] w-full overflow-hidden border border-ivory-300 bg-ivory-200 rounded">
+        <Image
+          src={seat.photoUrl || "/desk-render-01.jpg"}
+          alt={seat.name}
+          fill
+          sizes="(max-width: 768px) 100vw, 400px"
+          className="object-cover"
+        />
+        <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-charcoal-950/80 text-[10px] font-mono text-ivory-50 uppercase rounded">
+          Workstation Photo
         </div>
-      )}
+      </div>
 
       {/* View & Orientation */}
       <div className="p-3 bg-ivory-100/60 border border-ivory-200 text-xs font-sans text-charcoal-800">
