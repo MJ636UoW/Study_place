@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Table, Sparkles, Compass, Shield, Clock, MapPin, CheckCircle2 } from "lucide-react";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 export const metadata = {
   title: "Elite Study Zone • Premium Study Hall & Workstations in Ghatkopar West",
@@ -49,19 +50,9 @@ export default function HomePage() {
           ========================================================================= */}
       <section className="py-14 sm:py-20 px-4 sm:px-6 lg:px-8 border-b border-ivory-200 bg-gradient-to-b from-ivory-50/70 to-white">
         <div className="max-w-4xl mx-auto text-center space-y-6">
-          {/* Name with Logo */}
-          <div className="flex items-center justify-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-forest-900 text-amber-300 flex items-center justify-center shadow-md border border-forest-800">
-              <Compass className="w-7 h-7" />
-            </div>
-            <div className="text-left">
-              <span className="block font-serif text-2xl sm:text-3xl font-extrabold text-charcoal-900 tracking-tight leading-none">
-                Elite Study Zone
-              </span>
-              <span className="block text-[11px] font-mono text-amber-800 uppercase tracking-widest mt-0.5">
-                Workstation & Study Sanctuary
-              </span>
-            </div>
+          {/* Official Name with Desk Lamp & Book Logo */}
+          <div className="flex items-center justify-center">
+            <BrandLogo size="lg" />
           </div>
 
           {/* Primary Welcome Headline */}

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import clsx from "clsx";
 import { Seat, SeatAvailability } from "@/lib/bookingAdapter";
-import { Compass } from "lucide-react";
+import { Compass, Check } from "lucide-react";
 
 interface SvgRoomMapProps {
   availabilities: SeatAvailability[];
@@ -32,137 +32,205 @@ export const SvgRoomMap: React.FC<SvgRoomMapProps> = ({
   return (
     <div className={clsx("w-full space-y-4", className)}>
       {/* Map Legend */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-ivory-100/70 border border-ivory-300 text-xs font-mono">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono shadow-sm">
         <div className="flex items-center gap-4 flex-wrap">
           {/* Available */}
           <div className="flex items-center gap-1.5">
-            <span className="w-3.5 h-3.5 bg-ivory-50 border border-charcoal-700" />
-            <span className="text-charcoal-700">Available</span>
+            <span className="w-3.5 h-3.5 bg-sky-50 border-2 border-[#0B2545] rounded-sm" />
+            <span className="text-slate-800 font-medium">Available (Open)</span>
           </div>
 
           {/* Selected */}
           <div className="flex items-center gap-1.5">
-            <span className="w-3.5 h-3.5 bg-forest-900 border-2 border-amber-600 ring-1 ring-forest-900" />
-            <span className="text-charcoal-900 font-semibold">Selected</span>
+            <span className="w-3.5 h-3.5 bg-[#0B2545] border-2 border-blue-500 rounded-sm" />
+            <span className="text-[#0B2545] font-bold">Selected</span>
           </div>
 
           {/* Temporarily Held */}
           <div className="flex items-center gap-1.5">
-            <span className="w-3.5 h-3.5 bg-amber-100 border border-amber-700 border-dashed" />
+            <span className="w-3.5 h-3.5 bg-amber-100 border-2 border-amber-600 border-dashed rounded-sm" />
             <span className="text-amber-800">Temporarily Held</span>
           </div>
 
-          {/* Unavailable */}
+          {/* Unavailable / Booked */}
           <div className="flex items-center gap-1.5">
-            <span className="w-3.5 h-3.5 bg-stone-300 border border-stone-400 opacity-60" />
-            <span className="text-stone-500">Unavailable for Dates</span>
+            <span className="w-3.5 h-3.5 bg-slate-200 border border-slate-400 opacity-60 rounded-sm" />
+            <span className="text-slate-500">Booked / Occupied</span>
           </div>
         </div>
 
-        <div className="text-[10px] text-charcoal-500 uppercase tracking-widest flex items-center gap-1">
-          <Compass className="w-3.5 h-3.5 text-forest-800" />
-          <span>Interactive Architectural Plat</span>
+        <div className="text-[10px] text-slate-500 uppercase tracking-widest flex items-center gap-1 font-semibold">
+          <Compass className="w-3.5 h-3.5 text-[#0B2545]" />
+          <span>Real Room Layout &bull; 18 Desks</span>
         </div>
       </div>
 
       {/* Main SVG Floor Plan Canvas */}
-      <div className="relative border border-ivory-300 bg-ivory-50 overflow-hidden shadow-editorial">
-        {/* Subtle Architectural Grid Pattern */}
+      <div className="relative border-2 border-slate-200 bg-white rounded-xl overflow-hidden shadow-md max-w-xl mx-auto">
+        {/* Architectural Subtle Grid */}
         <div
-          className="absolute inset-0 pointer-events-none opacity-20"
+          className="absolute inset-0 pointer-events-none opacity-25"
           style={{
             backgroundImage:
-              "linear-gradient(#DDD3C1 1px, transparent 1px), linear-gradient(90deg, #DDD3C1 1px, transparent 1px)",
-            backgroundSize: "30px 30px",
+              "linear-gradient(#E2E8F0 1px, transparent 1px), linear-gradient(90deg, #E2E8F0 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
           }}
           aria-hidden="true"
         />
 
         <svg
-          viewBox="0 0 540 380"
-          className="w-full h-auto select-none"
+          viewBox="0 0 430 870"
+          className="w-full h-auto select-none p-2 sm:p-4"
           role="region"
-          aria-label="Sanctuary 20-seat interactive floorplan"
+          aria-label="Elite Study Zone 18-seat real architectural floorplan"
         >
-          {/* Defs for hatched pattern on unavailable seats */}
+          {/* Hatched Pattern for Booked Seats */}
           <defs>
-            <pattern id="hatch-unavailable" width="6" height="6" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
-              <line x1="0" y1="0" x2="0" y2="6" stroke="#9E9689" strokeWidth="1.2" />
+            <pattern
+              id="hatch-unavailable-desk"
+              width="8"
+              height="8"
+              patternTransform="rotate(45 0 0)"
+              patternUnits="userSpaceOnUse"
+            >
+              <line x1="0" y1="0" x2="0" y2="8" stroke="#94A3B8" strokeWidth="1.5" />
             </pattern>
           </defs>
 
-          {/* Exterior Walls */}
-          <rect x="15" y="15" width="510" height="350" fill="none" stroke="#1A1918" strokeWidth="3" />
+          {/* =========================================================================
+              OUTER ARCHITECTURAL WALLS
+              Matches real blueprint:
+              - Left straight wall from y:20 to y:790
+              - Bottom wall with entrance opening from x:165 to x:245
+              - Right wall from y:790 up to y:118
+              - Architectural recess at top-right (x:388 -> x:272 -> y:20)
+              - Top wall from x:272 to x:42
+              ========================================================================= */}
+          <path
+            d="
+              M 42,20
+              L 272,20
+              L 272,118
+              L 388,118
+              L 388,790
+              L 245,790
+              M 165,790
+              L 42,790
+              Z
+            "
+            fill="none"
+            stroke="#0B2545"
+            strokeWidth="5"
+            strokeLinejoin="round"
+          />
 
-          {/* ZONE 1: North Skylight Gallery (Top Left) */}
-          <rect x="25" y="25" width="280" height="175" fill="#FAF8F5" stroke="#DDD3C1" strokeWidth="1" strokeDasharray="4 2" />
-          <text x="35" y="45" fill="#706B64" fontSize="9" fontFamily="monospace" letterSpacing="0.1em">
-            ZONE A • NORTH SKYLIGHT GALLERY
+          {/* Central Whisper Hallway Guide Label */}
+          <text
+            x="215"
+            y="435"
+            textAnchor="middle"
+            fill="#CBD5E1"
+            fontSize="11"
+            fontFamily="monospace"
+            letterSpacing="0.3em"
+            transform="rotate(-90 215 435)"
+            className="font-bold select-none pointer-events-none"
+          >
+            MAIN WALKWAY CORRIDOR
           </text>
-          <line x1="25" y1="52" x2="160" y2="52" stroke="#DDD3C1" strokeWidth="1" />
 
-          {/* ZONE 2: Reference Stacks & Focus Alcoves (Top Right) */}
-          <rect x="315" y="25" width="200" height="175" fill="#F4EFE6" stroke="#DDD3C1" strokeWidth="1" strokeDasharray="4 2" />
-          <text x="325" y="45" fill="#706B64" fontSize="9" fontFamily="monospace" letterSpacing="0.1em">
-            ZONE B • REFERENCE STACKS
-          </text>
-          <line x1="315" y1="52" x2="435" y2="52" stroke="#DDD3C1" strokeWidth="1" />
+          {/* Top Notch Decorative Architectural Accent */}
+          <line
+            x1="272"
+            y1="118"
+            x2="388"
+            y2="118"
+            stroke="#0B2545"
+            strokeWidth="2"
+            strokeDasharray="4 3"
+            opacity="0.3"
+          />
 
-          {/* Bookcase decorative lines in Stacks */}
-          <rect x="495" y="65" width="12" height="120" fill="#EAE3D5" stroke="#2E2C29" strokeWidth="1" />
+          {/* =========================================================================
+              ENTRANCE DOOR & SWING (Bottom Center x: 165 to 245, y: 790)
+              ========================================================================= */}
+          <g id="entrance-door" className="select-none">
+            {/* Door swing arc */}
+            <path
+              d="M 165,790 A 70,70 0 0,1 235,745"
+              fill="none"
+              stroke="#0B2545"
+              strokeWidth="2"
+              strokeDasharray="4 3"
+            />
+            {/* Door leaf */}
+            <line
+              x1="165"
+              y1="790"
+              x2="235"
+              y2="745"
+              stroke="#0B2545"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+            />
+            {/* Entrance Door Hinge Pivot */}
+            <circle cx="165" cy="790" r="3.5" fill="#0B2545" />
 
-          {/* Dividing Central Corridor */}
-          <line x1="15" y1="210" x2="525" y2="210" stroke="#1A1918" strokeWidth="1.5" strokeDasharray="8 4" />
-          <text x="270" y="206" textAnchor="middle" fill="#99938B" fontSize="8" fontFamily="monospace" letterSpacing="0.2em">
-            CENTRAL WHISPER LOGGIA CORRIDOR
-          </text>
+            {/* Entry Arrow ⬆ */}
+            <path
+              d="M 205,845 L 205,805 M 195,818 L 205,805 L 215,818"
+              fill="none"
+              stroke="#0B2545"
+              strokeWidth="4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <text
+              x="205"
+              y="860"
+              textAnchor="middle"
+              fill="#0B2545"
+              fontSize="10"
+              fontFamily="sans-serif"
+              fontWeight="800"
+              letterSpacing="0.12em"
+            >
+              ENTRANCE
+            </text>
+          </g>
 
-          {/* ZONE 3: Courtyard Loggia (Bottom Left) */}
-          <rect x="25" y="220" width="215" height="145" fill="#FAF8F5" stroke="#DDD3C1" strokeWidth="1" strokeDasharray="4 2" />
-          <text x="35" y="235" fill="#706B64" fontSize="9" fontFamily="monospace" letterSpacing="0.1em">
-            ZONE C • COURTYARD LOGGIA
-          </text>
-          {/* Courtyard glass boundary indication */}
-          <line x1="25" y1="365" x2="240" y2="365" stroke="#183728" strokeWidth="2.5" />
-          <text x="130" y="362" textAnchor="middle" fill="#183728" fontSize="7" fontFamily="sans-serif">
-            BOTANICAL GLASSHOUSE WALL
-          </text>
-
-          {/* ZONE 4: East Timber Mezzanine (Bottom Right) */}
-          <rect x="250" y="220" width="265" height="145" fill="#F4EFE6" stroke="#DDD3C1" strokeWidth="1" strokeDasharray="4 2" />
-          <text x="260" y="235" fill="#706B64" fontSize="9" fontFamily="monospace" letterSpacing="0.1em">
-            ZONE D • TIMBER MEZZANINE
-          </text>
-
-          {/* SEATS RENDERING (20 SEATS) */}
+          {/* =========================================================================
+              18 WORKSTATIONS RENDERING
+              ========================================================================= */}
           {availabilities.map((avail) => {
             const { seat, status, statusMessage } = avail;
             const isSelected = selectedSeatId === seat.id;
             const isUnavailable = status === "unavailable";
             const isHeld = status === "temporarily_held";
 
-            // Determine visual styles
-            let rectFill = "#FAF8F5";
-            let rectStroke = "#1A1918";
-            let rectStrokeWidth = 1.5;
-            let textFill = "#1A1918";
+            // Visual styles exactly aligned with architectural blueprint
+            let rectFill = "#EFF6FF"; // Soft brand blue fill
+            let rectStroke = "#0B2545"; // Deep navy
+            let rectStrokeWidth = 2.5;
+            let textFill = "#0B2545";
             let dashArray = undefined;
 
             if (isUnavailable) {
-              rectFill = "url(#hatch-unavailable)";
-              rectStroke = "#9E9689";
-              textFill = "#706B64";
+              rectFill = "url(#hatch-unavailable-desk)";
+              rectStroke = "#94A3B8";
+              rectStrokeWidth = 1.5;
+              textFill = "#64748B";
             } else if (isSelected) {
-              rectFill = "#183728";
-              rectStroke = "#C5832B";
-              rectStrokeWidth = 3;
-              textFill = "#FAF8F5";
+              rectFill = "#0B2545";
+              rectStroke = "#2563EB";
+              rectStrokeWidth = 3.5;
+              textFill = "#FFFFFF";
             } else if (isHeld) {
-              rectFill = "#FEF3D6";
-              rectStroke = "#B37423";
-              rectStrokeWidth = 1.8;
-              textFill = "#7D4F12";
-              dashArray = "3 2";
+              rectFill = "#FEF3C7";
+              rectStroke = "#D97706";
+              rectStrokeWidth = 2;
+              textFill = "#92400E";
+              dashArray = "4 3";
             }
 
             return (
@@ -172,7 +240,9 @@ export const SvgRoomMap: React.FC<SvgRoomMapProps> = ({
                 tabIndex={isUnavailable ? -1 : 0}
                 aria-disabled={isUnavailable}
                 aria-pressed={isSelected}
-                aria-label={`${seat.seatNumber}: ${seat.name}, ${seat.zone}. Status: ${status}. ${statusMessage || ""}`}
+                aria-label={`Workstation ${seat.seatNumber}: ${seat.name}, ${seat.zone}. Status: ${status}. ${
+                  statusMessage || ""
+                }`}
                 onClick={() => {
                   if (!isUnavailable) onSelectSeat(seat);
                 }}
@@ -183,11 +253,11 @@ export const SvgRoomMap: React.FC<SvgRoomMapProps> = ({
                   "transition-all duration-150 outline-none",
                   isUnavailable
                     ? "cursor-not-allowed opacity-75"
-                    : "cursor-pointer hover:scale-[1.02] active:scale-[0.98]",
-                  "focus-visible:ring-2 focus-visible:ring-forest-900"
+                    : "cursor-pointer hover:opacity-95 active:scale-[0.99]",
+                  "focus-visible:ring-2 focus-visible:ring-blue-600"
                 )}
               >
-                {/* Smooth Seat Selection Highlight Halo */}
+                {/* Selected Halo Ring */}
                 {isSelected && (
                   <rect
                     x={seat.mapX - 4}
@@ -195,15 +265,15 @@ export const SvgRoomMap: React.FC<SvgRoomMapProps> = ({
                     width={seat.mapWidth + 8}
                     height={seat.mapHeight + 8}
                     fill="none"
-                    stroke="#C5832B"
-                    strokeWidth="1.5"
-                    strokeDasharray="3 2"
-                    rx="3"
-                    className="transition-all duration-200"
+                    stroke="#3B82F6"
+                    strokeWidth="2"
+                    strokeDasharray="4 3"
+                    rx="6"
+                    className="animate-pulse"
                   />
                 )}
 
-                {/* Desk Surface Rect */}
+                {/* Desk Outer Box */}
                 <rect
                   x={seat.mapX}
                   y={seat.mapY}
@@ -213,65 +283,78 @@ export const SvgRoomMap: React.FC<SvgRoomMapProps> = ({
                   stroke={rectStroke}
                   strokeWidth={rectStrokeWidth}
                   strokeDasharray={dashArray}
-                  rx="1"
+                  rx="3"
                   style={{ transition: "fill 140ms ease-out, stroke 140ms ease-out" }}
                 />
 
-                {/* Desk Identifier Number */}
+                {/* Large Bold Seat Number (Blueprint Style) */}
                 <text
                   x={seat.mapX + seat.mapWidth / 2}
-                  y={seat.mapY + seat.mapHeight / 2 - 2}
+                  y={seat.mapY + seat.mapHeight / 2 - (seat.seatNumber === "10" ? 2 : 4)}
                   textAnchor="middle"
                   dominantBaseline="middle"
                   fill={textFill}
-                  fontSize="10"
-                  fontFamily="JetBrains Mono, monospace"
-                  fontWeight="600"
+                  fontSize={seat.seatNumber === "10" ? "20" : "24"}
+                  fontFamily="system-ui, -apple-system, sans-serif"
+                  fontWeight="900"
+                  letterSpacing="-0.02em"
                 >
                   {seat.seatNumber}
                 </text>
 
-                {/* Sub-label state */}
+                {/* Status Sub-badge */}
                 <text
                   x={seat.mapX + seat.mapWidth / 2}
-                  y={seat.mapY + seat.mapHeight / 2 + 10}
+                  y={seat.mapY + seat.mapHeight / 2 + (seat.seatNumber === "10" ? 14 : 16)}
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  fill={isSelected ? "#E5AF5D" : isHeld ? "#915E1A" : isUnavailable ? "#8F8980" : "#6E6962"}
-                  fontSize="7"
-                  fontFamily="sans-serif"
-                  letterSpacing="0.05em"
+                  fill={
+                    isSelected
+                      ? "#93C5FD"
+                      : isHeld
+                      ? "#B45309"
+                      : isUnavailable
+                      ? "#64748B"
+                      : "#2563EB"
+                  }
+                  fontSize="7.5"
+                  fontFamily="monospace"
+                  fontWeight="700"
+                  letterSpacing="0.06em"
                 >
-                  {isSelected ? "SELECTED" : isHeld ? "HELD" : isUnavailable ? "BOOKED" : "OPEN"}
+                  {isSelected ? "SELECTED" : isHeld ? "HELD" : isUnavailable ? "BOOKED" : "AVAILABLE"}
                 </text>
 
-                {/* Ergonomic Chair Indicator on Front Edge */}
-                <circle
-                  cx={seat.mapX + seat.mapWidth / 2}
-                  cy={seat.mapY + seat.mapHeight + 6}
-                  r="4"
-                  fill={isSelected ? "#C5832B" : isUnavailable ? "#C8BBA5" : "#1A1918"}
-                />
+                {/* Desk Selection Indicator Icon */}
+                {isSelected && (
+                  <circle
+                    cx={seat.mapX + seat.mapWidth - 10}
+                    cy={seat.mapY + 10}
+                    r="5"
+                    fill="#3B82F6"
+                  />
+                )}
               </g>
             );
           })}
         </svg>
 
         {/* Hover Inspector Tooltip Strip */}
-        <div className="p-3 bg-ivory-100 border-t border-ivory-200 flex items-center justify-between text-xs font-sans min-h-[44px]">
+        <div className="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs font-sans min-h-[44px]">
           {hoveredSeat ? (
-            <div className="flex items-center gap-2 text-charcoal-900">
-              <span className="font-mono font-bold">{hoveredSeat.seat.seatNumber}</span>
-              <span>—</span>
-              <span className="font-semibold">{hoveredSeat.seat.name}</span>
-              <span className="text-charcoal-500 text-[11px]">({hoveredSeat.seat.zone})</span>
-              <span className="text-[11px] font-mono text-amber-800">
+            <div className="flex items-center gap-2 text-slate-900 flex-wrap">
+              <span className="font-mono font-extrabold text-[#0B2545] bg-sky-100 px-2 py-0.5 rounded text-xs">
+                Desk #{hoveredSeat.seat.seatNumber}
+              </span>
+              <span className="font-semibold text-slate-800">{hoveredSeat.seat.name}</span>
+              <span className="text-slate-500 text-[11px]">({hoveredSeat.seat.zone})</span>
+              <span className="text-[11px] font-mono text-emerald-800 font-bold">
                 • {hoveredSeat.statusMessage}
               </span>
             </div>
           ) : (
-            <div className="text-charcoal-500 text-[11px] font-sans">
-              Click or press Enter on any open workstation to inspect features and reserve.
+            <div className="text-slate-500 text-[11px] font-sans flex items-center gap-1.5">
+              <span>👉 Click or tap any open desk (#1 to #18) on the floorplan to reserve.</span>
             </div>
           )}
         </div>

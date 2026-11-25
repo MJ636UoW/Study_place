@@ -31,11 +31,10 @@ export const AccessibleSeatList: React.FC<AccessibleSeatListProps> = ({
   });
 
   const zones = [
-    { id: "all", label: "All Zones (20)" },
-    { id: "North Skylight Gallery", label: "North Gallery (6)" },
-    { id: "Reference Stacks", label: "Reference Stacks (4)" },
-    { id: "Courtyard Loggia", label: "Courtyard Loggia (4)" },
-    { id: "East Mezzanine", label: "East Mezzanine (6)" },
+    { id: "all", label: "All Workstations (18)" },
+    { id: "Left Wing (Desks 1-9)", label: "Left Wing (9)" },
+    { id: "Head Wall (Desk 10)", label: "Head Wall (1)" },
+    { id: "Right Wing (Desks 11-18)", label: "Right Wing (8)" },
   ];
 
   return (

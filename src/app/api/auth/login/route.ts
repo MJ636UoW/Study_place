@@ -5,20 +5,21 @@ import { signJwtToken, setAuthCookie } from "@/lib/auth";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { email, password } = body;
+    const identifier = (body.identifier || body.email || body.phone || "").trim();
+    const password = body.password;
 
-    if (!email || !password) {
+    if (!identifier || !password) {
       return NextResponse.json(
-        { error: "Email and password are required." },
+        { error: "Registered email or mobile number, and password are required." },
         { status: 400 }
       );
     }
 
-    const result = await verifyUserCredentials(email, password);
+    const result = await verifyUserCredentials(identifier, password);
 
     if (!result.ok || !result.user) {
       return NextResponse.json(
-        { error: result.error || "Invalid email or password." },
+        { error: result.error || "Invalid email, mobile number, or password." },
         { status: result.unverified ? 403 : 401 }
       );
     }

@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 const AVAILABLE_START_TIMES = [
   "07:00 AM",
@@ -40,6 +41,14 @@ const AVAILABLE_START_TIMES = [
   "08:00 PM",
   "09:00 PM",
   "10:00 PM",
+];
+
+const HOURLY_PASS_OPTIONS = [
+  { hours: 2, label: "2 Hours", tag: "Quick Focus", price: 99 },
+  { hours: 3, label: "3 Hours", tag: "Deep Focus", price: 139 },
+  { hours: 5, label: "5 Hours", tag: "Study Shift", price: 199 },
+  { hours: 10, label: "10 Hours", tag: "Two Shifts", price: 299 },
+  { hours: 15, label: "Full Day", tag: "15 Hours", price: 349 },
 ];
 
 function computeSlotEndTime(startTime12h: string, hours: number): string {
@@ -204,19 +213,20 @@ function LoginContent() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ identifier: email, email, password }),
       });
 
       const data = await res.json();
       if (!res.ok) {
         setIsLoading(false);
-        setStatusMessage({ type: "error", text: data.error || "Invalid email or password." });
+        setStatusMessage({ type: "error", text: data.error || "Invalid email, mobile number, or password." });
         return;
       }
 
-      const scholarName = data.user?.name || email.split("@")[0] || "Scholar";
+      const activeEmail = data.user?.email || email;
+      const scholarName = data.user?.name || activeEmail.split("@")[0] || "Scholar";
       document.cookie = `esz_student_session=active; path=/; max-age=604800; SameSite=Lax`;
-      document.cookie = `esz_student_email=${encodeURIComponent(email)}; path=/; max-age=604800; SameSite=Lax`;
+      document.cookie = `esz_student_email=${encodeURIComponent(activeEmail)}; path=/; max-age=604800; SameSite=Lax`;
       document.cookie = `esz_student_name=${encodeURIComponent(scholarName)}; path=/; max-age=604800; SameSite=Lax`;
 
       setStatusMessage({ type: "success", text: "Login verified! Entering your workstation dashboard..." });
@@ -415,19 +425,16 @@ function LoginContent() {
   return (
     <div className="min-h-[85vh] flex items-center justify-center px-4 py-8 sm:py-12 bg-slate-50">
       <div className="w-full max-w-md space-y-5">
-        {/* Masthead */}
-        <div className="text-center space-y-1.5">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-forest-700 text-white font-mono font-bold text-2xl shadow-md mb-1">
-            E
-          </div>
-          <div className="text-[11px] uppercase font-mono tracking-widest text-forest-700 font-bold">
-            ELITE STUDY ZONE • GHATKOPAR WEST
+        {/* Masthead with Enhanced Official Desk Lamp & Book Logo */}
+        <div className="text-center space-y-2">
+          <div className="flex justify-center mb-1">
+            <BrandLogo size="lg" linkToHome />
           </div>
           <h1 className="font-sans font-extrabold text-2xl sm:text-3xl text-charcoal-900 tracking-tight">
             {activeTab === "register"
               ? "Create Student Account"
               : activeTab === "magic_pass"
-              ? "Hourly Workstation Pass"
+              ? "Hourly & Shift Workstation Pass"
               : activeTab === "code_login"
               ? "Enter with Pass Code / PIN"
               : "Student & Member Login"}
@@ -436,7 +443,7 @@ function LoginContent() {
             {activeTab === "register"
               ? "Register to receive your Door Keypad PIN on WhatsApp and Email."
               : activeTab === "magic_pass"
-              ? "Book by the hour (₹49/hr) with custom time slots and instant door keypad PIN."
+              ? "Book flexible study shifts (2h, 3h, 5h, 10h, or Full Day) with instant door keypad PIN."
               : activeTab === "code_login"
               ? "Have an access code from WhatsApp or an hourly pass? Enter your code below."
               : "Sign in with Google, registered email, or access pass code."}
@@ -628,22 +635,22 @@ function LoginContent() {
             </div>
           )}
 
-          {/* TAB 1: LOGIN (EMAIL + PASSWORD) */}
+          {/* TAB 1: LOGIN (EMAIL OR MOBILE NUMBER + PASSWORD) */}
           {activeTab === "login" && (
             <div className="space-y-4">
               <form onSubmit={handleLoginSubmit} className="space-y-4">
                 <Input
-                  label="Registered Email"
+                  label="Registered Email or Mobile Number *"
                   name="email"
-                  type="email"
-                  placeholder="your.email@example.com"
+                  type="text"
+                  placeholder="your.email@example.com or 10-digit mobile"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                 />
 
                 <Input
-                  label="Password"
+                  label="Password *"
                   name="password"
                   type="password"
                   placeholder="Enter your password"
@@ -754,10 +761,10 @@ function LoginContent() {
               <div className="p-3.5 bg-sky-50 border border-sky-200 rounded-lg text-xs font-sans text-sky-950 space-y-1">
                 <div className="font-bold flex items-center gap-1.5 text-sky-900">
                   <Sparkles className="w-4 h-4 text-sky-600" />
-                  <span>Hourly Pass Booking (₹49/hour)</span>
+                  <span>Hourly & Shift Pass Booking</span>
                 </div>
                 <p className="text-[11px] leading-relaxed text-sky-800">
-                  Choose your dedicated study hours and time slot. Your access PIN is activated strictly for this slot and sent to your WhatsApp and Email.
+                  Choose your dedicated study hours (2h, 3h, 5h, 10h, or Full Day) and time slot. Your access PIN is activated strictly for this slot and sent to your WhatsApp and Email.
                 </p>
               </div>
 
@@ -830,22 +837,25 @@ function LoginContent() {
                   <div>
                     <label className="block text-xs font-semibold text-charcoal-700 mb-1.5 flex items-center justify-between">
                       <span>1. Select Access Duration</span>
-                      <span className="text-[10px] text-forest-700 font-mono font-bold">₹49 / hr</span>
+                      <span className="text-[10px] text-forest-700 font-mono font-bold">Official Shift Rates</span>
                     </label>
-                    <div className="grid grid-cols-4 gap-2">
-                      {[1, 2, 4, 8].map((hrs) => (
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                      {HOURLY_PASS_OPTIONS.map((opt) => (
                         <button
-                          key={hrs}
+                          key={opt.hours}
                           type="button"
-                          onClick={() => setSelectedHours(hrs)}
-                          className={`py-2 px-1 text-center rounded-lg border text-xs font-sans transition-all ${
-                            selectedHours === hrs
+                          onClick={() => setSelectedHours(opt.hours)}
+                          className={`py-2 px-2 text-center rounded-lg border text-xs font-sans transition-all flex flex-col items-center justify-center ${
+                            selectedHours === opt.hours
                               ? "bg-forest-700 text-white border-forest-700 font-bold shadow-sm"
                               : "bg-white text-charcoal-700 border-charcoal-300 hover:border-forest-600"
                           }`}
                         >
-                          <div>{hrs} {hrs === 1 ? "Hour" : "Hours"}</div>
-                          <div className="text-[10px] opacity-80">₹{hrs * 49}</div>
+                          <div className="font-bold text-xs">{opt.label}</div>
+                          <div className="text-[11px] font-extrabold mt-0.5">₹{opt.price}</div>
+                          <div className={`text-[9px] uppercase tracking-wider mt-0.5 ${selectedHours === opt.hours ? "text-emerald-200" : "text-charcoal-500"}`}>
+                            {opt.tag}
+                          </div>
                         </button>
                       ))}
                     </div>
@@ -894,7 +904,9 @@ function LoginContent() {
                     </div>
                     <div className="text-right">
                       <span className="text-[10px] uppercase text-forest-700 font-bold block">Total Fee:</span>
-                      <span className="font-bold text-sm text-forest-900">₹{selectedHours * 49}</span>
+                      <span className="font-bold text-sm text-forest-900">
+                        ₹{HOURLY_PASS_OPTIONS.find((o) => o.hours === selectedHours)?.price ?? 99}
+                      </span>
                     </div>
                   </div>
 
@@ -940,7 +952,9 @@ function LoginContent() {
                     isLoading={isLoading}
                   >
                     <KeyRound className="w-4 h-4 mr-2" />
-                    <span>Book Slot & Issue Door PIN (₹{selectedHours * 49})</span>
+                    <span>
+                      Book Slot & Issue Door PIN (₹{HOURLY_PASS_OPTIONS.find((o) => o.hours === selectedHours)?.price ?? 99})
+                    </span>
                   </Button>
                 </form>
               )}

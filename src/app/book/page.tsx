@@ -732,7 +732,7 @@ function BookContent() {
               Step 4 &bull; Spatial Workstation Selection
             </span>
             <h2 className="font-serif text-2xl sm:text-3xl text-charcoal-900 font-bold">
-              Inspect & Select Workstation ({availableCount} of 20 Open)
+              Inspect & Select Workstation ({availableCount} of 18 Open)
             </h2>
             <p className="text-xs text-charcoal-600 font-sans mt-0.5">
               Every workstation includes photo, ergonomic chair, power outlets, and high-speed Wi-Fi.
@@ -751,7 +751,7 @@ function BookContent() {
               }`}
             >
               <Compass className="w-4 h-4 text-forest-800" />
-              <span>Floor Map (20)</span>
+              <span>Floor Map (18)</span>
             </button>
             <button
               type="button"

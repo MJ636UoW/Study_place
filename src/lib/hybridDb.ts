@@ -66,6 +66,50 @@ export async function findUserByEmail(email: string) {
   return fallbackUsers.get(cleanEmail) || null;
 }
 
+export async function findUserByIdentifier(identifier: string) {
+  const cleanId = identifier.trim();
+  const cleanEmail = cleanId.toLowerCase();
+  const digits = cleanId.replace(/\D/g, "");
+  const last10 = digits.length >= 10 ? digits.slice(-10) : digits;
+
+  const mongoOk = await isMongoAvailable();
+  if (mongoOk) {
+    try {
+      if (cleanId.includes("@")) {
+        const u = await User.findOne({ email: cleanEmail });
+        if (u) return u;
+      } else if (last10.length >= 7) {
+        const u = await User.findOne({
+          $or: [
+            { phone: { $regex: last10 } },
+            { email: cleanEmail },
+          ],
+        });
+        if (u) return u;
+      } else {
+        const u = await User.findOne({ email: cleanEmail });
+        if (u) return u;
+      }
+    } catch (e) {
+      console.warn("Error querying mongo user by identifier:", e);
+    }
+  }
+
+  // Memory fallback lookup
+  if (cleanId.includes("@")) {
+    return fallbackUsers.get(cleanEmail) || null;
+  }
+  for (const user of fallbackUsers.values()) {
+    if (user.phone && user.phone.replace(/\D/g, "").endsWith(last10)) {
+      return user;
+    }
+    if (user.email.toLowerCase() === cleanEmail) {
+      return user;
+    }
+  }
+  return null;
+}
+
 export async function createUser(userData: {
   name: string;
   email: string;
@@ -123,9 +167,9 @@ export async function createUser(userData: {
   return { user: memoryUser, token: verificationToken };
 }
 
-export async function verifyUserCredentials(email: string, passwordAttempt: string) {
-  const user = await findUserByEmail(email);
-  if (!user) return { ok: false, error: "No account found with this email. Please register." };
+export async function verifyUserCredentials(identifier: string, passwordAttempt: string) {
+  const user = await findUserByIdentifier(identifier);
+  if (!user) return { ok: false, error: "No account found with this email or mobile number. Please register." };
 
   if (user.passwordHash) {
     const matches = await comparePassword(passwordAttempt, user.passwordHash);

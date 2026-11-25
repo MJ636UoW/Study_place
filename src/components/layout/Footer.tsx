@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { Compass } from "lucide-react";
 import { locationFixture } from "@/fixtures";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 export const Footer: React.FC = () => {
   return (
@@ -11,12 +12,7 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           {/* Brand Manifesto */}
           <div className="lg:col-span-5 space-y-4">
-            <div className="flex items-center gap-2">
-              <span className="w-8 h-8 rounded-lg bg-forest-700 text-white flex items-center justify-center font-mono font-bold text-lg shadow-sm">
-                E
-              </span>
-              <span className="font-sans font-extrabold text-2xl tracking-tight text-charcoal-900">ELITE STUDY ZONE</span>
-            </div>
+            <BrandLogo size="md" />
             <p className="font-sans font-semibold text-forest-700 text-sm tracking-wide uppercase">
               YOUR FOCUS. YOUR FUTURE. YOUR SUCCESS.
             </p>

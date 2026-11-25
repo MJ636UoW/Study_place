@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   ChevronDown,
 } from "lucide-react";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 export const Navigation: React.FC = () => {
   const pathname = usePathname();
@@ -117,21 +118,8 @@ export const Navigation: React.FC = () => {
 
       {/* Main navigation masthead */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-        {/* Brand mark */}
-        <Link
-          href="/"
-          className="group flex flex-col items-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-700 focus-visible:ring-offset-2"
-        >
-          <span className="font-sans font-extrabold text-2xl sm:text-3xl tracking-tight text-charcoal-900 group-hover:text-forest-700 transition-colors flex items-center gap-2">
-            <span className="w-8 h-8 rounded-lg bg-forest-700 text-white flex items-center justify-center font-mono font-bold text-lg shadow-sm">
-              E
-            </span>
-            <span>ELITE STUDY ZONE</span>
-          </span>
-          <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-forest-700 font-semibold -mt-0.5">
-            Self-Study Space & Focus Hub
-          </span>
-        </Link>
+        {/* Brand mark with Official Lamp & Book Logo */}
+        <BrandLogo linkToHome size="md" />
 
         {/* Desktop navigation links */}
         <nav className="hidden lg:flex items-center gap-1 xl:gap-2" aria-label="Main Navigation">

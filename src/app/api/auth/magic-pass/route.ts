@@ -47,6 +47,9 @@ export async function POST(req: NextRequest) {
     }).catch(() => {});
 
     // Dispatch pass details to WhatsApp if phone provided
+    const PRICE_MAP: Record<number, number> = { 2: 99, 3: 139, 5: 199, 10: 299, 15: 349 };
+    const calculatedFee = PRICE_MAP[durationHours] || (durationHours * 49);
+
     if (phone) {
       sendWhatsAppBookingPass({
         phone,
@@ -54,7 +57,7 @@ export async function POST(req: NextRequest) {
         passCode: pin,
         seatOrPass: "Hourly Flex Workstation",
         slotOrDates: slot || `${durationHours} hour(s) access`,
-        amountRupees: String(durationHours * 49),
+        amountRupees: String(calculatedFee),
       }).catch((e) => console.warn("[WhatsApp] Pass dispatch error:", e));
     }
 
