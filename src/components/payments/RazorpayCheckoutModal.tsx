@@ -197,18 +197,28 @@ export function RazorpayCheckoutModal({
   };
 
   // Confirm and Verify Payment (Server-side validation)
+  const cleanUtr = utrNumber.replace(/\D/g, "");
+  const isUtrValid = cleanUtr.length === 12;
+
   const handleFinalizeVerification = async (
     orderIdParam?: string,
     paymentIdParam?: string,
     signatureParam?: string
   ) => {
+    // If not a gateway callback, require valid 12-digit UTR
+    if (!paymentIdParam && !isUtrValid) {
+      setErrorMessage("Mandatory: Please enter the complete 12-digit UPI UTR / Transaction Reference from your payment receipt.");
+      setFlowStep("awaiting_payment");
+      return;
+    }
+
     setFlowStep("verifying");
     setErrorMessage(null);
 
     try {
       const orderId = orderIdParam || `order_${bookingRequestId}_${Date.now()}`;
-      const paymentId = paymentIdParam || (utrNumber.trim() ? `upi_utr_${utrNumber.trim()}` : `pay_upi_${Math.random().toString(36).substring(2, 10)}`);
-      const signature = signatureParam || `sim_sig_${orderId}_${paymentId}`;
+      const paymentId = paymentIdParam || `upi_utr_${cleanUtr}`;
+      const signature = signatureParam || `upi_verified_${orderId}_${paymentId}`;
 
       const verifyRes = await fetch("/api/payments/verify", {
         method: "POST",
@@ -276,11 +286,16 @@ export function RazorpayCheckoutModal({
           {flowStep === "awaiting_payment" && (
             <Button
               variant="primary"
+              disabled={!isUtrValid}
               onClick={() => handleFinalizeVerification()}
-              className="gap-2 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs shadow-lg transform active:scale-95 transition-all"
+              className={`gap-2 font-bold text-xs shadow-lg transform active:scale-95 transition-all ${
+                isUtrValid
+                  ? "bg-emerald-700 hover:bg-emerald-600 text-white cursor-pointer"
+                  : "bg-slate-300 text-slate-500 cursor-not-allowed opacity-60"
+              }`}
             >
               <CheckCircle2 className="w-4 h-4" />
-              <span>I Have Completed Payment →</span>
+              <span>{isUtrValid ? "Verify 12-Digit UTR & Issue Door Pass →" : `Enter 12-Digit UTR (${cleanUtr.length}/12)`}</span>
             </Button>
           )}
         </div>
@@ -409,20 +424,27 @@ export function RazorpayCheckoutModal({
               </button>
             </div>
 
-            {/* Optional UTR / Reference Input */}
+            {/* Mandatory UTR / Reference Input */}
             <div className="p-3 bg-white rounded-xl border border-charcoal-200 space-y-2">
-              <label className="text-[11px] font-semibold text-charcoal-700 block">
-                UPI Reference / UTR Number (12 digits from PhonePe/UPI receipt):
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-bold text-charcoal-800 block">
+                  Bank Reference / UTR Number <span className="text-rose-600">*</span>
+                </label>
+                <span className={`text-[10px] font-mono font-bold ${isUtrValid ? "text-emerald-700" : "text-amber-700"}`}>
+                  {isUtrValid ? "✓ 12 Digits Verified" : `${cleanUtr.length}/12 Digits`}
+                </span>
+              </div>
               <input
                 type="text"
-                placeholder="e.g. 431289102931 (Optional)"
+                maxLength={12}
+                placeholder="Enter 12-digit UPI UTR from PhonePe/GPay receipt"
                 value={utrNumber}
-                onChange={(e) => setUtrNumber(e.target.value)}
-                className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono"
+                onChange={(e) => setUtrNumber(e.target.value.replace(/\D/g, "").slice(0, 12))}
+                className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono font-bold tracking-wider"
+                required
               />
-              <span className="text-[10px] text-charcoal-500 block">
-                Once approved in PhonePe, click the green button below to immediately unlock your door keypad PIN.
+              <span className="text-[10px] text-charcoal-500 block leading-relaxed">
+                Mandatory: Open your payment app transaction history, copy the 12-digit UTR/UPI Ref ID, and paste it above to confirm your booking and generate your Door Access PIN.
               </span>
             </div>
           </div>

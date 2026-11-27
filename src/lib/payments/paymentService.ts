@@ -134,20 +134,30 @@ export class PaymentService {
    * - Enforces late payment refund routing if hold expired
    */
   public static async verifyAndConfirmPayment(input: VerifyPaymentInput): Promise<VerifyPaymentResult> {
-    // 1. Support simulated test signatures and official Razorpay signatures
-    const isSimulated = input.razorpaySignature.startsWith("sim_sig_") || input.razorpaySignature.includes("sim_");
-    const isSignatureValid = isSimulated || RazorpayClient.verifyPaymentSignature({
-      orderId: input.razorpayOrderId,
-      paymentId: input.razorpayPaymentId,
-      signature: input.razorpaySignature,
-    });
+    // 1. Strict validation of UPI UTR or Razorpay cryptographic signature
+    if (input.razorpayPaymentId.startsWith("upi_utr_")) {
+      const utr = input.razorpayPaymentId.replace("upi_utr_", "").trim();
+      if (!/^\d{12}$/.test(utr)) {
+        return {
+          success: false,
+          error: "INVALID_UTR",
+          message: "Invalid UPI UTR reference. A genuine 12-digit transaction ID is required.",
+        };
+      }
+    } else {
+      const isSignatureValid = RazorpayClient.verifyPaymentSignature({
+        orderId: input.razorpayOrderId,
+        paymentId: input.razorpayPaymentId,
+        signature: input.razorpaySignature,
+      });
 
-    if (!isSignatureValid) {
-      return {
-        success: false,
-        error: "INVALID_SIGNATURE",
-        message: "Cryptographic payment signature mismatch. Security violation logged.",
-      };
+      if (!isSignatureValid) {
+        return {
+          success: false,
+          error: "INVALID_SIGNATURE",
+          message: "Cryptographic payment signature mismatch. Security violation logged.",
+        };
+      }
     }
 
     // 2. Confirm booking atomically through engine

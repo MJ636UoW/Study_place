@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { BookingEngine } from "@/lib/booking/bookingEngine";
 import { NotificationService } from "@/lib/notifications/notificationService";
 import { sendBookingConfirmationEmail } from "@/lib/mailer";
+import { sendWhatsAppBookingPass } from "@/lib/whatsapp";
+import { syncStudentWithFitFaat } from "@/lib/fitfaat";
 import { bookingsFixture } from "@/fixtures";
 
 export const dynamic = "force-dynamic";
@@ -58,6 +60,7 @@ export async function POST(req: NextRequest) {
     const email = booking.email || (cookieEmail ? decodeURIComponent(cookieEmail) : null);
     const name = booking.name || (cookieName ? decodeURIComponent(cookieName) : "Scholar");
     const doorPin = booking.doorPin || cookiePin || "394821";
+    const phone = booking.phone || req.cookies.get("esz_student_phone")?.value || "";
 
     if (email && email.includes("@")) {
       sendBookingConfirmationEmail({
@@ -69,9 +72,29 @@ export async function POST(req: NextRequest) {
         timeSlotOrDuration: booking.tierName || "Custom Study Session",
         startDate: booking.startDate || new Date().toISOString().split("T")[0],
         endDate: booking.endDate,
-        amountRupees: booking.totalPriceRupees || "294.00",
+        amountRupees: booking.totalPriceRupees || "99.00",
         doorPin,
       }).catch((e) => console.warn("[Booking Dispatch] Email dispatch error:", e));
+    }
+
+    // Also dispatch WhatsApp pass and sync to FitFaat biometric device
+    if (phone) {
+      sendWhatsAppBookingPass({
+        phone,
+        name,
+        passCode: doorPin,
+        seatOrPass: booking.seatLabel || "Dedicated Workstation",
+        slotOrDates: `${booking.startDate || ""} to ${booking.endDate || ""}`,
+        amountRupees: String(booking.totalPriceRupees || "99.00"),
+      }).catch((e) => console.warn("[WhatsApp] Booking pass dispatch error:", e));
+
+      syncStudentWithFitFaat({
+        name,
+        mobile: phone,
+        email: email || "",
+        biometricPin: doorPin,
+        planDuration: booking.tierName,
+      }).catch((e) => console.warn("[FitFaat] Booking sync error:", e));
     }
 
     return NextResponse.json({ success: true, booking });

@@ -146,6 +146,7 @@ function BookContent() {
   const [isSubmittingHold, setIsSubmittingHold] = useState<boolean>(false);
   const [guestName, setGuestName] = useState<string>("");
   const [guestEmail, setGuestEmail] = useState<string>("");
+  const [guestPhone, setGuestPhone] = useState<string>("");
   const [guestNotes, setGuestNotes] = useState<string>("");
   const [holdResult, setHoldResult] = useState<HoldResponse | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState<boolean>(false);
@@ -172,6 +173,7 @@ function BookContent() {
           setIsAuthChecking(false);
           setGuestName(d.user.name || "");
           setGuestEmail(d.user.email || "");
+          if (d.user.phone) setGuestPhone(d.user.phone);
           if (d.user.allottedHours > 0 || d.user.usedHours > 0) {
             setIsReturningMember(true);
           }
@@ -1037,6 +1039,21 @@ function BookContent() {
               required
             />
 
+            <div>
+              <label className="block text-xs font-semibold text-charcoal-700 mb-1 flex items-center justify-between">
+                <span>WhatsApp Mobile Number *</span>
+                <span className="text-[10px] text-emerald-700 font-mono font-bold">Instant PIN Delivery</span>
+              </label>
+              <input
+                type="tel"
+                placeholder="+91 98765 43210"
+                value={guestPhone}
+                onChange={(e) => setGuestPhone(e.target.value)}
+                required
+                className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-sans"
+              />
+            </div>
+
             <Textarea
               label="Special Accommodations / Requests"
               placeholder="e.g. Left-handed orientation, prefers low foot traffic zone."
@@ -1087,6 +1104,10 @@ function BookContent() {
               totalPricePaise: (holdResult?.totalPrice || totalPayableAmount) * 100,
               totalPriceRupees: `${holdResult?.totalPrice || totalPayableAmount}.00`,
               passCode: passCode || `PASS-${Math.floor(1000 + Math.random() * 9000)}`,
+              doorPin: passCode || `PASS-${Math.floor(1000 + Math.random() * 9000)}`,
+              name: guestName,
+              email: guestEmail,
+              phone: guestPhone,
               lockerLabel: withLocker ? selectedLocker.label : "None",
             };
 
