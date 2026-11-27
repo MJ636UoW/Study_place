@@ -116,6 +116,12 @@ function LoginContent() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    (window as any).handleGoogleCredentialResponse = (res: { credential?: string }) => {
+      if (res?.credential) {
+        handleVerifyGoogleCredential(res.credential);
+      }
+    };
+
     const rawClientId = GOOGLE_CLIENT_ID;
     if (!rawClientId || rawClientId.includes("sample") || rawClientId.includes("placeholder")) {
       return;
@@ -132,7 +138,7 @@ function LoginContent() {
                 handleVerifyGoogleCredential(res.credential);
               }
             },
-            auto_select: true,
+            auto_select: false,
           });
 
           // Render official Google button into dedicated container if present
@@ -148,16 +154,13 @@ function LoginContent() {
               logo_alignment: "left",
             });
           }
-
-          // Trigger One-Tap prompt automatically
-          g.accounts.id.prompt();
         } catch (e) {
           console.warn("Google GSI setup error:", e);
         }
       }
     };
 
-    const timer = setTimeout(setupGoogleGsi, 800);
+    const timer = setTimeout(setupGoogleGsi, 400);
     return () => clearTimeout(timer);
   }, []);
 
@@ -459,6 +462,14 @@ function LoginContent() {
         {/* Main Card */}
         <div className="bg-white p-6 sm:p-8 rounded-xl border border-charcoal-200/80 shadow-lg space-y-5">
           {/* 1. Sign In with Google Button */}
+          <div
+            id="g_id_onload"
+            data-client_id="518523508794-g04r34nn7h35ij0cng8ru555jff5rb9s.apps.googleusercontent.com"
+            data-context="signin"
+            data-ux_mode="popup"
+            data-callback="handleGoogleCredentialResponse"
+            data-auto_prompt="false"
+          ></div>
           <div id="google-signin-btn-container" className="w-full flex justify-center">
             <button
               type="button"

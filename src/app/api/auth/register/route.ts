@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { findUserByEmail, createUser } from "@/lib/hybridDb";
 import { sendVerificationEmail, sendWelcomeAccessEmail } from "@/lib/mailer";
 import { sendWhatsAppWelcome } from "@/lib/whatsapp";
+import { syncStudentWithFitFaat } from "@/lib/fitfaat";
 import { signJwtToken, setAuthCookie } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
@@ -70,6 +71,14 @@ export async function POST(req: NextRequest) {
         email: cleanEmail,
         initialPassCode: doorPin,
       }).catch((e) => console.warn("[WhatsApp] Welcome dispatch error:", e));
+
+      // Sync student with FitFaat & eSSL Door Keypad Machine
+      syncStudentWithFitFaat({
+        name: cleanName,
+        mobile: phone,
+        email: cleanEmail,
+        biometricPin: doorPin,
+      }).catch((e) => console.warn("[FitFaat] Welcome sync error:", e));
     }
 
     const jwtToken = signJwtToken({

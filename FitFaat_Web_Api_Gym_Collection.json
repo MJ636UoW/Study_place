@@ -1,0 +1,1693 @@
+{
+  "info": {
+    "_postman_id": "b5330633-5954-4857-a042-8635820cf692",
+    "name": "_Web Api Gym Fitfaat",
+    "description": "Postman collection for FitFaat Gym Web APIs (updated route names). All requests are POST with x-www-form-urlencoded bodies and Bearer Token authorization (collection variable bearerToken). MasterId, UserId, and UserMobile are collection variables so they stay consistent across requests once you set them after login/OTP.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearerToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://www.fitfaat.com",
+      "type": "string"
+    },
+    {
+      "key": "bearerToken",
+      "value": "elite@22zone",
+      "type": "string"
+    },
+    {
+      "key": "MasterId",
+      "value": "Ihs8s9ycjkbOJw1mWNQq6Q",
+      "type": "string",
+      "description": "Encrypted GymId used across almost all endpoints"
+    },
+    {
+      "key": "UserId",
+      "value": "",
+      "type": "string",
+      "description": "Logged-in UserId, set after OTP verification/login"
+    },
+    {
+      "key": "UserMobile",
+      "value": "",
+      "type": "string",
+      "description": "Logged-in user's mobile number"
+    }
+  ],
+  "item": [
+    {
+      "name": "Gym Detail & Banners",
+      "item": [
+        {
+          "name": "Get_Gym_Detail",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_Gym_Detail",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_Gym_Detail"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get_GymBannerList",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_GymBannerList",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_GymBannerList"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get_GymActivityList",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_GymActivityList",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_GymActivityList"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get_GymFeatureList",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_GymFeatureList",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_GymFeatureList"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get_GymImagesList",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_GymImagesList",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_GymImagesList"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Gym Media, Events, Training, Content",
+      "item": [
+        {
+          "name": "Get_Latest_GymEventList",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_Latest_GymEventList",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_Latest_GymEventList"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Take",
+                  "value": "10",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get_Latest_GymVideoList",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_Latest_GymVideoList",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_Latest_GymVideoList"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Take",
+                  "value": "10",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get_GymEventList",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_GymEventList",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_GymEventList"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get_GymEvent_Detail",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_GymEvent_Detail",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_GymEvent_Detail"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "EventId",
+                  "value": "1",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get_GymVideoList",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_GymVideoList",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_GymVideoList"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get_GymTrainingCategory_With_TrainingList",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_GymTrainingCategory_With_TrainingList",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_GymTrainingCategory_With_TrainingList"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get_GymTraining_Detail",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_GymTraining_Detail",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_GymTraining_Detail"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "TrainingId",
+                  "value": "1",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get_GymContent",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_GymContent",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_GymContent"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "PageName",
+                  "value": "about-us",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Gym Trainers, Membership, Offers",
+      "item": [
+        {
+          "name": "Get_GymTrainerList",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_GymTrainerList",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_GymTrainerList"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get_GymMembershipList",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_GymMembershipList",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_GymMembershipList"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get_GymOfferMaster_TimeSlotList_Available",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_GymOfferMaster_TimeSlotList_Available",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_GymOfferMaster_TimeSlotList_Available"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "GymOfferMasterId",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "DateForTimeSlot",
+                  "value": "2026-09-20",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get_GymOfferMasterList_By_Gym_OfferFor",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_GymOfferMasterList_By_Gym_OfferFor",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_GymOfferMasterList_By_Gym_OfferFor"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "OfferFor",
+                  "value": "Membership",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Gym_Check_IsApp_Get_URL",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Gym_Check_IsApp_Get_URL",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Gym_Check_IsApp_Get_URL"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Gym Reviews & Blog",
+      "item": [
+        {
+          "name": "Get_GymReviewRatingList",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_GymReviewRatingList",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_GymReviewRatingList"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get_GymBlogCategory",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_GymBlogCategory",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_GymBlogCategory"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get_GymBlogTagList",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_GymBlogTagList",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_GymBlogTagList"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get_GymBlogPostList",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_GymBlogPostList",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_GymBlogPostList"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "CategoryId",
+                  "value": "1",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get_GymBlogPostList_By_BlogTag",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_GymBlogPostList_By_BlogTag",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_GymBlogPostList_By_BlogTag"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "TagId",
+                  "value": "1",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get_Latest_GymBlogPostList",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_Latest_GymBlogPostList",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_Latest_GymBlogPostList"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Take",
+                  "value": "5",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Country & User Auth / Address / Orders",
+      "item": [
+        {
+          "name": "GetCountry",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/GetCountry",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "GetCountry"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": []
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "User_Send_OTP_Get_Detail",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/User_Send_OTP_Get_Detail",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "User_Send_OTP_Get_Detail"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "CountryId",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "Mobile",
+                  "value": "8236919552",
+                  "type": "text"
+                },
+                {
+                  "key": "ATokenId",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "ITokenId",
+                  "value": "",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "User_Registration",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/User_Registration",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "User_Registration"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Name",
+                  "value": "Abc",
+                  "type": "text"
+                },
+                {
+                  "key": "Mobile",
+                  "value": "8236919552",
+                  "type": "text"
+                },
+                {
+                  "key": "Email",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "Gender",
+                  "value": "Male",
+                  "type": "text"
+                },
+                {
+                  "key": "CountryId",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "Image_base64String",
+                  "value": "",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "User_Add_New_Address",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/User_Add_New_Address",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "User_Add_New_Address"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "UserId",
+                  "value": "{{UserId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "UserMobile",
+                  "value": "{{UserMobile}}",
+                  "type": "text"
+                },
+                {
+                  "key": "AddressLine1",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "AddressLine2",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "City",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "State",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "Country",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "Pincode",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "Latitude",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "Longitude",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "AddressType",
+                  "value": "Home",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "User_Get_AddressList",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/User_Get_AddressList",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "User_Get_AddressList"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "UserId",
+                  "value": "{{UserId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "UserMobile",
+                  "value": "{{UserMobile}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "User_Delete_Address",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/User_Delete_Address",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "User_Delete_Address"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "UserId",
+                  "value": "{{UserId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "UserMobile",
+                  "value": "{{UserMobile}}",
+                  "type": "text"
+                },
+                {
+                  "key": "UserAddressId",
+                  "value": "1",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Membership",
+      "item": [
+        {
+          "name": "Check_Add_Get_GymUse_In_Gym",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Check_Add_Get_GymUse_In_Gym",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Check_Add_Get_GymUse_In_Gym"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "UserId",
+                  "value": "{{UserId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "IsGetMembershipList",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "IsLoadPTList",
+                  "value": "false",
+                  "type": "text"
+                },
+                {
+                  "key": "IsLoadPaymentHistory",
+                  "value": "false",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "User_Purchase_MembershipPlan",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/User_Purchase_MembershipPlan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "User_Purchase_MembershipPlan"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "UserId",
+                  "value": "{{UserId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "GymMembershipId",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "StartDate",
+                  "value": "2026-09-17",
+                  "type": "text"
+                },
+                {
+                  "key": "Amount",
+                  "value": "1000",
+                  "type": "text"
+                },
+                {
+                  "key": "PaymentMode",
+                  "value": "Cash",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "User_Biometric",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/User_Biometric",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "User_Biometric"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "UserId",
+                  "value": "{{UserId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "UserMobile",
+                  "value": "{{UserMobile}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Type",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "DeviceNo",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "GymUserMembershipId",
+                  "value": "1",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Gym Store",
+      "item": [
+        {
+          "name": "Get_GymStoreCategoryList",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_GymStoreCategoryList",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_GymStoreCategoryList"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "GymStoreId",
+                  "value": "1",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get_GymStoreProductTypeList",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_GymStoreProductTypeList",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_GymStoreProductTypeList"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "GymStoreId",
+                  "value": "1",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get_GymStoreProductList",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_GymStoreProductList",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_GymStoreProductList"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "GymStoreId",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "GymStoreCategoryId",
+                  "value": "1",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get_GymStoreProductDetail",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/Get_GymStoreProductDetail",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "Get_GymStoreProductDetail"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "GymStoreId",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "GymStoreProductId",
+                  "value": "1",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "User_GymStore_Order",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/User_GymStore_Order",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "User_GymStore_Order"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "UserId",
+                  "value": "{{UserId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "UserMobile",
+                  "value": "{{UserMobile}}",
+                  "type": "text"
+                },
+                {
+                  "key": "GymStoreId",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "GymStoreProductId",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "Quantity",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "Amount",
+                  "value": "100",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "User_Update_GymStore_Order_RazorPayDetail",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/User_Update_GymStore_Order_RazorPayDetail",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "User_Update_GymStore_Order_RazorPayDetail"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "UserId",
+                  "value": "{{UserId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "UserMobile",
+                  "value": "{{UserMobile}}",
+                  "type": "text"
+                },
+                {
+                  "key": "OrderId",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "razorpay_order_id",
+                  "value": "",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "User_Complete_GymStore_Order_RazorPay_Payment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/User_Complete_GymStore_Order_RazorPay_Payment",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "User_Complete_GymStore_Order_RazorPay_Payment"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "UserId",
+                  "value": "{{UserId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "UserMobile",
+                  "value": "{{UserMobile}}",
+                  "type": "text"
+                },
+                {
+                  "key": "rzp_orderid",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "rzp_paymentid",
+                  "value": "",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GymStore_Order_Invoice_Pdf_Url",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Api/Web/GymStore_Order_Invoice_Pdf_Url",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Api",
+                "Web",
+                "GymStore_Order_Invoice_Pdf_Url"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "MasterId",
+                  "value": "{{MasterId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "GymStoreId",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "GymStoreProductSaleId",
+                  "value": "1",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "User_Registration_With_Gym_Prospect",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/Api/Web/User_Registration_With_Gym_Prospect",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "Api",
+            "Web",
+            "User_Registration_With_Gym_Prospect"
+          ]
+        },
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "GymId",
+              "value": "{{MasterId}}",
+              "type": "text"
+            },
+            {
+              "key": "Mobile",
+              "value": "8236919552",
+              "type": "text"
+            },
+            {
+              "key": "Name",
+              "value": "Abc",
+              "type": "text"
+            },
+            {
+              "key": "Email",
+              "value": "",
+              "type": "text"
+            },
+            {
+              "key": "CountryId",
+              "value": "1",
+              "type": "text"
+            },
+            {
+              "key": "Gender",
+              "value": "Male",
+              "type": "text"
+            },
+            {
+              "key": "Image_base64String",
+              "value": "",
+              "type": "text"
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

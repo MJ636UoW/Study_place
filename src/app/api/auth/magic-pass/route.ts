@@ -3,6 +3,7 @@ import { createMagicPass, createUser, findUserByEmail } from "@/lib/hybridDb";
 import { signJwtToken, setAuthCookie } from "@/lib/auth";
 import { sendEmail } from "@/lib/mailer";
 import { sendWhatsAppBookingPass } from "@/lib/whatsapp";
+import { syncStudentWithFitFaat } from "@/lib/fitfaat";
 
 export async function POST(req: NextRequest) {
   try {
@@ -59,6 +60,15 @@ export async function POST(req: NextRequest) {
         slotOrDates: slot || `${durationHours} hour(s) access`,
         amountRupees: String(calculatedFee),
       }).catch((e) => console.warn("[WhatsApp] Pass dispatch error:", e));
+
+      // Sync student with FitFaat & eSSL Door Keypad Machine
+      syncStudentWithFitFaat({
+        name,
+        mobile: phone,
+        email: cleanEmail,
+        biometricPin: pin,
+        planDuration: `${durationHours} hour(s)`,
+      }).catch((e) => console.warn("[FitFaat] Background sync error:", e));
     }
 
     const token = signJwtToken({

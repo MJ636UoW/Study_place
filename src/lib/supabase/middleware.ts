@@ -70,23 +70,21 @@ export async function updateSession(request: NextRequest) {
   // 2. Protected Student Routes: /dashboard and /book
   if (pathname.startsWith("/dashboard") || pathname.startsWith("/book")) {
     if (!hasStudentSession) {
-      const fullPath = pathname + (request.nextUrl.search || "");
-      return NextResponse.redirect(`${baseUrl}/login?redirect=${encodeURIComponent(fullPath)}`);
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = "/login";
+      redirectUrl.searchParams.set("redirect", pathname + (request.nextUrl.search || ""));
+      return NextResponse.redirect(redirectUrl);
     }
-  }
-
-  // If already logged in and visiting /login, redirect to redirect target or /dashboard
-  if (pathname === "/login" && hasStudentSession) {
-    const next = request.nextUrl.searchParams.get("redirect") || request.nextUrl.searchParams.get("next") || "/book";
-    const targetUrl = next.startsWith("/") ? `${baseUrl}${next}` : `${baseUrl}/book`;
-    return NextResponse.redirect(targetUrl);
   }
 
   // 3. Protected Admin Routes: /admin (excluding /admin/login and /admin/mfa)
   if (pathname.startsWith("/admin") && pathname !== "/admin/login" && pathname !== "/admin/mfa") {
     const isAdminAuthenticated = adminCookie === "active_token_9842";
     if (!isAdminAuthenticated && !hasSupabaseUser) {
-      return NextResponse.redirect(`${baseUrl}/admin/login?next=${encodeURIComponent(pathname)}`);
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = "/admin/login";
+      redirectUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(redirectUrl);
     }
   }
 
