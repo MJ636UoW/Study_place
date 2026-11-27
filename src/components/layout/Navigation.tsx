@@ -104,9 +104,9 @@ export const Navigation: React.FC = () => {
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-ivory-50/95 backdrop-blur-md border-b border-ivory-200 transition-colors">
+    <header className="sticky top-0 z-40 w-full bg-ivory-50/95 backdrop-blur-md border-b border-ivory-200 transition-colors shadow-xs">
       {/* Top micro-bar with brand slogan */}
-      <div className="w-full bg-forest-950 text-white px-4 sm:px-8 py-1.5 flex items-center justify-between text-[11px] font-mono tracking-wider uppercase">
+      <div className="w-full bg-forest-950 text-white px-4 sm:px-8 py-2 sm:py-2.5 flex items-center justify-between text-[11px] font-mono tracking-wider uppercase border-b border-forest-900/60">
         <span className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" aria-hidden="true" />
           <span>YOUR FOCUS. YOUR FUTURE. YOUR SUCCESS.</span>
@@ -116,10 +116,12 @@ export const Navigation: React.FC = () => {
         </span>
       </div>
 
-      {/* Main navigation masthead */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      {/* Main navigation masthead with generous breathing room */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[78px] sm:min-h-[86px] py-3 sm:py-3.5 flex items-center justify-between gap-4">
         {/* Brand mark with Official Lamp & Book Logo */}
-        <BrandLogo linkToHome size="md" />
+        <div className="py-1">
+          <BrandLogo linkToHome size="md" />
+        </div>
 
         {/* Desktop navigation links */}
         <nav className="hidden lg:flex items-center gap-1 xl:gap-2" aria-label="Main Navigation">
