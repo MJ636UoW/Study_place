@@ -42,7 +42,7 @@ const AdminSettingsSchema: Schema<IAdminSettings> = new Schema(
   {
     adminEmail: { type: String, default: "admin@elitestudyzone.in", lowercase: true, trim: true },
     adminPasswordHash: { type: String, default: null },
-    upiId: { type: String, default: "shettyvarun001@okicici", trim: true },
+    upiId: { type: String, default: "shettyvarun001@okhdfcbank", trim: true },
     accountHolder: { type: String, default: "Varun Shetty", trim: true },
     accountNumber: { type: String, default: "50200084920192", trim: true },
     ifscCode: { type: String, default: "HDFC0000123", trim: true },

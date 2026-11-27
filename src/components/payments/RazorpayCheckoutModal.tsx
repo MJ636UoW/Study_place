@@ -41,8 +41,8 @@ export function RazorpayCheckoutModal({
   onSuccess,
 }: RazorpayCheckoutProps) {
   const [selectedMethod, setSelectedMethod] = useState<"qr" | "upi_apps">("qr");
-  const [merchantUpiId, setMerchantUpiId] = useState("shettyvarun001@okicici");
-  const [merchantUpiAlias, setMerchantUpiAlias] = useState("shettyvarun001@okhdfcbank");
+  const [merchantUpiId, setMerchantUpiId] = useState("shettyvarun001@okhdfcbank");
+  const [merchantUpiAlias, setMerchantUpiAlias] = useState("shettyvarun001@okicici");
   const [merchantName, setMerchantName] = useState("Varun Shetty");
   const [merchantQrUrl, setMerchantQrUrl] = useState("/upi-qr.jpg");
   
@@ -87,7 +87,7 @@ export function RazorpayCheckoutModal({
   const amountRupeesClean = amountRupeesNumber.toFixed(2);
 
   // Universal UPI Intent URI with standard specifications
-  const universalUpiUrl = `upi://pay?pa=${encodeURIComponent(merchantUpiId)}&pn=${encodeURIComponent("Elite Study Zone")}&am=${amountRupeesClean}&cu=INR&tn=${encodeURIComponent(`Desk Booking ${seatLabel}`)}&tr=${encodeURIComponent(bookingRequestId)}`;
+  const universalUpiUrl = `upi://pay?pa=${encodeURIComponent(merchantUpiId)}&pn=${encodeURIComponent(merchantName || "Varun Shetty")}&am=${amountRupeesClean}&cu=INR&tn=${encodeURIComponent(`Desk Booking ${seatLabel}`)}&tr=${encodeURIComponent(bookingRequestId)}`;
 
   // Dynamic Amount QR Code Image URL (encodes exact merchant UPI and payable amount)
   const dynamicQrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&data=${encodeURIComponent(universalUpiUrl)}`;
@@ -99,7 +99,7 @@ export function RazorpayCheckoutModal({
     setErrorMessage(null);
 
     const note = encodeURIComponent(`Desk Booking ${seatLabel}`);
-    const pn = encodeURIComponent("Elite Study Zone");
+    const pn = encodeURIComponent(merchantName || "Varun Shetty");
     let targetLink = universalUpiUrl;
 
     if (app === "phonepe") {
@@ -525,13 +525,13 @@ export function RazorpayCheckoutModal({
                 </div>
 
                 {/* Payee & UPI ID Details Bar */}
-                <div className="p-2.5 bg-white rounded-xl border border-charcoal-200 text-xs space-y-1 text-left">
+                <div className="p-2.5 bg-white rounded-xl border border-charcoal-200 text-xs space-y-1.5 text-left">
                   <div className="flex justify-between items-center text-[11px]">
                     <span className="text-charcoal-500">Verified Payee:</span>
                     <span className="font-bold text-charcoal-900">{merchantName} (Elite Study Zone)</span>
                   </div>
                   <div className="flex justify-between items-center pt-1 border-t border-slate-100">
-                    <span className="text-charcoal-500 font-sans">Primary UPI ID:</span>
+                    <span className="text-charcoal-500 font-sans">Active UPI ID:</span>
                     <div className="flex items-center gap-1.5 font-mono font-bold text-forest-800">
                       <span>{merchantUpiId}</span>
                       <button
@@ -545,9 +545,21 @@ export function RazorpayCheckoutModal({
                     </div>
                   </div>
                   {merchantUpiAlias && merchantUpiAlias !== merchantUpiId && (
-                    <div className="flex justify-between items-center text-[10px] text-charcoal-400">
-                      <span>Alternate UPI VPA:</span>
-                      <span className="font-mono">{merchantUpiAlias}</span>
+                    <div className="flex justify-between items-center text-[10px] text-charcoal-500 pt-0.5">
+                      <span>Backup / Alternate VPA:</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const current = merchantUpiId;
+                          setMerchantUpiId(merchantUpiAlias);
+                          setMerchantUpiAlias(current);
+                        }}
+                        className="text-forest-700 font-mono font-bold hover:underline cursor-pointer flex items-center gap-1"
+                        title="Click to switch to this UPI ID"
+                      >
+                        <span>{merchantUpiAlias}</span>
+                        <span className="text-[9px] bg-slate-100 px-1 py-0.5 rounded text-charcoal-600 border border-slate-200">Switch ⇄</span>
+                      </button>
                     </div>
                   )}
                 </div>
