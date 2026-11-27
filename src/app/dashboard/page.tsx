@@ -116,6 +116,11 @@ export default function DashboardPage() {
           } else {
             const cookies = document.cookie;
             const emailMatch = cookies.match(/esz_student_email=([^;]+)/);
+            const tokenMatch = cookies.match(/auth_token=([^;]+)/) || cookies.match(/esz_student_session=([^;]+)/);
+            if (!emailMatch && !tokenMatch) {
+              window.location.href = "/login?redirect=/dashboard";
+              return;
+            }
             const nameMatch = cookies.match(/esz_student_name=([^;]+)/);
             const pinMatch = cookies.match(/esz_student_pin=([^;]+)/);
             if (emailMatch) setProfileEmail(decodeURIComponent(emailMatch[1]));
@@ -127,7 +132,14 @@ export default function DashboardPage() {
             } catch (_) {}
           }
         })
-        .catch(() => {});
+        .catch(() => {
+          const cookies = document.cookie;
+          const emailMatch = cookies.match(/esz_student_email=([^;]+)/);
+          const tokenMatch = cookies.match(/auth_token=([^;]+)/) || cookies.match(/esz_student_session=([^;]+)/);
+          if (!emailMatch && !tokenMatch) {
+            window.location.href = "/login?redirect=/dashboard";
+          }
+        });
     }
   }, []);
 

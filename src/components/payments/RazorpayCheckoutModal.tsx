@@ -76,6 +76,11 @@ export function RazorpayCheckoutModal({
       setErrorMessage(null);
       setSuccessInfo(null);
       setUtrNumber("");
+
+      // On mobile devices, auto-switch to UPI Apps tab for instant PhonePe tap
+      if (typeof window !== "undefined" && window.innerWidth < 768) {
+        setSelectedMethod("upi_apps");
+      }
     }
   }, [isOpen]);
 
@@ -86,8 +91,10 @@ export function RazorpayCheckoutModal({
   });
   const amountRupeesClean = amountRupeesNumber.toFixed(2);
 
-  // Universal UPI Intent URI with standard specifications
-  const universalUpiUrl = `upi://pay?pa=${encodeURIComponent(merchantUpiId)}&pn=${encodeURIComponent(merchantName || "Varun Shetty")}&am=${amountRupeesClean}&cu=INR&tn=${encodeURIComponent(`Desk Booking ${seatLabel}`)}&tr=${encodeURIComponent(bookingRequestId)}`;
+  const returnUrl = typeof window !== "undefined" ? window.location.href : "https://elitestudyzone.in/book";
+
+  // Universal UPI Intent URI with standard specifications & return callback URL
+  const universalUpiUrl = `upi://pay?pa=${encodeURIComponent(merchantUpiId)}&pn=${encodeURIComponent(merchantName || "Varun Shetty")}&am=${amountRupeesClean}&cu=INR&tn=${encodeURIComponent(`Desk Booking ${seatLabel}`)}&tr=${encodeURIComponent(bookingRequestId)}&url=${encodeURIComponent(returnUrl)}`;
 
   // Dynamic Amount QR Code Image URL (encodes exact merchant UPI and payable amount)
   const dynamicQrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&data=${encodeURIComponent(universalUpiUrl)}`;
@@ -103,11 +110,11 @@ export function RazorpayCheckoutModal({
     let targetLink = universalUpiUrl;
 
     if (app === "phonepe") {
-      targetLink = `phonepe://pay?pa=${merchantUpiId}&pn=${pn}&am=${amountRupeesClean}&cu=INR&tn=${note}`;
+      targetLink = `phonepe://pay?pa=${merchantUpiId}&pn=${pn}&am=${amountRupeesClean}&cu=INR&tn=${note}&tr=${encodeURIComponent(bookingRequestId)}&url=${encodeURIComponent(returnUrl)}`;
     } else if (app === "gpay") {
-      targetLink = `tez://upi/pay?pa=${merchantUpiId}&pn=${pn}&am=${amountRupeesClean}&cu=INR&tn=${note}`;
+      targetLink = `tez://upi/pay?pa=${merchantUpiId}&pn=${pn}&am=${amountRupeesClean}&cu=INR&tn=${note}&tr=${encodeURIComponent(bookingRequestId)}&url=${encodeURIComponent(returnUrl)}`;
     } else if (app === "paytm") {
-      targetLink = `paytmmp://pay?pa=${merchantUpiId}&pn=${pn}&am=${amountRupeesClean}&cu=INR&tn=${note}`;
+      targetLink = `paytmmp://pay?pa=${merchantUpiId}&pn=${pn}&am=${amountRupeesClean}&cu=INR&tn=${note}&tr=${encodeURIComponent(bookingRequestId)}&url=${encodeURIComponent(returnUrl)}`;
     }
 
     if (typeof window !== "undefined") {
@@ -607,7 +614,37 @@ export function RazorpayCheckoutModal({
                   Tap to launch UPI app directly on your phone:
                 </div>
 
-                {/* 1. Google Pay Button */}
+                {/* 1. PhonePe Primary Button (Recommended & Instant) */}
+                <button
+                  type="button"
+                  onClick={() => handleOpenUpiApp("phonepe")}
+                  className="w-full flex items-center justify-between p-3.5 rounded-xl border-2 border-purple-400 bg-gradient-to-r from-purple-50 via-purple-100/40 to-white hover:border-purple-600 hover:shadow-lg transition-all group text-left transform active:scale-98 shadow-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-[#5f259f] text-white flex items-center justify-center font-bold text-base shadow">
+                      पे
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-black text-charcoal-900 group-hover:text-purple-700">
+                          PhonePe Instant
+                        </span>
+                        <span className="text-[9px] font-mono font-bold bg-purple-200 text-purple-900 px-1.5 py-0.5 rounded uppercase">
+                          ⚡ Auto-Launch
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-charcoal-500">
+                        Direct request to Varun Shetty ({merchantUpiId})
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 font-bold text-xs text-purple-700">
+                    <span>Pay ₹{amountRupeesFormatted}</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                </button>
+
+                {/* 2. Google Pay Button */}
                 <button
                   type="button"
                   onClick={() => handleOpenUpiApp("gpay")}
@@ -630,31 +667,6 @@ export function RazorpayCheckoutModal({
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 font-bold text-xs text-charcoal-700 group-hover:text-blue-700">
-                    <span>Pay ₹{amountRupeesFormatted}</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                  </div>
-                </button>
-
-                {/* 2. PhonePe Primary Button (Iconic Purple Brand) */}
-                <button
-                  type="button"
-                  onClick={() => handleOpenUpiApp("phonepe")}
-                  className="w-full flex items-center justify-between p-3.5 rounded-xl border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-white hover:border-purple-600 hover:shadow-md transition-all group text-left transform active:scale-98"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#5f259f] text-white flex items-center justify-center font-bold text-sm shadow">
-                      पे
-                    </div>
-                    <div>
-                      <div className="text-xs font-extrabold text-charcoal-900 group-hover:text-purple-700">
-                        PhonePe Instant
-                      </div>
-                      <div className="text-[11px] text-charcoal-500">
-                        Direct request to your PhonePe account
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1.5 font-bold text-xs text-purple-700">
                     <span>Pay ₹{amountRupeesFormatted}</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                   </div>
