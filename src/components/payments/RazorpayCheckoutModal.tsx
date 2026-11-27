@@ -40,14 +40,15 @@ export function RazorpayCheckoutModal({
   onClose,
   onSuccess,
 }: RazorpayCheckoutProps) {
-  const [selectedMethod, setSelectedMethod] = useState<"upi_apps" | "qr" | "razorpay" | "card">("upi_apps");
-  const [merchantUpiId, setMerchantUpiId] = useState("elitestudyzone@okhdfcbank");
-  const [merchantQrUrl, setMerchantQrUrl] = useState("");
-  const [razorpayKeyId, setRazorpayKeyId] = useState("");
+  const [selectedMethod, setSelectedMethod] = useState<"qr" | "upi_apps">("qr");
+  const [merchantUpiId, setMerchantUpiId] = useState("shettyvarun001@okicici");
+  const [merchantUpiAlias, setMerchantUpiAlias] = useState("shettyvarun001@okhdfcbank");
+  const [merchantName, setMerchantName] = useState("Varun Shetty");
+  const [merchantQrUrl, setMerchantQrUrl] = useState("/upi-qr.jpg");
   
   // Payment Flow Steps: 'select' -> 'awaiting_payment' -> 'verifying' -> 'success'
   const [flowStep, setFlowStep] = useState<"select" | "awaiting_payment" | "verifying" | "success">("select");
-  const [activeApp, setActiveApp] = useState<"phonepe" | "gpay" | "paytm" | "any" | "qr">("phonepe");
+  const [activeApp, setActiveApp] = useState<"phonepe" | "gpay" | "paytm" | "any" | "qr">("gpay");
   const [utrNumber, setUtrNumber] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successInfo, setSuccessInfo] = useState<{ paymentId: string; passCode?: string } | null>(null);
@@ -61,8 +62,9 @@ export function RazorpayCheckoutModal({
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (d?.upiId) setMerchantUpiId(d.upiId);
+        if (d?.upiIdAlias) setMerchantUpiAlias(d.upiIdAlias);
+        if (d?.accountHolder) setMerchantName(d.accountHolder);
         if (d?.qrCodeUrl) setMerchantQrUrl(d.qrCodeUrl);
-        if (d?.razorpayKeyId) setRazorpayKeyId(d.razorpayKeyId);
       })
       .catch(() => {});
   }, []);
@@ -269,8 +271,8 @@ export function RazorpayCheckoutModal({
     <Dialog
       isOpen={isOpen}
       onClose={onClose}
-      title="Elite Study Zone • Payment Settlement"
-      description="Instant Indian payment settlement with automatic door keypad PIN issuance."
+      title="Elite Study Zone • Official UPI Payment"
+      description="Instant UPI settlement via Google Pay QR or Mobile Apps with automatic door keypad PIN issuance."
       maxWidth="md"
       footer={
         <div className="flex items-center justify-between w-full pt-2">
@@ -283,7 +285,7 @@ export function RazorpayCheckoutModal({
             {flowStep === "success" ? "Done & Return" : "Cancel"}
           </Button>
 
-          {flowStep === "awaiting_payment" && (
+          {(flowStep === "awaiting_payment" || (flowStep === "select" && cleanUtr.length > 0)) && (
             <Button
               variant="primary"
               disabled={!isUtrValid}
@@ -473,56 +475,155 @@ export function RazorpayCheckoutModal({
               </div>
             </div>
 
-            {/* Tab Navigation */}
-            <div className="grid grid-cols-3 p-1 bg-slate-100 rounded-xl text-xs font-semibold text-charcoal-600">
-              <button
-                type="button"
-                onClick={() => setSelectedMethod("upi_apps")}
-                className={`py-2 px-2.5 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                  selectedMethod === "upi_apps"
-                    ? "bg-white text-charcoal-900 shadow-sm font-bold"
-                    : "hover:text-charcoal-900"
-                }`}
-              >
-                <Smartphone className="w-3.5 h-3.5 text-purple-600" />
-                <span>UPI Apps</span>
-              </button>
-
+            {/* Pure UPI Tab Navigation */}
+            <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-xl text-xs font-semibold text-charcoal-600">
               <button
                 type="button"
                 onClick={() => setSelectedMethod("qr")}
                 className={`py-2 px-2.5 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
                   selectedMethod === "qr"
-                    ? "bg-white text-charcoal-900 shadow-sm font-bold"
+                    ? "bg-white text-forest-900 shadow-sm font-bold"
                     : "hover:text-charcoal-900"
                 }`}
               >
                 <QrCode className="w-3.5 h-3.5 text-forest-700" />
-                <span>Scan QR Code</span>
+                <span>Scan Google Pay / UPI QR</span>
               </button>
 
               <button
                 type="button"
-                onClick={() => setSelectedMethod("razorpay")}
+                onClick={() => setSelectedMethod("upi_apps")}
                 className={`py-2 px-2.5 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                  selectedMethod === "razorpay"
-                    ? "bg-white text-charcoal-900 shadow-sm font-bold"
+                  selectedMethod === "upi_apps"
+                    ? "bg-white text-purple-900 shadow-sm font-bold"
                     : "hover:text-charcoal-900"
                 }`}
               >
-                <CreditCard className="w-3.5 h-3.5 text-blue-600" />
-                <span>Cards & NetBanking</span>
+                <Smartphone className="w-3.5 h-3.5 text-purple-600" />
+                <span>Pay via UPI Apps</span>
               </button>
             </div>
 
-            {/* METHOD 1: UPI APPS (PhonePe, Google Pay, Paytm) */}
+            {/* METHOD 1: DYNAMIC & OFFICIAL GOOGLE PAY SCAN QR */}
+            {selectedMethod === "qr" && (
+              <div className="p-4 bg-slate-50 border border-charcoal-200 rounded-2xl text-center space-y-3 shadow-inner">
+                <div className="text-xs font-bold text-charcoal-800">
+                  Scan & Pay Exactly <span className="text-forest-800 font-extrabold text-sm">₹{amountRupeesFormatted}</span>
+                </div>
+
+                {/* Official Google Pay QR Code Display */}
+                <div className="p-2.5 bg-white border-2 border-forest-600 rounded-2xl inline-block shadow-md max-w-[240px]">
+                  <img
+                    src={merchantQrUrl || "/upi-qr.jpg"}
+                    alt="Varun Shetty Google Pay UPI QR Code"
+                    className="w-52 h-52 mx-auto object-contain rounded-xl"
+                  />
+                </div>
+
+                <div className="text-[11px] text-charcoal-600 max-w-xs mx-auto leading-tight">
+                  Scan with <strong>Google Pay, PhonePe, Paytm, BHIM</strong>, or any UPI banking app.
+                </div>
+
+                {/* Payee & UPI ID Details Bar */}
+                <div className="p-2.5 bg-white rounded-xl border border-charcoal-200 text-xs space-y-1 text-left">
+                  <div className="flex justify-between items-center text-[11px]">
+                    <span className="text-charcoal-500">Verified Payee:</span>
+                    <span className="font-bold text-charcoal-900">{merchantName} (Elite Study Zone)</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-1 border-t border-slate-100">
+                    <span className="text-charcoal-500 font-sans">Primary UPI ID:</span>
+                    <div className="flex items-center gap-1.5 font-mono font-bold text-forest-800">
+                      <span>{merchantUpiId}</span>
+                      <button
+                        type="button"
+                        onClick={copyUpiId}
+                        className="p-1 hover:bg-slate-100 rounded text-charcoal-500"
+                        title="Copy UPI ID"
+                      >
+                        {copiedUpi ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                  {merchantUpiAlias && merchantUpiAlias !== merchantUpiId && (
+                    <div className="flex justify-between items-center text-[10px] text-charcoal-400">
+                      <span>Alternate UPI VPA:</span>
+                      <span className="font-mono">{merchantUpiAlias}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Instant 12-Digit UTR Entry in QR Tab */}
+                <div className="p-3 bg-white rounded-xl border-2 border-emerald-300 space-y-2 text-left shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-bold text-charcoal-900 block">
+                      Enter 12-Digit UPI UTR Reference <span className="text-rose-600">*</span>
+                    </label>
+                    <span className={`text-[10px] font-mono font-bold ${isUtrValid ? "text-emerald-700" : "text-amber-700"}`}>
+                      {isUtrValid ? "✓ 12 Digits Verified" : `${cleanUtr.length}/12 Digits`}
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    maxLength={12}
+                    placeholder="e.g. 433018294821 from payment receipt"
+                    value={utrNumber}
+                    onChange={(e) => setUtrNumber(e.target.value.replace(/\D/g, "").slice(0, 12))}
+                    className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-600 font-mono font-bold tracking-wider"
+                    required
+                  />
+                  <Button
+                    variant="primary"
+                    disabled={!isUtrValid}
+                    onClick={() => handleFinalizeVerification()}
+                    className={`w-full justify-center gap-2 font-bold text-xs py-2.5 shadow-md transition-all ${
+                      isUtrValid
+                        ? "bg-emerald-700 hover:bg-emerald-600 text-white cursor-pointer"
+                        : "bg-slate-200 text-slate-400 cursor-not-allowed opacity-70"
+                    }`}
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>{isUtrValid ? `Confirm ₹${amountRupeesFormatted} & Issue Door PIN →` : `Enter 12-Digit UTR to Confirm (${cleanUtr.length}/12)`}</span>
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* METHOD 2: UPI APPS INTENT (PhonePe, Google Pay, Paytm) */}
             {selectedMethod === "upi_apps" && (
               <div className="space-y-3">
                 <div className="text-[11px] font-bold text-charcoal-700">
                   Tap to launch UPI app directly on your phone:
                 </div>
 
-                {/* 1. PhonePe Primary Button (Iconic Purple Brand) */}
+                {/* 1. Google Pay Button */}
+                <button
+                  type="button"
+                  onClick={() => handleOpenUpiApp("gpay")}
+                  className="w-full flex items-center justify-between p-3.5 rounded-xl border border-charcoal-200 bg-white hover:border-blue-600 hover:shadow-md transition-all group text-left transform active:scale-98"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center font-bold text-xs shadow-sm">
+                      <span className="text-blue-600 font-extrabold text-sm">G</span>
+                      <span className="text-red-500 font-extrabold text-sm">P</span>
+                      <span className="text-amber-500 font-extrabold text-sm">a</span>
+                      <span className="text-green-600 font-extrabold text-sm">y</span>
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-charcoal-900 group-hover:text-blue-700">
+                        Google Pay
+                      </div>
+                      <div className="text-[11px] text-charcoal-500">
+                        Pay via Google Pay to Varun Shetty
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 font-bold text-xs text-charcoal-700 group-hover:text-blue-700">
+                    <span>Pay ₹{amountRupeesFormatted}</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                </button>
+
+                {/* 2. PhonePe Primary Button (Iconic Purple Brand) */}
                 <button
                   type="button"
                   onClick={() => handleOpenUpiApp("phonepe")}
@@ -542,34 +643,6 @@ export function RazorpayCheckoutModal({
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 font-bold text-xs text-purple-700">
-                    <span>Pay ₹{amountRupeesFormatted}</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                  </div>
-                </button>
-
-                {/* 2. Google Pay Button */}
-                <button
-                  type="button"
-                  onClick={() => handleOpenUpiApp("gpay")}
-                  className="w-full flex items-center justify-between p-3.5 rounded-xl border border-charcoal-200 bg-white hover:border-blue-600 hover:shadow-md transition-all group text-left transform active:scale-98"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center font-bold text-xs shadow-sm">
-                      <span className="text-blue-600 font-extrabold text-sm">G</span>
-                      <span className="text-red-500 font-extrabold text-sm">P</span>
-                      <span className="text-amber-500 font-extrabold text-sm">a</span>
-                      <span className="text-green-600 font-extrabold text-sm">y</span>
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold text-charcoal-900 group-hover:text-blue-700">
-                        Google Pay
-                      </div>
-                      <div className="text-[11px] text-charcoal-500">
-                        Pay via Google Pay UPI
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1.5 font-bold text-xs text-charcoal-700 group-hover:text-blue-700">
                     <span>Pay ₹{amountRupeesFormatted}</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                   </div>
@@ -609,78 +682,6 @@ export function RazorpayCheckoutModal({
                   <Zap className="w-3.5 h-3.5 text-amber-600" />
                   <span>Choose Other Installed UPI App (Cred, BHIM, Amazon Pay)</span>
                 </button>
-              </div>
-            )}
-
-            {/* METHOD 2: DYNAMIC AMOUNT SCAN QR */}
-            {selectedMethod === "qr" && (
-              <div className="p-4 bg-slate-50 border border-charcoal-200 rounded-2xl text-center space-y-3 shadow-inner">
-                <div className="text-xs font-bold text-charcoal-800">
-                  Scan & Pay Exactly <span className="text-forest-800 font-extrabold">₹{amountRupeesFormatted}</span>
-                </div>
-
-                <div className="p-3 bg-white border-2 border-forest-600 rounded-2xl inline-block shadow-md">
-                  <img
-                    src={merchantQrUrl || dynamicQrImageUrl}
-                    alt="UPI Dynamic QR Code"
-                    className="w-48 h-48 mx-auto object-contain"
-                  />
-                </div>
-
-                <div className="text-[11px] text-charcoal-600 max-w-xs mx-auto">
-                  Scan with any camera, Google Pay, PhonePe, Paytm, or BHIM. Amount is automatically configured.
-                </div>
-
-                {/* Center UPI ID Bar with Copy */}
-                <div className="flex items-center justify-between p-2.5 bg-white rounded-xl border border-charcoal-200 text-xs">
-                  <span className="text-charcoal-500 font-sans">Center Receiving UPI ID:</span>
-                  <div className="flex items-center gap-1.5 font-mono font-bold text-forest-800">
-                    <span>{merchantUpiId}</span>
-                    <button
-                      type="button"
-                      onClick={copyUpiId}
-                      className="p-1 hover:bg-slate-100 rounded text-charcoal-500"
-                      title="Copy UPI ID"
-                    >
-                      {copiedUpi ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                    </button>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setFlowStep("awaiting_payment")}
-                  className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl transition-all shadow"
-                >
-                  I Have Scanned & Completed Payment →
-                </button>
-              </div>
-            )}
-
-            {/* METHOD 3: RAZORPAY GATEWAY (CARDS & NET BANKING) */}
-            {selectedMethod === "razorpay" && (
-              <div className="p-4 bg-slate-50 border border-charcoal-200 rounded-2xl space-y-3">
-                <div className="flex items-center gap-2 text-xs font-bold text-charcoal-900">
-                  <Lock className="w-4 h-4 text-blue-600" />
-                  <span>Razorpay Standard Checkout Gateway</span>
-                </div>
-                <p className="text-xs text-charcoal-600 leading-relaxed">
-                  Pay securely using Credit / Debit Cards (RuPay, Visa, Mastercard), Net Banking from all 50+ Indian banks, or online wallets.
-                </p>
-
-                <div className="p-3 bg-white rounded-xl border border-charcoal-200 flex justify-between items-center text-xs">
-                  <span className="text-charcoal-600 font-sans">Gateway Provider:</span>
-                  <span className="font-bold text-blue-700 font-mono">Razorpay Official (India)</span>
-                </div>
-
-                <Button
-                  variant="primary"
-                  onClick={handleOpenRazorpay}
-                  className="w-full justify-center bg-blue-700 hover:bg-blue-600 text-white font-bold text-xs py-3 rounded-xl shadow-md"
-                >
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  <span>Open Razorpay Gateway (₹{amountRupeesFormatted})</span>
-                </Button>
               </div>
             )}
           </div>

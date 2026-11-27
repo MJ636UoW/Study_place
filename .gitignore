@@ -48,6 +48,8 @@ SecretScanner/
 *.zip
 *.docx
 *.jpg
+!public/*.jpg
+!public/*.png
 build_api_clean.py
 build_phase1.py
 build_phases234.py

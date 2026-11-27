@@ -1064,7 +1064,7 @@ function BookContent() {
             />
 
             <div className="p-3 border border-emerald-300 bg-emerald-50 text-[11px] font-sans text-emerald-900 rounded-lg">
-              ✨ Instant checkout via PhonePe, Google Pay, dynamic UPI QR code, or Cards. Your Smart Door Keypad PIN is generated and delivered immediately via WhatsApp & Email upon payment. To exit, press the interior exit button.
+              ✨ Instant checkout via Google Pay, PhonePe, Paytm, or UPI QR code. Your Smart Door Keypad PIN is generated and delivered immediately via WhatsApp & Email upon payment. To exit, press the interior exit button.
             </div>
           </form>
         )}

@@ -10,12 +10,13 @@ export async function GET() {
       if (settings) {
         return NextResponse.json({
           success: true,
-          upiId: settings.upiId || "elitestudyzone@okhdfcbank",
-          accountHolder: settings.accountHolder || "Elite Study Zone",
+          upiId: settings.upiId || "shettyvarun001@okicici",
+          upiIdAlias: "shettyvarun001@okhdfcbank",
+          accountHolder: settings.accountHolder || "Varun Shetty",
           accountNumber: settings.accountNumber || "50200084920192",
           ifscCode: settings.ifscCode || "HDFC0000123",
-          qrCodeUrl: settings.qrCodeUrl || "",
-          razorpayKeyId: settings.razorpayKeyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
+          qrCodeUrl: settings.qrCodeUrl || "/upi-qr.jpg",
+          razorpayKeyId: "",
         });
       }
     }
@@ -25,11 +26,12 @@ export async function GET() {
 
   return NextResponse.json({
     success: true,
-    upiId: "elitestudyzone@okhdfcbank",
-    accountHolder: "Elite Study Zone",
+    upiId: "shettyvarun001@okicici",
+    upiIdAlias: "shettyvarun001@okhdfcbank",
+    accountHolder: "Varun Shetty",
     accountNumber: "50200084920192",
     ifscCode: "HDFC0000123",
-    qrCodeUrl: "",
-    razorpayKeyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
+    qrCodeUrl: "/upi-qr.jpg",
+    razorpayKeyId: "",
   });
 }
