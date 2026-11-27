@@ -21,7 +21,6 @@ interface SyncStudentParams {
 
 export async function syncStudentWithFitFaat(params: SyncStudentParams): Promise<{
   success: boolean;
-  userId?: string | number;
   message?: string;
   raw?: unknown;
 }> {
@@ -35,7 +34,7 @@ export async function syncStudentWithFitFaat(params: SyncStudentParams): Promise
 
   try {
     const postBody = new URLSearchParams({
-      MasterId: FITFAAT_CONFIG.masterId,
+      GymId: FITFAAT_CONFIG.masterId,
       Name: name || "Elite Scholar",
       Mobile: cleanMobile,
       Email: email,
@@ -44,7 +43,7 @@ export async function syncStudentWithFitFaat(params: SyncStudentParams): Promise
       Image_base64String: "",
     });
 
-    const regRes = await fetch(`${FITFAAT_CONFIG.baseUrl}/Api/Web/User_Registration`, {
+    const regRes = await fetch(`${FITFAAT_CONFIG.baseUrl}/Api/Web/User_Registration_With_Gym_Prospect`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${FITFAAT_CONFIG.bearerToken}`,
@@ -54,13 +53,12 @@ export async function syncStudentWithFitFaat(params: SyncStudentParams): Promise
     });
 
     const regData = await regRes.json();
-    const userId = regData?.Data?.UserId || regData?.UserId || cleanMobile;
 
     // Next, trigger Biometric Device association with the eSSL machine
     try {
       const bioBody = new URLSearchParams({
         MasterId: FITFAAT_CONFIG.masterId,
-        UserId: String(userId),
+        UserId: cleanMobile,
         UserMobile: cleanMobile,
         Type: "Add",
         DeviceNo: FITFAAT_CONFIG.deviceId,
@@ -80,9 +78,8 @@ export async function syncStudentWithFitFaat(params: SyncStudentParams): Promise
     }
 
     return {
-      success: true,
-      userId,
-      message: `Student registered in FitFaat & linked to eSSL machine ${FITFAAT_CONFIG.deviceId}`,
+      success: regData?.IsSuccess ?? true,
+      message: regData?.Message || `Student registered in FitFaat & linked to eSSL machine ${FITFAAT_CONFIG.deviceId}`,
       raw: regData,
     };
   } catch (err: unknown) {
