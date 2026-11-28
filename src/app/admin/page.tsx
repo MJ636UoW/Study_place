@@ -186,10 +186,11 @@ export default function AdminPage() {
   const handlePricingCellChange = (
     shiftId: string,
     tenure: "one_visit" | "week" | "month" | "weekend",
-    val: number
+    val: number | string
   ) => {
+    const num = typeof val === "string" ? (val === "" ? 0 : isNaN(Number(val)) ? 0 : Number(val)) : val;
     setPricingMatrix((prev) =>
-      prev.map((row) => (row.shiftId === shiftId ? { ...row, [tenure]: val } : row))
+      prev.map((row) => (row.shiftId === shiftId ? { ...row, [tenure]: num } : row))
     );
   };
 
@@ -1705,8 +1706,9 @@ export default function AdminPage() {
                     </label>
                     <input
                       type="number"
-                      value={hourlyRateInput}
-                      onChange={(e) => setHourlyRateInput(Number(e.target.value))}
+                      value={hourlyRateInput === 0 ? "" : hourlyRateInput}
+                      onChange={(e) => setHourlyRateInput(e.target.value === "" ? 0 : Number(e.target.value))}
+                      placeholder="0"
                       className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono font-bold"
                     />
                     <p className="text-[10px] text-charcoal-500 mt-0.5">Always ₹0 registration fee</p>
@@ -1718,8 +1720,9 @@ export default function AdminPage() {
                     </label>
                     <input
                       type="number"
-                      value={dayPassRateInput}
-                      onChange={(e) => setDayPassRateInput(Number(e.target.value))}
+                      value={dayPassRateInput === 0 ? "" : dayPassRateInput}
+                      onChange={(e) => setDayPassRateInput(e.target.value === "" ? 0 : Number(e.target.value))}
+                      placeholder="0"
                       className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono font-bold"
                     />
                     <p className="text-[10px] text-charcoal-500 mt-0.5">Always ₹0 registration fee</p>
@@ -1731,8 +1734,9 @@ export default function AdminPage() {
                     </label>
                     <input
                       type="number"
-                      value={weeklyRateInput}
-                      onChange={(e) => setWeeklyRateInput(Number(e.target.value))}
+                      value={weeklyRateInput === 0 ? "" : weeklyRateInput}
+                      onChange={(e) => setWeeklyRateInput(e.target.value === "" ? 0 : Number(e.target.value))}
+                      placeholder="0"
                       className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono font-bold"
                     />
                   </div>
@@ -1743,8 +1747,9 @@ export default function AdminPage() {
                     </label>
                     <input
                       type="number"
-                      value={monthlyRateInput}
-                      onChange={(e) => setMonthlyRateInput(Number(e.target.value))}
+                      value={monthlyRateInput === 0 ? "" : monthlyRateInput}
+                      onChange={(e) => setMonthlyRateInput(e.target.value === "" ? 0 : Number(e.target.value))}
+                      placeholder="0"
                       className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono font-bold"
                     />
                   </div>
@@ -1756,8 +1761,9 @@ export default function AdminPage() {
                   </label>
                   <input
                     type="number"
-                    value={oneTimeRegFeeInput}
-                    onChange={(e) => setOneTimeRegFeeInput(Number(e.target.value))}
+                    value={oneTimeRegFeeInput === 0 ? "" : oneTimeRegFeeInput}
+                    onChange={(e) => setOneTimeRegFeeInput(e.target.value === "" ? 0 : Number(e.target.value))}
+                    placeholder="0"
                     className="w-full px-3 py-2 text-xs border border-emerald-400 bg-emerald-50 text-emerald-950 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono font-bold"
                   />
                   <p className="text-[10px] text-charcoal-600 mt-1">
@@ -2577,8 +2583,9 @@ export default function AdminPage() {
                     <td className="p-2 bg-amber-50/30">
                       <input
                         type="number"
-                        value={row.one_visit}
-                        onChange={(e) => handlePricingCellChange(row.shiftId, "one_visit", Number(e.target.value))}
+                        value={row.one_visit === 0 ? "" : row.one_visit}
+                        onChange={(e) => handlePricingCellChange(row.shiftId, "one_visit", e.target.value)}
+                        placeholder="0"
                         className="w-24 px-2 py-1.5 border border-ivory-300 rounded font-mono text-xs focus:ring-1 focus:ring-forest-700 bg-white"
                         required
                       />
@@ -2586,8 +2593,9 @@ export default function AdminPage() {
                     <td className="p-2">
                       <input
                         type="number"
-                        value={row.week}
-                        onChange={(e) => handlePricingCellChange(row.shiftId, "week", Number(e.target.value))}
+                        value={row.week === 0 ? "" : row.week}
+                        onChange={(e) => handlePricingCellChange(row.shiftId, "week", e.target.value)}
+                        placeholder="0"
                         className="w-24 px-2 py-1.5 border border-ivory-300 rounded font-mono text-xs focus:ring-1 focus:ring-forest-700 bg-white"
                         required
                       />
@@ -2595,8 +2603,9 @@ export default function AdminPage() {
                     <td className="p-2 bg-forest-50/30">
                       <input
                         type="number"
-                        value={row.month}
-                        onChange={(e) => handlePricingCellChange(row.shiftId, "month", Number(e.target.value))}
+                        value={row.month === 0 ? "" : row.month}
+                        onChange={(e) => handlePricingCellChange(row.shiftId, "month", e.target.value)}
+                        placeholder="0"
                         className="w-24 px-2 py-1.5 border border-ivory-300 rounded font-mono text-xs font-bold text-forest-900 focus:ring-1 focus:ring-forest-700 bg-white"
                         required
                       />
@@ -2604,8 +2613,9 @@ export default function AdminPage() {
                     <td className="p-2">
                       <input
                         type="number"
-                        value={row.weekend}
-                        onChange={(e) => handlePricingCellChange(row.shiftId, "weekend", Number(e.target.value))}
+                        value={row.weekend === 0 ? "" : row.weekend}
+                        onChange={(e) => handlePricingCellChange(row.shiftId, "weekend", e.target.value)}
+                        placeholder="0"
                         className="w-24 px-2 py-1.5 border border-ivory-300 rounded font-mono text-xs focus:ring-1 focus:ring-forest-700 bg-white"
                         required
                       />
