@@ -162,3 +162,37 @@ export function formatDisplayDate(dateStr: string): string {
 export function doIntervalsOverlap(s1: string, e1: string, s2: string, e2: string): boolean {
   return s1 <= e2 && e1 >= s2;
 }
+
+/**
+ * Get current date (YYYY-MM-DD) and hour (0-23) in Indian Standard Time (Asia/Kolkata)
+ */
+export function getIstDateAndHour(): { todayStr: string; currentHour: number } {
+  const now = new Date();
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hour12: false,
+  });
+  const formatted = formatter.format(now);
+  const [datePart, hourPart] = formatted.split(", ");
+  return {
+    todayStr: datePart,
+    currentHour: parseInt(hourPart, 10),
+  };
+}
+
+/**
+ * Compute the next day (YYYY-MM-DD) given a date string
+ */
+export function getTomorrowDateStr(dateStr: string): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  date.setDate(date.getDate() + 1);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}

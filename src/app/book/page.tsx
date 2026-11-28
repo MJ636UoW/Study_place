@@ -24,6 +24,8 @@ import {
   calculateEndDate,
   formatDisplayDate,
   formatDate,
+  getIstDateAndHour,
+  getTomorrowDateStr,
 } from "@/lib/dateUtils";
 import {
   ShiftId,
@@ -56,6 +58,9 @@ import { motion } from "motion/react";
 function BookContent() {
   const searchParams = useSearchParams();
 
+  // Current Indian Standard Time (IST) Date and Hour
+  const istInfo = useMemo(() => getIstDateAndHour(), []);
+
   // 1. Duration & Shift selection (Strictly 4 plans & 5 shifts)
   const initialDuration = (searchParams.get("duration") as PlanTenure) || "hour";
   const initialShift = (searchParams.get("shift") as ShiftId) || "deep_focus";
@@ -69,16 +74,6 @@ function BookContent() {
     SHIFTS.some((s) => s.id === initialShift) ? initialShift : "deep_focus"
   );
 
-  // Time Selection (Center open 07:00 AM to 11:00 PM)
-  const [startHour, setStartHour] = useState<number>(8); // Default 08:00 AM
-  const [startDate, setStartDate] = useState<string>(() => formatDate(new Date()));
-  const [viewMode, setViewMode] = useState<"map" | "list">("map");
-  const [isReturningMember, setIsReturningMember] = useState<boolean>(false);
-
-  // Locker Selection State
-  const [withLocker, setWithLocker] = useState<boolean>(false);
-  const [selectedLockerId, setSelectedLockerId] = useState<string>("locker-02");
-
   // Selected shift definition
   const currentShift = useMemo(() => {
     return SHIFTS.find((s) => s.id === selectedShiftId) || SHIFTS[1];
@@ -86,6 +81,41 @@ function BookContent() {
 
   // Daily hours derived from shift
   const dailyHours = currentShift.hours;
+
+  // Strict Restriction: Check if any slot can fit today strictly AFTER current hour (e.g. at 8:00 PM, slots must start > 8:00 PM)
+  const canFitAnySlotToday = useMemo(() => {
+    return [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21].some(
+      (h) => h > istInfo.currentHour && h + dailyHours <= 23
+    );
+  }, [istInfo.currentHour, dailyHours]);
+
+  const earliestBookableDate = useMemo(() => {
+    return canFitAnySlotToday ? istInfo.todayStr : getTomorrowDateStr(istInfo.todayStr);
+  }, [canFitAnySlotToday, istInfo.todayStr]);
+
+  // Commencement Date: Defaults to today (if slots available) or tomorrow (if today has concluded)
+  const [startDate, setStartDate] = useState<string>(() => {
+    const { todayStr, currentHour } = getIstDateAndHour();
+    const canFit = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21].some(
+      (h) => h > currentHour && h + 4 <= 23
+    );
+    return canFit ? todayStr : getTomorrowDateStr(todayStr);
+  });
+
+  const [startHour, setStartHour] = useState<number>(() => {
+    const { currentHour } = getIstDateAndHour();
+    const upcoming = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21].find(
+      (h) => h > currentHour && h + 4 <= 23
+    );
+    return upcoming || 8;
+  });
+
+  const [viewMode, setViewMode] = useState<"map" | "list">("map");
+  const [isReturningMember, setIsReturningMember] = useState<boolean>(false);
+
+  // Locker Selection State
+  const [withLocker, setWithLocker] = useState<boolean>(false);
+  const [selectedLockerId, setSelectedLockerId] = useState<string>("locker-02");
 
   // Format hour label
   const formatHourLabel = (h: number) => {
@@ -96,6 +126,41 @@ function BookContent() {
 
   const endHour = Math.min(23, startHour + dailyHours);
   const timeSlotLabel = `${formatHourLabel(startHour)} — ${formatHourLabel(endHour)} (${dailyHours} hrs daily)`;
+
+  // Strict Restriction: Check which hours are valid for the selected date
+  const isSelectedDateToday = startDate === istInfo.todayStr;
+
+  const availableHours = useMemo(() => {
+    const ALL_HOURS = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
+    return ALL_HOURS.map((h) => {
+      // If booking for today, slots at or before the current hour are completely passed / disabled
+      const isPast = isSelectedDateToday && h <= istInfo.currentHour;
+      const exceedsClosing = h + dailyHours > 23;
+      const canFit = !isPast && !exceedsClosing;
+      return {
+        hour: h,
+        isPast,
+        exceedsClosing,
+        canFit,
+      };
+    });
+  }, [isSelectedDateToday, istInfo.currentHour, dailyHours]);
+
+  // Keep startHour pointing to a valid future slot
+  useEffect(() => {
+    const currentHourObj = availableHours.find((item) => item.hour === startHour);
+    if (!currentHourObj || !currentHourObj.canFit) {
+      const firstValid = availableHours.find((item) => item.canFit);
+      if (firstValid) {
+        setStartHour(firstValid.hour);
+      } else if (isSelectedDateToday) {
+        // Today has no slots left for this duration -> advance to tomorrow
+        const tomorrow = getTomorrowDateStr(istInfo.todayStr);
+        setStartDate(tomorrow);
+        setStartHour(8);
+      }
+    }
+  }, [availableHours, startHour, isSelectedDateToday, istInfo.todayStr]);
 
   // Pricing calculations
   const basePlanPrice = useMemo(() => {
@@ -252,11 +317,19 @@ function BookContent() {
     setIsInspectorOpen(true);
   };
 
-  // Quick date presets
+  // Quick date presets (strictly preventing past dates & enforcing same-day availability)
   const handleDatePreset = (daysFromNow: number) => {
-    const d = new Date();
-    d.setDate(d.getDate() + daysFromNow);
-    setStartDate(formatDate(d));
+    if (daysFromNow === 0 && !canFitAnySlotToday) {
+      setStartDate(getTomorrowDateStr(istInfo.todayStr));
+      return;
+    }
+    const [y, m, d] = istInfo.todayStr.split("-").map(Number);
+    const target = new Date(y, m - 1, d);
+    target.setDate(target.getDate() + daysFromNow);
+    const yr = target.getFullYear();
+    const mo = String(target.getMonth() + 1).padStart(2, "0");
+    const da = String(target.getDate()).padStart(2, "0");
+    setStartDate(`${yr}-${mo}-${da}`);
   };
 
   // Selected seat availability details
@@ -479,30 +552,42 @@ function BookContent() {
             </span>
           </div>
 
-          {/* Start Hour Horizontal Selector */}
+          {/* Start Hour Horizontal Selector with Same-Day Time Lock */}
           <div className="space-y-1.5">
-            <span className="text-[11px] font-mono text-charcoal-600">
-              Select Start Time:
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-mono text-charcoal-600">
+                Select Start Time:
+              </span>
+              {isSelectedDateToday && (
+                <span className="text-[10px] font-mono text-amber-800 bg-amber-100 px-2 py-0.5 rounded border border-amber-300">
+                  ⚡ Advance Booking: Only slots starting after {formatHourLabel(istInfo.currentHour)} available today
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
-              {[7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21].map((h) => {
+              {availableHours.map(({ hour: h, isPast, exceedsClosing, canFit }) => {
                 const isSelected = startHour === h;
-                const canFit = h + dailyHours <= 23;
                 return (
                   <button
                     key={h}
                     type="button"
                     disabled={!canFit}
                     onClick={() => setStartHour(h)}
-                    className={`px-3 py-1.5 text-xs font-mono font-bold rounded-lg whitespace-nowrap transition-all flex-shrink-0 ${
+                    title={isPast ? "Slot has already passed today" : exceedsClosing ? "Exceeds 11:00 PM closing" : undefined}
+                    className={`px-3 py-1.5 text-xs font-mono font-bold rounded-lg whitespace-nowrap transition-all flex-shrink-0 flex flex-col items-center justify-center ${
                       isSelected
                         ? "bg-forest-800 text-white shadow-md ring-2 ring-forest-600 scale-105"
                         : canFit
                         ? "bg-white text-charcoal-800 border border-ivory-300 hover:bg-forest-50"
-                        : "bg-ivory-200 text-charcoal-400 border border-ivory-200 opacity-40 cursor-not-allowed"
+                        : "bg-slate-100 text-slate-400 border border-slate-200 opacity-40 cursor-not-allowed"
                     }`}
                   >
-                    {formatHourLabel(h)}
+                    <span>{formatHourLabel(h)}</span>
+                    {isPast && (
+                      <span className="text-[8px] font-sans font-semibold text-rose-500 uppercase tracking-tighter">
+                        Passed
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -522,28 +607,44 @@ function BookContent() {
         </div>
 
         {/* =========================================================================
-            START DATE & CALENDAR RULES
+            START DATE & CALENDAR RULES (STRICTLY NO PAST DATES)
             ========================================================================= */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 pt-4 border-t border-ivory-200 items-end">
           <div className="md:col-span-4 space-y-2">
-            <label htmlFor="start-date-input" className="block text-xs uppercase font-mono text-charcoal-700 tracking-wider font-bold">
-              Commencement Date
-            </label>
+            <div className="flex items-center justify-between">
+              <label htmlFor="start-date-input" className="block text-xs uppercase font-mono text-charcoal-700 tracking-wider font-bold">
+                Commencement Date
+              </label>
+              <span className="text-[10px] font-mono text-emerald-800 font-bold">
+                Strict: Future / Today Only
+              </span>
+            </div>
             <input
               id="start-date-input"
               type="date"
+              min={earliestBookableDate}
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (!val) return;
+                if (val < earliestBookableDate) {
+                  setStartDate(earliestBookableDate);
+                  return;
+                }
+                setStartDate(val);
+              }}
               className="w-full px-3.5 py-2.5 min-h-[44px] bg-white text-charcoal-900 border border-ivory-300 rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-forest-800 shadow-sm"
             />
             <div className="flex items-center gap-2 text-[10px] font-mono text-charcoal-600">
               <span>Quick:</span>
               <button
                 type="button"
+                disabled={!canFitAnySlotToday}
                 onClick={() => handleDatePreset(0)}
-                className="underline hover:text-forest-900"
+                className={`underline ${canFitAnySlotToday ? "hover:text-forest-900" : "text-slate-400 cursor-not-allowed line-through"}`}
+                title={canFitAnySlotToday ? "Book today" : "Today's remaining hours have closed"}
               >
-                Today
+                {canFitAnySlotToday ? "Today" : "Today (Closed)"}
               </button>
               <span>&bull;</span>
               <button
@@ -1100,6 +1201,8 @@ function BookContent() {
               tierName: `${tenure.toUpperCase()} Plan (${currentShift.name})`,
               startDate: startDate,
               endDate: calculatedEndDate,
+              startHour: startHour,
+              dailySlot: timeSlotLabel,
               requestStatus: "pending_approval",
               paymentStatus: "awaiting_verification",
               utrNumber: cleanUtr,

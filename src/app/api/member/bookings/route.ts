@@ -5,6 +5,7 @@ import { sendBookingConfirmationEmail } from "@/lib/mailer";
 import { sendWhatsAppBookingPass } from "@/lib/whatsapp";
 import { syncStudentWithFitFaat } from "@/lib/fitfaat";
 import { bookingsFixture } from "@/fixtures";
+import { getIstDateAndHour } from "@/lib/dateUtils";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +52,30 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const booking = await req.json();
+
+    const { todayStr, currentHour } = getIstDateAndHour();
+    const bookingStartDate = booking.startDate || todayStr;
+
+    // Strict validation: Reject past dates
+    if (bookingStartDate < todayStr) {
+      return NextResponse.json(
+        { error: "Cannot book for past dates. Please select today or a future date." },
+        { status: 400 }
+      );
+    }
+
+    // Strict validation: For same-day bookings, hourly slots must start strictly in the future (after current hour)
+    if (bookingStartDate === todayStr && booking.startHour !== undefined && booking.startHour !== null) {
+      const selectedStartHour = Number(booking.startHour);
+      if (selectedStartHour <= currentHour) {
+        return NextResponse.json(
+          {
+            error: `Same-day booking restriction: Current time is ${currentHour}:00 IST. Slots can only be booked for future times (after ${currentHour}:00).`,
+          },
+          { status: 400 }
+        );
+      }
+    }
 
     // Extract student email from cookie or booking payload
     const cookieEmail = req.cookies.get("esz_student_email")?.value;
