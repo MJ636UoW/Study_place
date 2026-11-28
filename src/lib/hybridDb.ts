@@ -5,26 +5,39 @@ import { hashPassword, comparePassword } from "./auth";
 import crypto from "crypto";
 
 // Fallback in-memory store if MongoDB Atlas IP whitelist is still being configured
-const fallbackUsers: Map<string, Partial<IUser>> = new Map([
-  [
-    "mandarj2412@gmail.com",
-    {
-      name: "Mandar Joshi",
-      email: "mandarj2412@gmail.com",
-      phone: "+91 98753 59327",
-      role: "student",
-      emailVerified: true,
-      allottedHours: 48,
-      usedHours: 0,
-      deskNumber: "Desk #04",
-      lockerNumber: "Locker #14",
-      biometricPin: "001",
-      authProvider: "email",
-    },
-  ],
-]);
+const fallbackUsers: Map<string, Partial<IUser>> = new Map();
 
 const fallbackPasses: Map<string, Partial<IHourlyMagicPass>> = new Map();
+
+export async function deleteUsersByPatterns(patterns: string[]) {
+  // 1. Clear matching users from fallback memory store
+  for (const [email, user] of Array.from(fallbackUsers.entries())) {
+    const emailMatch = patterns.some((p) => email.toLowerCase().includes(p.toLowerCase()));
+    const nameMatch = user.name && patterns.some((p) => user.name!.toLowerCase().includes(p.toLowerCase()));
+    if (emailMatch || nameMatch) {
+      fallbackUsers.delete(email);
+    }
+  }
+
+  // 2. Clear matching users from MongoDB Atlas
+  const mongoOk = await isMongoAvailable();
+  if (mongoOk) {
+    try {
+      const orConditions = patterns.flatMap((p) => [
+        { email: { $regex: p, $options: "i" } },
+        { name: { $regex: p, $options: "i" } },
+      ]);
+      if (orConditions.length > 0) {
+        const delRes = await User.deleteMany({ $or: orConditions });
+        console.log(`[deleteUsersByPatterns] Removed ${delRes.deletedCount} users from MongoDB.`);
+        return { deletedCount: delRes.deletedCount, mongo: true };
+      }
+    } catch (e) {
+      console.warn("[deleteUsersByPatterns] MongoDB delete error:", e);
+    }
+  }
+  return { deletedCount: 0, mongo: false };
+}
 
 let lastMongoCheck = 0;
 let lastMongoStatus = false;

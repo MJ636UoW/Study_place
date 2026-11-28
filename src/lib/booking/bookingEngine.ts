@@ -839,6 +839,30 @@ export class BookingEngine {
     return [...memoryRequests];
   }
 
+  public static purgeTestBookingsByPatterns(patterns: string[]) {
+    const isMatch = (val?: string) => {
+      if (!val) return false;
+      const lower = val.toLowerCase();
+      return patterns.some((p) => lower.includes(p.toLowerCase()));
+    };
+
+    const toDeleteIds = new Set<string>();
+    for (let i = memoryRequests.length - 1; i >= 0; i--) {
+      const r = memoryRequests[i];
+      if (isMatch(r.userId) || isMatch((r as any).userEmail) || isMatch((r as any).userName)) {
+        toDeleteIds.add(r.id);
+        memoryRequests.splice(i, 1);
+      }
+    }
+
+    for (let i = memoryAllocations.length - 1; i >= 0; i--) {
+      const a = memoryAllocations[i];
+      if (toDeleteIds.has(a.bookingRequestId) || isMatch(a.userId)) {
+        memoryAllocations.splice(i, 1);
+      }
+    }
+  }
+
   public static getAllRefunds() {
     return [...memoryRefunds];
   }
