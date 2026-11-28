@@ -17,6 +17,7 @@ import {
   ArrowRight,
   Zap,
   Lock,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
@@ -160,7 +161,7 @@ export function RazorpayCheckoutModal({
         });
       }
 
-      const activeKey = razorpayKeyId || (orderData.keyId !== "rzp_test_placeholder" ? orderData.keyId : "") || "rzp_test_placeholder";
+      const activeKey = orderData.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_placeholder";
 
       if ((window as any).Razorpay && activeKey && activeKey !== "rzp_test_placeholder") {
         const options = {

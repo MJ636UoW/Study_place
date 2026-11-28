@@ -103,7 +103,7 @@ export async function findUserByIdentifier(identifier: string) {
     if (user.phone && user.phone.replace(/\D/g, "").endsWith(last10)) {
       return user;
     }
-    if (user.email.toLowerCase() === cleanEmail) {
+    if (user.email && user.email.toLowerCase() === cleanEmail) {
       return user;
     }
   }
@@ -139,7 +139,7 @@ export async function createUser(userData: {
         usedHours: 0,
         deskNumber: "",
         lockerNumber: "",
-        biometricPin: pin,
+        biometricPin: "",
       });
       return { user: newUser, token: verificationToken };
     } catch (e) {
@@ -161,7 +161,7 @@ export async function createUser(userData: {
     usedHours: 0,
     deskNumber: "",
     lockerNumber: "",
-    biometricPin: pin,
+    biometricPin: "",
   };
   fallbackUsers.set(cleanEmail, memoryUser);
   return { user: memoryUser, token: verificationToken };

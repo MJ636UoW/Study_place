@@ -584,7 +584,6 @@ export class BookingEngine {
     }
     return reqRecord;
   }
-  }
 
   /**
    * Step 3: Verified captured payment confirms the booking while the hold remains valid.

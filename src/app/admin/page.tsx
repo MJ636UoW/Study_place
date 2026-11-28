@@ -2855,7 +2855,9 @@ export default function AdminPage() {
       </Dialog>
 
       {/* Global Print Styles for Cash Receipts & Tax Bills */}
-      <style jsx global>{`
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         @media print {
           body * {
             visibility: hidden;
@@ -2876,7 +2878,9 @@ export default function AdminPage() {
             box-shadow: none !important;
           }
         }
-      `}</style>
+      `,
+        }}
+      />
     </div>
   );
 }

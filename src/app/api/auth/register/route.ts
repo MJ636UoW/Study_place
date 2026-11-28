@@ -44,42 +44,13 @@ export async function POST(req: NextRequest) {
     }
 
     const confirmUrl = `${origin}/api/auth/verify?token=${encodeURIComponent(token)}&email=${encodeURIComponent(cleanEmail)}`;
-    const doorPin = user?.biometricPin || String(Math.floor(100000 + Math.random() * 900000));
 
-    sendVerificationEmail(cleanEmail, cleanName, token, origin, doorPin).catch((e) =>
+    // Note: Door PIN is NOT issued on registration.
+    // Door PIN is strictly issued AFTER the student books a plan, completes UPI payment,
+    // and the administrator verifies & approves the booking in the admin panel.
+    sendVerificationEmail(cleanEmail, cleanName, token, origin).catch((e) =>
       console.warn("sendVerificationEmail error:", e)
     );
-
-    sendWelcomeAccessEmail({
-      to: cleanEmail,
-      name: cleanName,
-      doorPin,
-      siteUrl: origin,
-    }).catch((e) => console.warn("sendWelcomeAccessEmail error:", e));
-
-    // Also dispatch welcome & credentials via WhatsApp
-    let whatsappLink: string | null = null;
-    if (phone) {
-      const cleanPhone = phone.replace(/\D/g, "");
-      const formattedPhone = cleanPhone.length === 10 ? "91" + cleanPhone : cleanPhone;
-      const waMsg = `*ELITE STUDY ZONE • DOOR ACCESS PASS*\n\nHello ${cleanName},\nWelcome to Elite Study Zone (Ghatkopar West).\n\nYour 6-Digit Door Keypad Access PIN is: *#${doorPin}*\n\nEnter this PIN on the digital door keypad to unlock. To exit the study hall, press the push-to-exit button next to the door.\n\nPortal: https://elitestudyzone.in`;
-      whatsappLink = `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodeURIComponent(waMsg)}`;
-
-      sendWhatsAppWelcome({
-        phone,
-        name: cleanName,
-        email: cleanEmail,
-        initialPassCode: doorPin,
-      }).catch((e) => console.warn("[WhatsApp] Welcome dispatch error:", e));
-
-      // Sync student with FitFaat & eSSL Door Keypad Machine
-      syncStudentWithFitFaat({
-        name: cleanName,
-        mobile: phone,
-        email: cleanEmail,
-        biometricPin: doorPin,
-      }).catch((e) => console.warn("[FitFaat] Welcome sync error:", e));
-    }
 
     const jwtToken = signJwtToken({
       userId: user?._id ? user._id.toString() : "user_" + Buffer.from(cleanEmail).toString("hex"),
@@ -90,16 +61,12 @@ export async function POST(req: NextRequest) {
 
     const res = NextResponse.json({
       success: true,
-      message: `Account created successfully! Welcome to Elite Study Zone, ${cleanName}. Your door access PIN is #${doorPin}.`,
+      message: `Account created successfully! Welcome to Elite Study Zone, ${cleanName}. You are now logged in.`,
       confirmUrl,
-      passCode: doorPin,
-      doorPin,
-      whatsappLink,
       user: {
         name: cleanName,
         email: cleanEmail,
         phone,
-        doorPin,
       },
     });
 
@@ -107,7 +74,6 @@ export async function POST(req: NextRequest) {
     res.cookies.set("esz_student_session", "active", { path: "/", maxAge: 604800, sameSite: "lax" });
     res.cookies.set("esz_student_email", encodeURIComponent(cleanEmail), { path: "/", maxAge: 604800, sameSite: "lax" });
     res.cookies.set("esz_student_name", encodeURIComponent(cleanName), { path: "/", maxAge: 604800, sameSite: "lax" });
-    res.cookies.set("esz_student_pin", doorPin, { path: "/", maxAge: 604800, sameSite: "lax" });
 
     return res;
   } catch (error: any) {

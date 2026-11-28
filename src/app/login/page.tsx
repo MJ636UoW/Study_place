@@ -244,7 +244,7 @@ function LoginContent() {
     }
   };
 
-  // 3. Normal Register (Email + Password + Email Confirmation Link)
+  // 3. Normal Register (Email + Password + Account Creation)
   const handleRegisterSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
@@ -270,38 +270,29 @@ function LoginContent() {
         return;
       }
 
-      if (data.confirmUrl) {
-        let cleanUrl = data.confirmUrl;
-        if (cleanUrl.includes("/api/auth/verify")) {
-          const q = cleanUrl.indexOf("?");
-          if (q !== -1) {
-            cleanUrl = `/api/auth/verify${cleanUrl.substring(q)}`;
-          }
-        }
-        setRegisteredConfirmUrl(cleanUrl);
-      }
+      // Establish client cookies
+      const activeEmail = data.user?.email || email;
+      const scholarName = data.user?.name || fullName || "Scholar";
+      document.cookie = `esz_student_session=active; path=/; max-age=604800; SameSite=Lax`;
+      document.cookie = `esz_student_email=${encodeURIComponent(activeEmail)}; path=/; max-age=604800; SameSite=Lax`;
+      document.cookie = `esz_student_name=${encodeURIComponent(scholarName)}; path=/; max-age=604800; SameSite=Lax`;
 
-      if (data.doorPin) {
-        try {
-          localStorage.setItem("esz_student_pin", data.doorPin);
-        } catch (_) {}
-        setRegisteredDoorPin(data.doorPin);
-      }
+      // Clear any PIN state
+      setRegisteredDoorPin(null);
+      setRegisteredWhatsAppLink(null);
 
-      if (data.whatsappLink) {
-        setRegisteredWhatsAppLink(data.whatsappLink);
-      }
+      // Revert back to login tab as requested
+      setActiveTab("login");
 
       setStatusMessage({
         type: "success",
-        text: `Welcome to Elite Study Zone, ${fullName}! Your door PIN is #${data.doorPin || "Generated"}. Tap the WhatsApp button below to receive your pass, or enter your dashboard.`,
+        text: `Account created successfully! Welcome to Elite Study Zone, ${scholarName}. You are now logged in. Redirecting to select your workstation plan...`,
       });
 
-      if (!data.whatsappLink) {
-        setTimeout(() => {
-          window.location.href = searchParams.get("redirect") || searchParams.get("next") || "/book";
-        }, 1500);
-      }
+      const next = searchParams.get("redirect") || searchParams.get("next") || "/book";
+      setTimeout(() => {
+        window.location.href = next;
+      }, 1200);
     } catch (err: unknown) {
       setIsLoading(false);
       setStatusMessage({
@@ -444,17 +435,15 @@ function LoginContent() {
           </h1>
           <p className="text-xs text-charcoal-600 font-sans max-w-sm mx-auto leading-relaxed">
             {activeTab === "register"
-              ? "Register to receive your Door Keypad PIN on WhatsApp and Email."
-              : activeTab === "magic_pass"
-              ? "Book flexible study shifts (2h, 3h, 5h, 10h, or Full Day) with instant door keypad PIN."
+              ? "Create your student account to book workstation seats and access study passes."
               : activeTab === "code_login"
-              ? "Have an access code from WhatsApp or an hourly pass? Enter your code below."
+              ? "Have an active pass code from WhatsApp or Email? Enter your PIN below."
               : "Sign in with Google, registered email, or access pass code."}
           </p>
 
-          {searchParams.get("redirect") === "/book" && (
-            <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-lg text-emerald-900 text-xs font-semibold max-w-sm mx-auto shadow-sm">
-              🎯 Sign in below to reserve your workstation seat and get your instant Door Keypad PIN.
+          {searchParams.get("redirect")?.includes("/book") && (
+            <div className="p-3 bg-forest-50 border border-forest-300 rounded-lg text-forest-900 text-xs font-semibold max-w-sm mx-auto shadow-sm">
+              🎯 Sign in or register below to choose your plan and reserve your workstation desk.
             </div>
           )}
         </div>
@@ -506,8 +495,8 @@ function LoginContent() {
             </span>
           </div>
 
-          {/* Clean Responsive 4 Tabs */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 p-1 bg-slate-100 rounded-lg text-xs font-sans font-medium text-charcoal-600 gap-1">
+          {/* Clean Responsive 3 Tabs */}
+          <div className="grid grid-cols-3 p-1 bg-slate-100 rounded-lg text-xs font-sans font-medium text-charcoal-600 gap-1">
             <button
               type="button"
               onClick={() => {
@@ -538,22 +527,6 @@ function LoginContent() {
               }`}
             >
               Register
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab("magic_pass");
-                setStatusMessage(null);
-              }}
-              className={`py-2 px-2 text-center rounded-md transition-all flex items-center justify-center gap-1 ${
-                activeTab === "magic_pass"
-                  ? "bg-white text-forest-900 font-bold shadow-sm"
-                  : "hover:text-charcoal-900"
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Hourly Pass</span>
             </button>
 
             <button
@@ -596,51 +569,14 @@ function LoginContent() {
                 </div>
               </div>
 
-              {registeredDoorPin && (
-                <div className="p-3 bg-white border border-emerald-400 rounded-lg text-center space-y-1 shadow-sm mt-1">
-                  <div className="text-[10px] font-mono uppercase text-emerald-800 font-bold tracking-wider">
-                    Your Door Keypad Access PIN
-                  </div>
-                  <div className="text-2xl font-mono font-extrabold text-emerald-950">
-                    #{registeredDoorPin}
-                  </div>
-                  <div className="text-[10px] text-charcoal-600 font-sans">
-                    Punch #{registeredDoorPin} on entrance door keypad. Exit via push button.
-                  </div>
-                </div>
-              )}
-
-              {registeredWhatsAppLink && (
-                <div className="pt-1 flex flex-col gap-2">
-                  <a
-                    href={registeredWhatsAppLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow-md transition-all"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    <span>Send Door PIN & Pass to My WhatsApp →</span>
-                  </a>
-
-                  <Link
-                    href="/dashboard"
-                    className="inline-flex items-center justify-center gap-2 w-full py-2 px-4 bg-forest-800 hover:bg-forest-700 text-white font-bold text-xs rounded-lg transition-all"
-                  >
-                    <span>Proceed to Student Dashboard →</span>
-                  </Link>
-                </div>
-              )}
-
-              {registeredConfirmUrl && !registeredWhatsAppLink && (
+              {statusMessage.type === "success" && (
                 <div className="pt-1">
-                  <button
-                    type="button"
-                    onClick={handleInstantConfirmClick}
-                    disabled={isLoading}
-                    className="inline-flex items-center justify-center w-full py-2.5 bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 text-white font-bold text-xs rounded-md transition-all shadow-md transform active:scale-98"
+                  <Link
+                    href={searchParams.get("redirect") || searchParams.get("next") || "/book"}
+                    className="inline-flex items-center justify-center gap-2 w-full py-2 px-4 bg-forest-800 hover:bg-forest-700 text-white font-bold text-xs rounded-lg transition-all shadow-sm"
                   >
-                    <span>Instant Confirm & Enter Dashboard →</span>
-                  </button>
+                    <span>Proceed to Book a Workstation →</span>
+                  </Link>
                 </div>
               )}
             </div>
@@ -729,7 +665,7 @@ function LoginContent() {
                   className="w-full px-3.5 py-2.5 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-sans"
                 />
                 <p className="text-[10px] text-charcoal-500 mt-1">
-                  Your Door Keypad PIN and access pass will be sent to both your WhatsApp and Email.
+                  Your official Door Keypad PIN and access pass will be issued once your workstation booking is verified by admin.
                 </p>
               </div>
 
@@ -760,219 +696,13 @@ function LoginContent() {
                 className="w-full justify-center bg-forest-700 hover:bg-forest-600 text-white font-bold rounded-lg shadow-sm"
                 isLoading={isLoading}
               >
-                <span>Complete Registration & Get Pass PIN</span>
+                <span>Create Account & Continue to Workstations</span>
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </form>
           )}
 
-          {/* TAB 3: HOURLY PASS WITH TIME SLOT SELECTOR */}
-          {activeTab === "magic_pass" && (
-            <div className="space-y-4">
-              <div className="p-3.5 bg-sky-50 border border-sky-200 rounded-lg text-xs font-sans text-sky-950 space-y-1">
-                <div className="font-bold flex items-center gap-1.5 text-sky-900">
-                  <Sparkles className="w-4 h-4 text-sky-600" />
-                  <span>Hourly & Shift Pass Booking</span>
-                </div>
-                <p className="text-[11px] leading-relaxed text-sky-800">
-                  Choose your dedicated study hours (2h, 3h, 5h, 10h, or Full Day) and time slot. Your access PIN is activated strictly for this slot and sent to your WhatsApp and Email.
-                </p>
-              </div>
-
-              {hourlyPassPin ? (
-                <div className="p-5 bg-emerald-50 border-2 border-emerald-400 rounded-xl space-y-4 text-center shadow-sm">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-200/80 text-emerald-900 text-[10px] font-mono font-bold rounded-full uppercase tracking-wider">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
-                    <span>Smart Keypad Pass Active</span>
-                  </div>
-
-                  <div>
-                    <div className="text-[10px] font-mono uppercase text-emerald-800 font-bold tracking-wider mb-1">
-                      Your Door Access PIN
-                    </div>
-                    <div className="flex items-center justify-center gap-3">
-                      <div className="font-mono text-4xl sm:text-5xl font-extrabold text-emerald-950 tracking-widest py-1 bg-white px-5 rounded-lg border border-emerald-200 shadow-inner">
-                        #{hourlyPassPin}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={copyPinToClipboard}
-                        className="p-3 bg-white border border-emerald-300 rounded-lg text-emerald-700 hover:bg-emerald-100 transition-colors"
-                        title="Copy PIN"
-                      >
-                        {copiedPin ? <Check className="w-5 h-5 text-emerald-600" /> : <Copy className="w-5 h-5" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {hourlyPassSlot && (
-                    <div className="p-2.5 bg-white border border-emerald-300 rounded-lg text-xs font-mono text-emerald-900">
-                      <span className="font-bold block text-[10px] text-emerald-700 uppercase">Active Time Slot:</span>
-                      <span>{hourlyPassSlot}</span>
-                    </div>
-                  )}
-
-                  <p className="text-xs text-emerald-900 leading-relaxed font-sans">
-                    Type <strong>#{hourlyPassPin}</strong> on the numeric keypad at the door to unlock. To exit, simply press the interior push button.
-                  </p>
-
-                  {/* 2 Clear Options: Return to Login with Code OR Proceed to Dashboard */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAccessCodeInput(hourlyPassPin);
-                        setActiveTab("code_login");
-                        setStatusMessage({
-                          type: "info",
-                          text: `PIN #${hourlyPassPin} is ready. Click "Verify Code" below to enter.`,
-                        });
-                      }}
-                      className="py-2.5 px-3 bg-white border border-emerald-600 text-emerald-900 hover:bg-emerald-100 font-bold text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5"
-                    >
-                      <KeyRound className="w-4 h-4 text-emerald-700" />
-                      <span>Back to Login with PIN</span>
-                    </button>
-
-                    <Link
-                      href="/dashboard"
-                      className="py-2.5 px-3 bg-forest-700 hover:bg-forest-600 text-white font-bold text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm"
-                    >
-                      <span>Enter Dashboard →</span>
-                    </Link>
-                  </div>
-                </div>
-              ) : (
-                <form onSubmit={handleHourlyMagicPass} className="space-y-4">
-                  {/* Step 1: Select Duration */}
-                  <div>
-                    <label className="block text-xs font-semibold text-charcoal-700 mb-1.5 flex items-center justify-between">
-                      <span>1. Select Access Duration</span>
-                      <span className="text-[10px] text-forest-700 font-mono font-bold">Official Shift Rates</span>
-                    </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                      {HOURLY_PASS_OPTIONS.map((opt) => (
-                        <button
-                          key={opt.hours}
-                          type="button"
-                          onClick={() => setSelectedHours(opt.hours)}
-                          className={`py-2 px-2 text-center rounded-lg border text-xs font-sans transition-all flex flex-col items-center justify-center ${
-                            selectedHours === opt.hours
-                              ? "bg-forest-700 text-white border-forest-700 font-bold shadow-sm"
-                              : "bg-white text-charcoal-700 border-charcoal-300 hover:border-forest-600"
-                          }`}
-                        >
-                          <div className="font-bold text-xs">{opt.label}</div>
-                          <div className="text-[11px] font-extrabold mt-0.5">₹{opt.price}</div>
-                          <div className={`text-[9px] uppercase tracking-wider mt-0.5 ${selectedHours === opt.hours ? "text-emerald-200" : "text-charcoal-500"}`}>
-                            {opt.tag}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Step 2: Select Date & Time Slot */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-charcoal-700 mb-1 flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5 text-forest-700" />
-                        <span>Date</span>
-                      </label>
-                      <input
-                        type="date"
-                        value={hourlyDate}
-                        onChange={(e) => setHourlyDate(e.target.value)}
-                        className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono bg-white"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-semibold text-charcoal-700 mb-1 flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-forest-700" />
-                        <span>Start Time Slot</span>
-                      </label>
-                      <select
-                        value={hourlyStartTime}
-                        onChange={(e) => setHourlyStartTime(e.target.value)}
-                        className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-mono bg-white"
-                      >
-                        {AVAILABLE_START_TIMES.map((t) => (
-                          <option key={t} value={t}>
-                            {t} (to {computeSlotEndTime(t, selectedHours)})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Slot Confirmation Banner */}
-                  <div className="p-2.5 bg-forest-50 border border-forest-200 rounded-lg text-xs font-mono text-forest-950 flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] uppercase text-forest-700 font-bold block">Assigned Slot Window:</span>
-                      <span className="font-bold">{hourlyStartTime} → {computeSlotEndTime(hourlyStartTime, selectedHours)}</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-[10px] uppercase text-forest-700 font-bold block">Total Fee:</span>
-                      <span className="font-bold text-sm text-forest-900">
-                        ₹{HOURLY_PASS_OPTIONS.find((o) => o.hours === selectedHours)?.price ?? 99}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Step 3: Contact Details */}
-                  <div className="space-y-3 pt-1">
-                    <Input
-                      label="Your Full Name"
-                      type="text"
-                      placeholder="e.g. Rahul Sharma"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                    />
-
-                    <div>
-                      <label className="block text-xs font-semibold text-charcoal-700 mb-1 flex items-center gap-1.5">
-                        <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>WhatsApp Number (for instant PIN dispatch)</span>
-                      </label>
-                      <input
-                        type="tel"
-                        placeholder="+91 98765 43210"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        className="w-full px-3 py-2 text-xs border border-charcoal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest-600 font-sans"
-                      />
-                    </div>
-
-                    <Input
-                      label="Email Address *"
-                      type="email"
-                      placeholder="visitor@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="lg"
-                    className="w-full justify-center bg-forest-700 hover:bg-forest-600 text-white font-bold rounded-lg shadow-sm"
-                    isLoading={isLoading}
-                  >
-                    <KeyRound className="w-4 h-4 mr-2" />
-                    <span>
-                      Book Slot & Issue Door PIN (₹{HOURLY_PASS_OPTIONS.find((o) => o.hours === selectedHours)?.price ?? 99})
-                    </span>
-                  </Button>
-                </form>
-              )}
-            </div>
-          )}
-
-          {/* TAB 4: DIRECT CODE / DOOR PIN LOGIN */}
+          {/* TAB 3: DIRECT CODE / DOOR PIN LOGIN */}
           {activeTab === "code_login" && (
             <div className="space-y-4">
               <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-lg text-xs font-sans text-emerald-950 space-y-1">

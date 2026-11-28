@@ -86,7 +86,7 @@ export default function DashboardPage() {
   const [profileName, setProfileName] = useState("Scholar");
   const [profileEmail, setProfileEmail] = useState("");
   const [profilePhone, setProfilePhone] = useState("+91 98765 43210");
-  const [profilePin, setProfilePin] = useState("849201");
+  const [profilePin, setProfilePin] = useState("");
   const [studyGoal, setStudyGoal] = useState("Competitive Examinations & Self-Study Research");
   const [allocatedShift, setAllocatedShift] = useState("Morning Focus Shift (08:00 — 14:00)");
   const [allocatedHours, setAllocatedHours] = useState(48);
@@ -398,7 +398,7 @@ export default function DashboardPage() {
           <span className="text-[10px] uppercase font-mono tracking-widest text-forest-800 font-semibold">
             Smart Keypad Access & Exit Button
           </span>
-          {reservations.length > 0 && (reservations[0].requestStatus === "pending_approval" || reservations[0].passCode === "Pending Admin Approval") ? (
+          {reservations.length > 0 && (reservations[0].requestStatus === "pending_approval" || reservations[0].passCode === "Pending Admin Approval" || reservations[0].paymentStatus === "payment_hold") ? (
             <div>
               <div className="font-mono text-xl text-amber-800 font-bold flex items-center gap-2">
                 <span>🔒 Verification Pending</span>
@@ -410,16 +410,25 @@ export default function DashboardPage() {
                 Your payment is under review. Your 6-digit door PIN will be issued and sent via WhatsApp & Email once verified by admin.
               </p>
             </div>
-          ) : (
+          ) : (reservations.find((r) => r.requestStatus === "approved" && r.passCode && !r.passCode.includes("Pending"))?.passCode || (profilePin && profilePin.length >= 4)) ? (
             <div>
               <div className="font-mono text-2xl text-forest-900 font-bold flex items-center gap-2">
-                <span>PIN: #{(reservations.length > 0 && reservations[0].passCode && reservations[0].passCode !== "Pending Admin Approval") ? reservations[0].passCode : (profilePin || "849201")}</span>
+                <span>PIN: #{reservations.find((r) => r.requestStatus === "approved" && r.passCode && !r.passCode.includes("Pending"))?.passCode || profilePin}</span>
                 <span className="text-[10px] font-sans font-bold uppercase px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded border border-emerald-300">
                   Active PIN
                 </span>
               </div>
               <p className="text-xs text-charcoal-600 font-sans">
-                Punch #{(reservations.length > 0 && reservations[0].passCode && reservations[0].passCode !== "Pending Admin Approval") ? reservations[0].passCode : (profilePin || "849201")} on exterior door keypad • Exit via push button
+                Punch #{reservations.find((r) => r.requestStatus === "approved" && r.passCode && !r.passCode.includes("Pending"))?.passCode || profilePin} on exterior door keypad • Exit via push button
+              </p>
+            </div>
+          ) : (
+            <div>
+              <div className="font-mono text-lg text-charcoal-600 font-bold flex items-center gap-2">
+                <span>🔒 No Active Door Pass</span>
+              </div>
+              <p className="text-xs text-charcoal-600 font-sans mt-1">
+                Book a workstation to activate your smart door keypad PIN.
               </p>
             </div>
           )}
@@ -917,14 +926,20 @@ export default function DashboardPage() {
               </span>
               <div className="font-mono text-xl text-charcoal-900 font-bold flex items-center gap-2">
                 <KeypadIcon className="w-5 h-5 text-emerald-600" />
-                <span>Door Access PIN #001</span>
+                <span>
+                  {profilePin ? `Door Access PIN #${profilePin}` : "🔒 No Active Pass"}
+                </span>
               </div>
               <p className="text-xs text-charcoal-600 font-sans">
-                Type your PIN on the exterior digital keypad to unlock the door. Press the interior push button to exit.
+                {profilePin
+                  ? "Type your PIN on the exterior digital keypad to unlock the door. Press the interior push button to exit."
+                  : "Your 6-digit door keypad PIN is activated once your workstation booking is verified & approved by admin."}
               </p>
-              <div className="text-[11px] font-mono text-charcoal-500 pt-1">
-                Pass Code: #PASS-2610-STRL04
-              </div>
+              {profilePin && (
+                <div className="text-[11px] font-mono text-emerald-700 font-bold pt-1">
+                  Active Door Pass
+                </div>
+              )}
             </div>
           </div>
 

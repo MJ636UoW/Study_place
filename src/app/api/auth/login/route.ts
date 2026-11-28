@@ -25,9 +25,10 @@ export async function POST(req: NextRequest) {
     }
 
     const user = result.user;
+    const resolvedEmail = user.email || identifier;
     const token = signJwtToken({
-      userId: user._id ? user._id.toString() : "user_" + Buffer.from(user.email || "").toString("hex"),
-      email: user.email || email,
+      userId: user._id ? user._id.toString() : "user_" + Buffer.from(resolvedEmail).toString("hex"),
+      email: resolvedEmail,
       name: user.name || "Scholar",
       role: user.role || "student",
     });
@@ -36,7 +37,7 @@ export async function POST(req: NextRequest) {
       success: true,
       user: {
         name: user.name,
-        email: user.email,
+        email: resolvedEmail,
         role: user.role,
         allottedHours: user.allottedHours,
         deskNumber: user.deskNumber,
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest) {
 
     setAuthCookie(res, token);
     res.cookies.set("esz_student_session", "active", { path: "/", maxAge: 604800, sameSite: "lax" });
-    res.cookies.set("esz_student_email", encodeURIComponent(email), { path: "/", maxAge: 604800, sameSite: "lax" });
+    res.cookies.set("esz_student_email", encodeURIComponent(resolvedEmail), { path: "/", maxAge: 604800, sameSite: "lax" });
     res.cookies.set("esz_student_name", encodeURIComponent(user.name || "Scholar"), { path: "/", maxAge: 604800, sameSite: "lax" });
     return res;
   } catch (error: any) {

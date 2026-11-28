@@ -237,11 +237,11 @@ export async function sendVerificationEmail(
           </div>
           <div class="content">
             <h2>Welcome to Elite Study Zone, ${name}!</h2>
-            <p>Your scholar registration has been successfully recorded. Below is your 24/7 smart door keypad access pass:</p>
+            <p>Your scholar registration has been successfully recorded.</p>
             
             ${pinSection}
 
-            <p>Please confirm your email address below to finalize your account and access your booking portal:</p>
+            <p>Please confirm your email address below to finalize your account and choose your workstation plan:</p>
             <div style="text-align: center;">
               <a href="${confirmUrl}" class="btn" target="_blank">Confirm Email & Open Dashboard &rarr;</a>
             </div>

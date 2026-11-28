@@ -529,7 +529,6 @@ export class AdminService {
       resourceId: "pricing-matrix",
       details: { matrix },
       reason: "Official pricing chart updated by administrator.",
-      timestamp: new Date().toISOString(),
     });
     return { success: true, message: "Pricing chart successfully updated across the center!" };
   }
