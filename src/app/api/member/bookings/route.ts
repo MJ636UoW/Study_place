@@ -61,7 +61,41 @@ export async function POST(req: NextRequest) {
     const name = booking.name || (cookieName ? decodeURIComponent(cookieName) : "Scholar");
     const doorPin = booking.doorPin || cookiePin || "394821";
     const phone = booking.phone || req.cookies.get("esz_student_phone")?.value || "";
+    const isPendingAdminApproval =
+      booking.paymentStatus === "awaiting_verification" ||
+      booking.requestStatus === "pending_approval" ||
+      booking.passCode === "Pending Admin Approval" ||
+      booking.doorPin === "Pending Admin Approval";
 
+    // 1. Register into BookingEngine queue so the request appears in the Admin Portal under "Pending Intake"
+    BookingEngine.addPendingUtrBooking({
+      id: booking.id || booking.bookingRef || `BK-${Date.now()}`,
+      requestNumber: booking.bookingRef || booking.id || `REQ-${Date.now().toString().slice(-4)}`,
+      userId: email || "student",
+      userName: name,
+      userEmail: email || "",
+      userPhone: phone,
+      seatId: booking.seatId || "desk-04",
+      seatLabel: booking.seatLabel || "Dedicated Workstation",
+      planId: booking.tierName || "One Visit Plan",
+      startDate: booking.startDate || new Date().toISOString().split("T")[0],
+      endDate: booking.endDate || booking.startDate || new Date().toISOString().split("T")[0],
+      totalPricePaise: Math.round(parseFloat(booking.totalPriceRupees || "99") * 100),
+      utrNumber: booking.utrNumber || "",
+    });
+
+    // 2. If awaiting admin verification: Do NOT dispatch Door PIN or sync FitFaat yet!
+    // The PIN will be generated and dispatched ONLY when the admin approves the request.
+    if (isPendingAdminApproval) {
+      return NextResponse.json({
+        success: true,
+        booking,
+        status: "pending_approval",
+        message: "Payment reference submitted successfully. Waiting for admin approval.",
+      });
+    }
+
+    // 3. If pre-approved / instant walk-in: Dispatch immediately
     if (email && email.includes("@")) {
       sendBookingConfirmationEmail({
         to: email,
@@ -77,7 +111,6 @@ export async function POST(req: NextRequest) {
       }).catch((e) => console.warn("[Booking Dispatch] Email dispatch error:", e));
     }
 
-    // Also dispatch WhatsApp pass and sync to FitFaat biometric device
     if (phone) {
       sendWhatsAppBookingPass({
         phone,

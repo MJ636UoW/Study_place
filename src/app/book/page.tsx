@@ -1090,6 +1090,7 @@ function BookContent() {
           }
 
           try {
+            const cleanUtr = paymentId ? paymentId.replace("upi_utr_", "") : "";
             const newBooking = {
               id: holdResult?.holdRef || `BK-${Date.now()}`,
               bookingRef: holdResult?.holdRef || `ESZ-${Date.now()}`,
@@ -1099,12 +1100,13 @@ function BookContent() {
               tierName: `${tenure.toUpperCase()} Plan (${currentShift.name})`,
               startDate: startDate,
               endDate: calculatedEndDate,
-              requestStatus: "approved",
-              paymentStatus: "paid",
+              requestStatus: "pending_approval",
+              paymentStatus: "awaiting_verification",
+              utrNumber: cleanUtr,
               totalPricePaise: (holdResult?.totalPrice || totalPayableAmount) * 100,
               totalPriceRupees: `${holdResult?.totalPrice || totalPayableAmount}.00`,
-              passCode: passCode || `PASS-${Math.floor(1000 + Math.random() * 9000)}`,
-              doorPin: passCode || `PASS-${Math.floor(1000 + Math.random() * 9000)}`,
+              passCode: "Pending Admin Approval",
+              doorPin: "Pending Admin Approval",
               name: guestName,
               email: guestEmail,
               phone: guestPhone,

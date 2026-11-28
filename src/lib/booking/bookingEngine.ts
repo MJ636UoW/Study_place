@@ -27,6 +27,9 @@ import {
   FixtureBookingAdapter,
 } from "../bookingAdapter.ts";
 import { NotificationService } from "../notifications/notificationService.ts";
+import { sendBookingConfirmationEmail } from "../mailer.ts";
+import { sendWhatsAppBookingPass } from "../whatsapp.ts";
+import { syncStudentWithFitFaat } from "../fitfaat.ts";
 
 export interface BookingRequestInput {
   userId: string;
@@ -386,10 +389,10 @@ export class BookingEngine {
       return { success: false, message: "Booking request not found.", error: "NOT_FOUND" };
     }
 
-    if (req.status !== "submitted") {
+    if (req.status !== "submitted" && req.status !== "under_review") {
       return {
         success: false,
-        message: `Request is not in submitted state (current: ${req.status}).`,
+        message: `Request is not in submitted/under review state (current: ${req.status}).`,
         error: "INVALID_STATUS",
       };
     }
@@ -397,6 +400,7 @@ export class BookingEngine {
     // 3. Check for conflicting active seat allocations or holds
     const hasConflict = memoryAllocations.some((alloc) => {
       if (alloc.seatId !== req.seatId) return false;
+      if (alloc.bookingRequestId === req.id) return false;
       if (alloc.status !== "active" && alloc.status !== "payment_hold" && alloc.status !== "walk_in") return false;
 
       // Overlap check on [startDate, endDate]
@@ -425,10 +429,12 @@ export class BookingEngine {
       };
     }
 
-    // 5. Create expiring payment hold (15 minutes default)
-    const holdExpiresAt = Date.now() + holdDurationMinutes * 60 * 1000;
-    const passCode = `PASS-${new Date().getFullYear().toString().slice(-2)}${(new Date().getMonth() + 1).toString().padStart(2, "0")}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    // 5. If this is a UPI payment awaiting admin verification: Approve directly & issue real Door PIN!
+    const isUtrPayment = Boolean((req as any).utrNumber);
+    const pin = Math.floor(100000 + Math.random() * 900000).toString();
+    const passCode = isUtrPayment ? pin : `PASS-${new Date().getFullYear().toString().slice(-2)}${(new Date().getMonth() + 1).toString().padStart(2, "0")}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
     const allocationId = `alloc-${Date.now()}`;
+    const holdExpiresAt = isUtrPayment ? null : Date.now() + holdDurationMinutes * 60 * 1000;
 
     memoryAllocations.push({
       id: allocationId,
@@ -437,12 +443,63 @@ export class BookingEngine {
       userId: req.userId,
       startDate: req.startDate,
       endDate: req.endDate,
-      status: "payment_hold",
+      status: isUtrPayment ? "active" : "payment_hold",
       passCode,
       holdExpiresAt,
     });
 
-    req.status = "under_review";
+    req.status = isUtrPayment ? "approved" : "under_review";
+
+    // When admin approves a paid UPI submission: Dispatch Email, WhatsApp, and Biometric sync!
+    if (isUtrPayment) {
+      const email = (req as any).userEmail || req.userId;
+      const name = (req as any).userName || "Scholar";
+      const phone = (req as any).userPhone || "";
+      const seatLabel = (req as any).seatLabel || `Workstation Desk ${req.seatId}`;
+      const amountRupees = ((req.totalPricePaise || 9900) / 100).toFixed(2);
+
+      if (email && email.includes("@")) {
+        sendBookingConfirmationEmail({
+          to: email,
+          name,
+          bookingRef: req.requestNumber || req.id,
+          seatLabel,
+          roomName: "Main Study Sanctuary",
+          timeSlotOrDuration: req.planId || "Workstation Session",
+          startDate: req.startDate,
+          endDate: req.endDate,
+          amountRupees,
+          doorPin: pin,
+        }).catch((e) => console.warn("[Admin Approval Email] Error:", e));
+      }
+
+      if (phone) {
+        sendWhatsAppBookingPass({
+          phone,
+          name,
+          passCode: pin,
+          seatOrPass: seatLabel,
+          slotOrDates: `${req.startDate} to ${req.endDate}`,
+          amountRupees,
+        }).catch((e) => console.warn("[Admin Approval WhatsApp] Error:", e));
+
+        syncStudentWithFitFaat({
+          name,
+          mobile: phone,
+          email,
+          biometricPin: pin,
+          planDuration: req.planId,
+        }).catch((e) => console.warn("[Admin Approval FitFaat] Error:", e));
+      }
+
+      return {
+        success: true,
+        allocationId,
+        passCode: pin,
+        holdExpiresAt: undefined,
+        message: `Payment verified by admin! 6-digit Door PIN (#${pin}) issued and dispatched to student via WhatsApp & Email.`,
+      };
+    }
 
     try {
       NotificationService.queueNotification({
@@ -457,7 +514,7 @@ export class BookingEngine {
           requestNumber: req.requestNumber,
           allocationId,
           seatId: req.seatId,
-          holdExpiresAt: new Date(holdExpiresAt).toISOString(),
+          holdExpiresAt: new Date(holdExpiresAt || Date.now()).toISOString(),
           passCode,
         },
       });
@@ -469,9 +526,64 @@ export class BookingEngine {
       success: true,
       allocationId,
       passCode,
-      holdExpiresAt: new Date(holdExpiresAt).toISOString(),
+      holdExpiresAt: new Date(holdExpiresAt || Date.now()).toISOString(),
       message: `Curatorial hold established. Payment hold active for ${holdDurationMinutes} minutes.`,
     };
+  }
+
+  /**
+   * Helper: Register a pending booking with student UTR so admin can review and approve it
+   */
+  public static addPendingUtrBooking(booking: {
+    id: string;
+    requestNumber?: string;
+    userId: string;
+    userName: string;
+    userEmail: string;
+    userPhone: string;
+    seatId: string;
+    seatLabel?: string;
+    planId: string;
+    startDate: string;
+    endDate?: string;
+    totalPricePaise: number;
+    utrNumber: string;
+  }) {
+    const existingIdx = memoryRequests.findIndex(
+      (r) => r.id === booking.id || r.requestNumber === booking.requestNumber
+    );
+
+    const reqRecord: any = {
+      id: booking.id,
+      requestNumber: booking.requestNumber || booking.id,
+      userId: booking.userEmail || booking.userId,
+      seatId: booking.seatId,
+      planId: booking.planId,
+      startDate: booking.startDate,
+      endDate: booking.endDate || booking.startDate,
+      status: "under_review",
+      totalPricePaise: booking.totalPricePaise,
+      priceSnapshot: {
+        base_price_paise: booking.totalPricePaise,
+        currency: "INR",
+        plan_slug: booking.planId,
+      },
+      planTermsSnapshot: "Elite Study Zone Standard Sanctuary Terms",
+      guestNotes: `${booking.userName} (${booking.userPhone || "No Phone"})`,
+      utrNumber: booking.utrNumber,
+      userPhone: booking.userPhone,
+      userName: booking.userName,
+      userEmail: booking.userEmail,
+      seatLabel: booking.seatLabel || `Workstation Desk ${booking.seatId}`,
+    };
+
+    if (existingIdx >= 0) {
+      memoryRequests[existingIdx] = reqRecord;
+    } else {
+      memoryRequests.unshift(reqRecord);
+    }
+    return reqRecord;
+  }
   }
 
   /**

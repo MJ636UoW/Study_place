@@ -395,7 +395,7 @@ export default function AdminPage() {
   const handleApproveRequest = async (requestId: string) => {
     const res = await AdminService.approveRequest(requestId, staffId, 15);
     if (res.success) {
-      showToast(`Hold Approved: Station reserved under 15-minute expiring hold (Pass: ${res.passCode}).`);
+      showToast(res.message || `Request Approved! Door PIN issued (#${res.passCode}) and dispatched via WhatsApp & Email.`);
       refreshAllState();
     } else {
       showToast(`Approval Failed: ${res.message}`);
@@ -730,45 +730,68 @@ export default function AdminPage() {
             </div>
           ) : (
             <div className="divide-y divide-ivory-200">
-              {pendingRequests.map((req) => (
-                <div key={req.id} className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="space-y-1 text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-amber-900">{req.requestNumber}</span>
-                      <span className="px-2 py-0.5 bg-amber-100 text-amber-900 font-mono text-[10px] uppercase">
-                        {req.status}
-                      </span>
+              {pendingRequests.map((req) => {
+                const hasUtr = Boolean((req as any).utrNumber);
+                return (
+                  <div key={req.id} className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="space-y-1.5 text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-amber-900">{req.requestNumber}</span>
+                        <span
+                          className={`px-2 py-0.5 font-mono text-[10px] uppercase font-bold rounded ${
+                            hasUtr
+                              ? "bg-emerald-100 text-emerald-900 border border-emerald-300"
+                              : "bg-amber-100 text-amber-900"
+                          }`}
+                        >
+                          {hasUtr ? "💳 UPI Payment Submitted" : req.status}
+                        </span>
+                      </div>
+                      <div className="text-charcoal-900 font-semibold font-serif text-sm">
+                        {req.guestNotes || "Member Applicant"} ({req.userId})
+                      </div>
+                      <div className="font-mono text-charcoal-600 text-[11px]">
+                        Workstation: <strong>{req.seatId}</strong> • Interval: {req.startDate} → {req.endDate}
+                      </div>
+                      {hasUtr ? (
+                        <div className="p-2 bg-emerald-50 rounded-lg border border-emerald-200 font-mono text-xs text-emerald-950 inline-block space-y-0.5">
+                          <div>
+                            <span className="text-emerald-700">Bank UTR Reference:</span>{" "}
+                            <strong className="tracking-wider">{(req as any).utrNumber}</strong>
+                          </div>
+                          <div>
+                            <span className="text-emerald-700">Payable Amount:</span>{" "}
+                            <strong>₹{((req.totalPricePaise || 9900) / 100).toFixed(2)}</strong>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="font-mono text-forest-900 font-bold">
+                          Price Snapshot: ₹{(req.totalPricePaise / 100).toFixed(2)} ({req.totalPricePaise} paise)
+                        </div>
+                      )}
                     </div>
-                    <div className="text-charcoal-900 font-semibold font-serif text-sm">
-                      {req.guestNotes || "Member Applicant"} ({req.userId})
-                    </div>
-                    <div className="font-mono text-charcoal-600 text-[11px]">
-                      Workstation: <strong>{req.seatId}</strong> • Interval: {req.startDate} → {req.endDate}
-                    </div>
-                    <div className="font-mono text-forest-900 font-bold">
-                      Price Snapshot: ₹{(req.totalPricePaise / 100).toFixed(2)} ({req.totalPricePaise} paise)
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => handleApproveRequest(req.id)}
-                    >
-                      Approve Hold (15 Min)
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-800 hover:bg-red-50 hover:text-red-950"
-                      onClick={() => handleRejectRequest(req.id)}
-                    >
-                      Reject Request
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => handleApproveRequest(req.id)}
+                        className={hasUtr ? "bg-emerald-700 hover:bg-emerald-600 text-white font-bold" : ""}
+                      >
+                        {hasUtr ? "✅ Verify Payment & Issue Door PIN" : "Approve Hold (15 Min)"}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-800 hover:bg-red-50 hover:text-red-950"
+                        onClick={() => handleRejectRequest(req.id)}
+                      >
+                        Reject
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

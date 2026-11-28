@@ -398,15 +398,31 @@ export default function DashboardPage() {
           <span className="text-[10px] uppercase font-mono tracking-widest text-forest-800 font-semibold">
             Smart Keypad Access & Exit Button
           </span>
-          <div className="font-mono text-2xl text-forest-900 font-bold flex items-center gap-2">
-            <span>PIN: #{(reservations.length > 0 && reservations[0].passCode) || profilePin || "849201"}</span>
-            <span className="text-[10px] font-sans font-bold uppercase px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded border border-emerald-300">
-              Active PIN
-            </span>
-          </div>
-          <p className="text-xs text-charcoal-600 font-sans">
-            Punch #{ (reservations.length > 0 && reservations[0].passCode) || profilePin || "849201" } on exterior door keypad • Exit via push button
-          </p>
+          {reservations.length > 0 && (reservations[0].requestStatus === "pending_approval" || reservations[0].passCode === "Pending Admin Approval") ? (
+            <div>
+              <div className="font-mono text-xl text-amber-800 font-bold flex items-center gap-2">
+                <span>🔒 Verification Pending</span>
+                <span className="text-[10px] font-sans font-bold uppercase px-2 py-0.5 bg-amber-100 text-amber-900 rounded border border-amber-300">
+                  Awaiting Admin Approval
+                </span>
+              </div>
+              <p className="text-xs text-charcoal-600 font-sans mt-1">
+                Your payment is under review. Your 6-digit door PIN will be issued and sent via WhatsApp & Email once verified by admin.
+              </p>
+            </div>
+          ) : (
+            <div>
+              <div className="font-mono text-2xl text-forest-900 font-bold flex items-center gap-2">
+                <span>PIN: #{(reservations.length > 0 && reservations[0].passCode && reservations[0].passCode !== "Pending Admin Approval") ? reservations[0].passCode : (profilePin || "849201")}</span>
+                <span className="text-[10px] font-sans font-bold uppercase px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded border border-emerald-300">
+                  Active PIN
+                </span>
+              </div>
+              <p className="text-xs text-charcoal-600 font-sans">
+                Punch #{(reservations.length > 0 && reservations[0].passCode && reservations[0].passCode !== "Pending Admin Approval") ? reservations[0].passCode : (profilePin || "849201")} on exterior door keypad • Exit via push button
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="space-y-1 border-t md:border-t-0 md:border-l border-forest-200/80 pt-4 md:pt-0 md:pl-6">

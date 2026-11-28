@@ -246,7 +246,7 @@ export function RazorpayCheckoutModal({
         throw new Error(verifyData.message || "Payment verification could not be confirmed.");
       }
 
-      const passCode = verifyData.passCode || `PASS-2026-PIN${Math.floor(100 + Math.random() * 900)}`;
+      const passCode = "PENDING_ADMIN_APPROVAL";
 
       setSuccessInfo({
         paymentId,
@@ -256,7 +256,7 @@ export function RazorpayCheckoutModal({
       onSuccess(paymentId, passCode);
     } catch (err: unknown) {
       setFlowStep("awaiting_payment");
-      setErrorMessage(err instanceof Error ? err.message : "Could not verify payment yet. Please check your transaction.");
+      setErrorMessage(err instanceof Error ? err.message : "Could not submit payment reference. Please check your transaction.");
     }
   };
 
@@ -299,72 +299,83 @@ export function RazorpayCheckoutModal({
               onClick={() => handleFinalizeVerification()}
               className={`gap-2 font-bold text-xs shadow-lg transform active:scale-95 transition-all ${
                 isUtrValid
-                  ? "bg-emerald-700 hover:bg-emerald-600 text-white cursor-pointer"
+                  ? "bg-amber-600 hover:bg-amber-500 text-white cursor-pointer"
                   : "bg-slate-300 text-slate-500 cursor-not-allowed opacity-60"
               }`}
             >
               <CheckCircle2 className="w-4 h-4" />
-              <span>{isUtrValid ? "Verify 12-Digit UTR & Issue Door Pass →" : `Enter 12-Digit UTR (${cleanUtr.length}/12)`}</span>
+              <span>{isUtrValid ? "Submit 12-Digit UTR for Admin Verification →" : `Enter 12-Digit UTR (${cleanUtr.length}/12)`}</span>
             </Button>
           )}
         </div>
       }
     >
       <div className="space-y-4 text-left text-xs font-sans">
-        {/* STEP 4: SUCCESS CONFIRMATION & DOOR KEYPAD PIN */}
+        {/* STEP 4: AWAITING ADMIN VERIFICATION (NO PIN BEFORE ADMIN APPROVAL) */}
         {flowStep === "success" && successInfo && (
-          <div className="p-6 border-2 border-emerald-500 bg-gradient-to-b from-emerald-50 to-emerald-100/50 text-emerald-950 rounded-2xl space-y-4 shadow-xl text-center animate-fade-in">
-            <div className="w-14 h-14 rounded-full bg-emerald-500 text-white flex items-center justify-center mx-auto shadow-md">
-              <CheckCircle2 className="w-8 h-8" />
+          <div className="p-6 border-2 border-amber-400 bg-gradient-to-b from-amber-50 to-orange-50/40 text-charcoal-900 rounded-2xl space-y-4 shadow-xl text-center animate-fade-in">
+            <div className="w-14 h-14 rounded-full bg-amber-500 text-white flex items-center justify-center mx-auto shadow-md">
+              <Clock className="w-8 h-8" />
             </div>
 
             <div>
-              <span className="text-[10px] uppercase font-mono font-bold tracking-widest text-emerald-700 bg-emerald-200/60 px-2.5 py-0.5 rounded-full">
-                Payment Confirmed
+              <span className="text-[10px] uppercase font-mono font-bold tracking-widest text-amber-800 bg-amber-200/70 px-3 py-1 rounded-full border border-amber-300">
+                ⏳ Payment Submitted • Awaiting Admin Verification
               </span>
-              <h3 className="font-sans text-xl font-extrabold text-emerald-950 mt-1">
-                Desk Reserved Successfully!
+              <h3 className="font-sans text-xl font-extrabold text-charcoal-900 mt-2">
+                Workstation Request Submitted!
               </h3>
-              <p className="text-xs text-emerald-800 mt-0.5">
-                Your workstation reservation is confirmed. Your door keypad access PIN is active.
+              <p className="text-xs text-charcoal-600 mt-0.5 max-w-sm mx-auto">
+                Your payment reference has been forwarded to the center admin. Once verified in the admin portal, your Door Keypad Access PIN will be issued.
               </p>
             </div>
 
             {/* Dimensional Receipt Card */}
-            <div className="bg-white p-4 rounded-xl border border-emerald-200/80 shadow-md space-y-2.5 text-left font-mono text-xs">
-              <div className="flex justify-between border-b border-emerald-100 pb-1.5">
+            <div className="bg-white p-4 rounded-xl border border-amber-200/80 shadow-md space-y-2.5 text-left font-mono text-xs">
+              <div className="flex justify-between border-b border-amber-100 pb-1.5">
                 <span className="text-charcoal-600 font-sans">Workstation:</span>
                 <span className="font-bold text-charcoal-900">{seatLabel}</span>
               </div>
-              <div className="flex justify-between border-b border-emerald-100 pb-1.5">
+              <div className="flex justify-between border-b border-amber-100 pb-1.5">
                 <span className="text-charcoal-600 font-sans">Amount Paid:</span>
                 <span className="font-bold text-emerald-800">₹{amountRupeesFormatted}</span>
               </div>
-              <div className="flex justify-between border-b border-emerald-100 pb-1.5">
-                <span className="text-charcoal-600 font-sans">Transaction Ref:</span>
-                <span className="text-charcoal-700 text-[11px] truncate max-w-[200px]">{successInfo.paymentId}</span>
+              <div className="flex justify-between border-b border-amber-100 pb-1.5">
+                <span className="text-charcoal-600 font-sans">UPI Reference (UTR):</span>
+                <span className="text-charcoal-800 font-bold font-mono tracking-wider">{cleanUtr || successInfo.paymentId}</span>
               </div>
               <div className="flex justify-between items-center pt-1">
                 <span className="text-charcoal-800 font-sans font-bold">Door Access Keypad PIN:</span>
                 <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-lg text-emerald-900 bg-emerald-100 px-3 py-1 rounded-lg border border-emerald-300 tracking-wider shadow-inner">
-                    {successInfo.passCode}
+                  <span className="font-mono font-bold text-xs text-amber-900 bg-amber-100 px-3 py-1.5 rounded-lg border border-amber-300">
+                    🔒 Pending Admin Verification
                   </span>
-                  <button
-                    type="button"
-                    onClick={copyPassCode}
-                    className="p-1.5 hover:bg-slate-100 rounded-lg text-charcoal-600 border border-slate-200 transition-colors"
-                    title="Copy Door PIN"
-                  >
-                    {copiedPass ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-                  </button>
                 </div>
               </div>
             </div>
 
-            <div className="p-2.5 bg-emerald-50 rounded-lg border border-emerald-200 text-[11px] text-emerald-900 font-sans leading-relaxed">
-              🔑 Enter this PIN on the digital access keypad at the center entrance door to unlock. When exiting, press the interior exit button next to the door.
+            <div className="p-3 bg-amber-100/70 rounded-xl border border-amber-200 text-[11px] text-amber-950 font-sans leading-relaxed text-left space-y-1">
+              <div className="font-bold flex items-center gap-1.5 text-amber-900">
+                <span>📌 What happens next?</span>
+              </div>
+              <p>
+                1. The center administrator will confirm your UPI transfer in their bank statement.
+              </p>
+              <p>
+                2. Upon approval, your <strong>6-Digit Smart Door PIN</strong> will be generated and automatically sent to your <strong>WhatsApp</strong> and <strong>Email</strong>.
+              </p>
+              <p>
+                3. You can track this booking anytime from your <strong>Student Portal Dashboard</strong>.
+              </p>
             </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full py-2.5 bg-forest-800 hover:bg-forest-700 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow"
+            >
+              Go to Student Dashboard →
+            </button>
           </div>
         )}
 
@@ -596,12 +607,12 @@ export function RazorpayCheckoutModal({
                     onClick={() => handleFinalizeVerification()}
                     className={`w-full justify-center gap-2 font-bold text-xs py-2.5 shadow-md transition-all ${
                       isUtrValid
-                        ? "bg-emerald-700 hover:bg-emerald-600 text-white cursor-pointer"
+                        ? "bg-amber-600 hover:bg-amber-500 text-white cursor-pointer"
                         : "bg-slate-200 text-slate-400 cursor-not-allowed opacity-70"
                     }`}
                   >
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>{isUtrValid ? `Confirm ₹${amountRupeesFormatted} & Issue Door PIN →` : `Enter 12-Digit UTR to Confirm (${cleanUtr.length}/12)`}</span>
+                    <span>{isUtrValid ? `Submit UTR for Admin Approval (₹${amountRupeesFormatted}) →` : `Enter 12-Digit UTR (${cleanUtr.length}/12)`}</span>
                   </Button>
                 </div>
               </div>
