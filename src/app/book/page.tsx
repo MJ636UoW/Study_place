@@ -17,6 +17,7 @@ import {
   Check,
   ChevronRight,
   ShieldCheck,
+  Eye,
 } from "lucide-react";
 import {
   DurationType,
@@ -35,7 +36,8 @@ import {
   DEFAULT_PRICING_MATRIX,
   getPlanPrice,
   LOCKER_RATES,
-  LOCKERS_FIXTURE_24,
+  LOCKERS_FIXTURE_15,
+  generateLockersList,
   LockerItem,
 } from "@/lib/pricingMatrix";
 import {
@@ -116,6 +118,13 @@ function BookContent() {
   // Locker Selection State
   const [withLocker, setWithLocker] = useState<boolean>(false);
   const [selectedLockerId, setSelectedLockerId] = useState<string>("locker-02");
+
+  // Custom Admin Layout & Images State
+  const [seatCustomImages, setSeatCustomImages] = useState<Record<string, string>>({});
+  const [lockerCustomImages, setLockerCustomImages] = useState<Record<string, string>>({});
+  const [lockerLayoutImage, setLockerLayoutImage] = useState<string>("/desk-render-01.jpg");
+  const [workstationLayoutImage, setWorkstationLayoutImage] = useState<string>("/room-layout.png");
+  const [isLockerLayoutModalOpen, setIsLockerLayoutModalOpen] = useState<boolean>(false);
 
   // Format hour label
   const formatHourLabel = (h: number) => {
@@ -278,6 +287,19 @@ function BookContent() {
         }
       });
 
+    // Load custom seat & locker images uploaded by admin
+    fetch("/api/admin/settings")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.settings) {
+          if (d.settings.seatCustomImages) setSeatCustomImages(d.settings.seatCustomImages);
+          if (d.settings.lockerCustomImages) setLockerCustomImages(d.settings.lockerCustomImages);
+          if (d.settings.lockerLayoutImage) setLockerLayoutImage(d.settings.lockerLayoutImage);
+          if (d.settings.workstationLayoutImage) setWorkstationLayoutImage(d.settings.workstationLayoutImage);
+        }
+      })
+      .catch(() => {});
+
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
@@ -343,10 +365,25 @@ function BookContent() {
     return availabilities.filter((a) => a.status === "available").length;
   }, [availabilities]);
 
+  // 15 Lockers list with admin uploaded custom photos
+  const lockersList = useMemo(() => {
+    return generateLockersList(15, lockerCustomImages);
+  }, [lockerCustomImages]);
+
   // Selected locker item
   const selectedLocker = useMemo(() => {
-    return LOCKERS_FIXTURE_24.find((l) => l.id === selectedLockerId) || LOCKERS_FIXTURE_24[1];
-  }, [selectedLockerId]);
+    return lockersList.find((l) => l.id === selectedLockerId) || lockersList[1] || lockersList[0];
+  }, [selectedLockerId, lockersList]);
+
+  // Selected seat with admin-uploaded custom photo override
+  const inspectedSeat = useMemo(() => {
+    if (!selectedSeat) return null;
+    const customPhoto = seatCustomImages[selectedSeat.id];
+    if (customPhoto) {
+      return { ...selectedSeat, photoUrl: customPhoto };
+    }
+    return selectedSeat;
+  }, [selectedSeat, seatCustomImages]);
 
   // Submit Hold Simulation
   const handleConfirmHold = async (e: React.FormEvent) => {
@@ -767,18 +804,28 @@ function BookContent() {
           {/* Locker Matrix & Selection when With Locker is active */}
           {withLocker && (
             <div className="p-4 sm:p-5 bg-ivory-100/70 border border-ivory-300 rounded-xl space-y-4">
-              <div className="flex items-center justify-between text-xs font-mono">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono">
                 <span className="font-bold text-charcoal-900">
-                  Select Locker Number (#01 — #24):
+                  Select Locker Number (#01 — #15):
                 </span>
-                <span className="text-forest-800 font-bold">
-                  Selected: {selectedLocker.label} ({selectedLocker.size})
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-forest-800 font-bold">
+                    Selected: {selectedLocker.label} ({selectedLocker.size})
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsLockerLayoutModalOpen(true)}
+                    className="underline text-[11px] text-amber-800 hover:text-amber-900 flex items-center gap-1 font-bold"
+                  >
+                    <Eye className="w-3 h-3" />
+                    <span>View Cabinet Layout</span>
+                  </button>
+                </div>
               </div>
 
-              {/* Locker Grid */}
-              <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-12 gap-2">
-                {LOCKERS_FIXTURE_24.map((locker) => {
+              {/* Locker Grid (15 Lockers in 3 rows of 5) */}
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2.5">
+                {lockersList.map((locker) => {
                   const isOccupied = locker.status === "occupied";
                   const isSelected = selectedLockerId === locker.id;
                   return (
@@ -787,7 +834,7 @@ function BookContent() {
                       type="button"
                       disabled={isOccupied}
                       onClick={() => setSelectedLockerId(locker.id)}
-                      className={`p-2 border rounded-lg text-center transition-all ${
+                      className={`p-2.5 border rounded-lg text-center transition-all ${
                         isOccupied
                           ? "bg-ivory-200 text-charcoal-400 border-ivory-300 cursor-not-allowed opacity-50"
                           : isSelected
@@ -796,27 +843,54 @@ function BookContent() {
                       }`}
                     >
                       <div className="text-xs font-mono font-bold">{locker.number}</div>
-                      <div className="text-[9px] font-sans mt-0.5">
+                      <div className="text-[10px] font-sans mt-0.5">
                         {isOccupied ? "Occupied" : isSelected ? "Selected" : "Open"}
+                      </div>
+                      <div className="text-[9px] font-mono text-charcoal-400 mt-0.5">
+                        {locker.size}
                       </div>
                     </button>
                   );
                 })}
               </div>
 
-              {/* Locker Booking Details Display */}
-              <div className="p-3 bg-white border border-ivory-300 rounded-lg text-xs font-mono space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-charcoal-600">Assigned Locker:</span>
-                  <strong className="text-forest-900">{selectedLocker.label} &bull; Status: Available</strong>
+              {/* Selected Locker Details & Live Photo Preview */}
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 p-3 bg-white border border-ivory-300 rounded-lg text-xs font-mono">
+                {/* Physical Locker Photo */}
+                <div className="sm:col-span-4 relative aspect-[4/3] rounded-md overflow-hidden bg-slate-100 border border-ivory-200">
+                  <img
+                    src={selectedLocker.photoUrl || "/desk-render-01.jpg"}
+                    alt={selectedLocker.label}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        "https://images.unsplash.com/photo-1590402494682-cd3fb53b1f70?auto=format&fit=crop&w=600&q=80";
+                    }}
+                  />
+                  <div className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/70 text-white text-[9px] font-mono rounded">
+                    Locker Photo
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-charcoal-600">Locker Validity:</span>
-                  <span>{formatDisplayDate(startDate)} to {formatDisplayDate(calculatedEndDate)}</span>
-                </div>
-                <div className="flex items-center justify-between text-forest-800 font-bold pt-1 border-t border-ivory-200">
-                  <span>Locker Add-on Fee:</span>
-                  <span>₹{LOCKER_RATES[tenure]} INR (Added to Total)</span>
+
+                <div className="sm:col-span-8 flex flex-col justify-between space-y-1.5">
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-charcoal-600">Assigned Locker:</span>
+                      <strong className="text-forest-900">{selectedLocker.label} &bull; Status: Available</strong>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-charcoal-600">Compartment:</span>
+                      <span className="text-charcoal-800 font-bold">{selectedLocker.size} Steel Locker with Key</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-charcoal-600">Locker Validity:</span>
+                      <span>{formatDisplayDate(startDate)} to {formatDisplayDate(calculatedEndDate)}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-forest-800 font-bold pt-1.5 border-t border-ivory-200">
+                    <span>Locker Add-on Fee:</span>
+                    <span>₹{LOCKER_RATES[tenure]} INR (Added to Total)</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -911,7 +985,7 @@ function BookContent() {
             {selectedSeat && isInspectorOpen && !isMobile && (
               <div className="lg:col-span-5 sticky top-28">
                 <SeatInspector
-                  seat={selectedSeat}
+                  seat={inspectedSeat}
                   status={selectedAvailability?.status || "available"}
                   statusMessage={selectedAvailability?.statusMessage}
                   startDate={startDate}
@@ -931,7 +1005,7 @@ function BookContent() {
       {/* Mobile Bottom Sheet Inspector */}
       {selectedSeat && isMobile && (
         <SeatInspector
-          seat={selectedSeat}
+          seat={inspectedSeat}
           status={selectedAvailability?.status || "available"}
           statusMessage={selectedAvailability?.statusMessage}
           startDate={startDate}
@@ -1232,6 +1306,56 @@ function BookContent() {
           window.location.href = "/dashboard?tab=residencies";
         }}
       />
+
+      {/* 15-Locker Cabinet Layout Modal */}
+      {isLockerLayoutModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setIsLockerLayoutModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-xl max-w-2xl w-full overflow-hidden shadow-2xl p-5 space-y-4 text-left"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-ivory-200">
+              <div>
+                <h3 className="font-serif text-lg font-bold text-charcoal-900">
+                  15 Storage Lockers Cabinet Layout (#01 to #15)
+                </h3>
+                <p className="text-xs text-charcoal-600">
+                  High-security private steel locker unit located adjacent to the Main Sanctuary entrance.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsLockerLayoutModalOpen(false)}
+                className="p-1 hover:bg-ivory-100 rounded text-charcoal-500 font-mono text-sm"
+              >
+                ✕ Close
+              </button>
+            </div>
+            <div className="relative aspect-[16/10] w-full bg-slate-900 rounded-lg overflow-hidden border border-ivory-300">
+              <img
+                src={lockerLayoutImage || "/desk-render-01.jpg"}
+                alt="15 Lockers Cabinet Layout"
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <div className="flex items-center justify-between text-xs font-mono text-charcoal-600">
+              <span>Selected: <strong>{selectedLocker.label}</strong> ({selectedLocker.size})</span>
+              <button
+                type="button"
+                onClick={() => setIsLockerLayoutModalOpen(false)}
+                className="px-4 py-1.5 bg-forest-900 text-white rounded-lg font-bold"
+              >
+                Select & Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

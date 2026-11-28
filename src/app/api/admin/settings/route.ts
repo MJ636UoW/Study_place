@@ -36,6 +36,11 @@ let cachedSettings = {
   wifiSsid: "EliteStudy_5G",
   wifiPassword: "FocusQuiet2026",
   centerAddress: "Amrut Nagar, Near Shreyas Cinema, LBS Marg, Ghatkopar West, Mumbai 400086",
+  workstationLayoutImage: "/room-layout.png",
+  lockerLayoutImage: "/desk-render-01.jpg",
+  seatCustomImages: {} as Record<string, string>,
+  lockerCustomImages: {} as Record<string, string>,
+  lockerCount: 15,
 };
 
 export async function GET() {
@@ -79,6 +84,11 @@ export async function GET() {
           wifiSsid: settings.wifiSsid || "EliteStudy_5G",
           wifiPassword: settings.wifiPassword || "FocusQuiet2026",
           centerAddress: settings.centerAddress || cachedSettings.centerAddress,
+          workstationLayoutImage: settings.workstationLayoutImage || cachedSettings.workstationLayoutImage,
+          lockerLayoutImage: settings.lockerLayoutImage || cachedSettings.lockerLayoutImage,
+          seatCustomImages: settings.seatCustomImages ? (settings.seatCustomImages instanceof Map ? Object.fromEntries(settings.seatCustomImages) : settings.seatCustomImages) : cachedSettings.seatCustomImages,
+          lockerCustomImages: settings.lockerCustomImages ? (settings.lockerCustomImages instanceof Map ? Object.fromEntries(settings.lockerCustomImages) : settings.lockerCustomImages) : cachedSettings.lockerCustomImages,
+          lockerCount: settings.lockerCount || cachedSettings.lockerCount,
         },
       });
     }
@@ -132,6 +142,11 @@ export async function POST(req: NextRequest) {
       wifiSsid,
       wifiPassword,
       centerAddress,
+      workstationLayoutImage,
+      lockerLayoutImage,
+      seatCustomImages,
+      lockerCustomImages,
+      lockerCount,
     } = body;
 
     const mongoOk = await isMongoAvailable();
@@ -325,6 +340,34 @@ export async function POST(req: NextRequest) {
     if (centerAddress !== undefined) {
       if (settingsDoc) settingsDoc.centerAddress = centerAddress.trim();
       cachedSettings.centerAddress = centerAddress.trim();
+    }
+
+    if (workstationLayoutImage !== undefined) {
+      if (settingsDoc) settingsDoc.workstationLayoutImage = workstationLayoutImage.trim();
+      cachedSettings.workstationLayoutImage = workstationLayoutImage.trim();
+    }
+
+    if (lockerLayoutImage !== undefined) {
+      if (settingsDoc) settingsDoc.lockerLayoutImage = lockerLayoutImage.trim();
+      cachedSettings.lockerLayoutImage = lockerLayoutImage.trim();
+    }
+
+    if (seatCustomImages !== undefined && typeof seatCustomImages === "object") {
+      if (settingsDoc) settingsDoc.seatCustomImages = seatCustomImages;
+      cachedSettings.seatCustomImages = { ...cachedSettings.seatCustomImages, ...seatCustomImages };
+    }
+
+    if (lockerCustomImages !== undefined && typeof lockerCustomImages === "object") {
+      if (settingsDoc) settingsDoc.lockerCustomImages = lockerCustomImages;
+      cachedSettings.lockerCustomImages = { ...cachedSettings.lockerCustomImages, ...lockerCustomImages };
+    }
+
+    if (lockerCount !== undefined) {
+      const cnt = Number(lockerCount);
+      if (!isNaN(cnt) && cnt > 0) {
+        if (settingsDoc) settingsDoc.lockerCount = cnt;
+        cachedSettings.lockerCount = cnt;
+      }
     }
 
     if (settingsDoc) {

@@ -139,17 +139,43 @@ export interface LockerItem {
   label: string;
   status: "available" | "occupied";
   size: "Standard" | "Spacious";
+  photoUrl?: string;
 }
 
-export const LOCKERS_FIXTURE_24: LockerItem[] = Array.from({ length: 24 }, (_, i) => {
+export const LOCKERS_FIXTURE_15: LockerItem[] = Array.from({ length: 15 }, (_, i) => {
   const num = (i + 1).toString().padStart(2, "0");
-  // Lockers 05, 11, 19 occupied for realistic student demo
-  const isOccupied = i === 4 || i === 10 || i === 18;
+  // Lockers 04 and 09 occupied for realistic student demo
+  const isOccupied = i === 3 || i === 8;
   return {
     id: `locker-${num}`,
     number: `#${num}`,
     label: `Locker #${num}`,
     status: isOccupied ? "occupied" : "available",
-    size: i < 12 ? "Standard" : "Spacious",
+    size: i < 8 ? "Standard" : "Spacious",
+    photoUrl: "https://images.unsplash.com/photo-1590402494682-cd3fb53b1f70?auto=format&fit=crop&w=600&q=80",
   };
 });
+
+export const LOCKERS_FIXTURE_24: LockerItem[] = LOCKERS_FIXTURE_15;
+
+export function generateLockersList(
+  count: number = 15,
+  customImages?: Record<string, string>,
+  occupiedIds?: string[]
+): LockerItem[] {
+  return Array.from({ length: count }, (_, i) => {
+    const num = (i + 1).toString().padStart(2, "0");
+    const id = `locker-${num}`;
+    const isOccupied = occupiedIds ? occupiedIds.includes(id) : i === 3 || i === 8;
+    return {
+      id,
+      number: `#${num}`,
+      label: `Locker #${num}`,
+      status: isOccupied ? "occupied" : "available",
+      size: i < Math.ceil(count / 2) ? "Standard" : "Spacious",
+      photoUrl:
+        customImages?.[id] ||
+        "https://images.unsplash.com/photo-1590402494682-cd3fb53b1f70?auto=format&fit=crop&w=600&q=80",
+    };
+  });
+}

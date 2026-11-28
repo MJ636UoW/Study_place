@@ -34,6 +34,12 @@ export interface IAdminSettings extends Document {
   wifiSsid?: string;
   wifiPassword?: string;
   centerAddress?: string;
+  // Layout and Custom Seat/Locker Photos
+  workstationLayoutImage?: string;
+  lockerLayoutImage?: string;
+  seatCustomImages?: Record<string, string>;
+  lockerCustomImages?: Record<string, string>;
+  lockerCount?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -73,6 +79,11 @@ const AdminSettingsSchema: Schema<IAdminSettings> = new Schema(
     wifiSsid: { type: String, default: "EliteStudy_5G" },
     wifiPassword: { type: String, default: "FocusQuiet2026" },
     centerAddress: { type: String, default: "Amrut Nagar, Near Shreyas Cinema, LBS Marg, Ghatkopar West, Mumbai 400086" },
+    workstationLayoutImage: { type: String, default: "/room-layout.png" },
+    lockerLayoutImage: { type: String, default: "/desk-render-01.jpg" },
+    seatCustomImages: { type: Map, of: String, default: {} },
+    lockerCustomImages: { type: Map, of: String, default: {} },
+    lockerCount: { type: Number, default: 15 },
   },
   {
     timestamps: true,

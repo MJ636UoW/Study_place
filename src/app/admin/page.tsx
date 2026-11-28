@@ -37,11 +37,12 @@ import { AdminService, AuditEvent, EnquiryItem, ModeratedReview } from "@/lib/ad
 import { BookingEngine } from "@/lib/booking/bookingEngine";
 import { bookingsFixture } from "@/fixtures";
 import { DEFAULT_PRICING_MATRIX, type PlanPricingRow, SHIFTS } from "@/lib/pricingMatrix";
+import { LayoutAndPhotoManager } from "@/components/admin/LayoutAndPhotoManager";
 
 export default function AdminPage() {
   // Operational Navigation
   const [activeQueue, setActiveQueue] = useState<
-    "pending" | "holds" | "attendance" | "endings" | "exceptions" | "enquiries" | "reviews" | "audit" | "keypad" | "content" | "settings"
+    "pending" | "holds" | "attendance" | "endings" | "exceptions" | "enquiries" | "reviews" | "audit" | "keypad" | "content" | "settings" | "layout"
   >("pending");
 
   // Smart Door Keypad & Access Control Hardware State (Cloud Wi-Fi & Push-to-Exit)
@@ -255,6 +256,49 @@ export default function AdminPage() {
   const [wifiSsidInput, setWifiSsidInput] = useState("EliteStudy_5G");
   const [wifiPasswordInput, setWifiPasswordInput] = useState("FocusQuiet2026");
   const [centerAddressInput, setCenterAddressInput] = useState("Amrut Nagar, Near Shreyas Cinema, LBS Marg, Ghatkopar West, Mumbai 400086");
+  
+  // Workstations & 15 Lockers Layout & Photo State
+  const [workstationLayoutImage, setWorkstationLayoutImage] = useState<string>("/room-layout.png");
+  const [lockerLayoutImage, setLockerLayoutImage] = useState<string>("/desk-render-01.jpg");
+  const [seatCustomImages, setSeatCustomImages] = useState<Record<string, string>>({});
+  const [lockerCustomImages, setLockerCustomImages] = useState<Record<string, string>>({});
+  const [lockerCount, setLockerCount] = useState<number>(15);
+
+  const handleUpdateSeatImage = async (seatId: string, url: string) => {
+    const updated = { ...seatCustomImages, [seatId]: url };
+    setSeatCustomImages(updated);
+    await fetch("/api/admin/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ seatCustomImages: updated }),
+    });
+  };
+
+  const handleUpdateLockerImage = async (lockerId: string, url: string) => {
+    const updated = { ...lockerCustomImages, [lockerId]: url };
+    setLockerCustomImages(updated);
+    await fetch("/api/admin/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lockerCustomImages: updated }),
+    });
+  };
+
+  const handleUpdateLayoutImage = async (type: "workstations" | "lockers", url: string) => {
+    const payload: Record<string, string> = {};
+    if (type === "workstations") {
+      setWorkstationLayoutImage(url);
+      payload.workstationLayoutImage = url;
+    } else {
+      setLockerLayoutImage(url);
+      payload.lockerLayoutImage = url;
+    }
+    await fetch("/api/admin/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  };
 
   useEffect(() => {
     fetch("/api/admin/settings")
@@ -290,6 +334,11 @@ export default function AdminPage() {
           if (s.wifiSsid) setWifiSsidInput(s.wifiSsid);
           if (s.wifiPassword) setWifiPasswordInput(s.wifiPassword);
           if (s.centerAddress) setCenterAddressInput(s.centerAddress);
+          if (s.workstationLayoutImage) setWorkstationLayoutImage(s.workstationLayoutImage);
+          if (s.lockerLayoutImage) setLockerLayoutImage(s.lockerLayoutImage);
+          if (s.seatCustomImages) setSeatCustomImages(s.seatCustomImages);
+          if (s.lockerCustomImages) setLockerCustomImages(s.lockerCustomImages);
+          if (s.lockerCount) setLockerCount(s.lockerCount);
         }
       })
       .catch(() => {});
@@ -684,6 +733,7 @@ export default function AdminPage() {
           { id: "reviews", label: "Review Moderation", count: reviews.length },
           { id: "audit", label: "Audit Ledger", count: auditLog.length },
           { id: "content", label: "🎨 Site Content & Images CMS", count: 0 },
+          { id: "layout", label: "🪑 Seats & 15 Lockers Layout & Photos", count: 0 },
           { id: "settings", label: "Admin & Payment Settings", count: 0 },
         ].map((tab) => {
           const isActive = activeQueue === tab.id;
@@ -1854,6 +1904,21 @@ export default function AdminPage() {
             </div>
           </form>
         </div>
+      )}
+
+      {/* QUEUE: WORKSTATIONS & 15 LOCKERS LAYOUT & PHOTOS */}
+      {activeQueue === "layout" && (
+        <LayoutAndPhotoManager
+          workstationLayoutImage={workstationLayoutImage}
+          lockerLayoutImage={lockerLayoutImage}
+          seatCustomImages={seatCustomImages}
+          lockerCustomImages={lockerCustomImages}
+          lockerCount={lockerCount}
+          onUpdateSeatImage={handleUpdateSeatImage}
+          onUpdateLockerImage={handleUpdateLockerImage}
+          onUpdateLayoutImage={handleUpdateLayoutImage}
+          showToast={showToast}
+        />
       )}
 
       {/* QUEUE 11: ADMIN & PAYMENT SETTINGS */}
